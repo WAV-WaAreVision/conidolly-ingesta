@@ -426,6 +426,8 @@ export type Database = {
           archivo_clave: string | null
           autor: string | null
           categoria_id: string
+          corrida_desde: string | null
+          corrida_id: string | null
           creado_en: string
           declaracion_sin_pacientes_en: string
           estado: string
@@ -444,6 +446,8 @@ export type Database = {
           archivo_clave?: string | null
           autor?: string | null
           categoria_id: string
+          corrida_desde?: string | null
+          corrida_id?: string | null
           creado_en?: string
           declaracion_sin_pacientes_en: string
           estado?: string
@@ -462,6 +466,8 @@ export type Database = {
           archivo_clave?: string | null
           autor?: string | null
           categoria_id?: string
+          corrida_desde?: string | null
+          corrida_id?: string | null
           creado_en?: string
           declaracion_sin_pacientes_en?: string
           estado?: string
