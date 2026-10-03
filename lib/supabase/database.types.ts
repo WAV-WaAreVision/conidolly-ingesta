@@ -289,35 +289,6 @@ export type Database = {
         }
         Relationships: []
       }
-      embeddings_ficha: {
-        Row: {
-          creado_en: string
-          material_id: string
-          modelo: string
-          vector: string
-        }
-        Insert: {
-          creado_en?: string
-          material_id: string
-          modelo: string
-          vector: string
-        }
-        Update: {
-          creado_en?: string
-          material_id?: string
-          modelo?: string
-          vector?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "embeddings_ficha_material_id_fkey"
-            columns: ["material_id"]
-            isOneToOne: true
-            referencedRelation: "materiales"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       eventos: {
         Row: {
           actor_rol: string
@@ -990,6 +961,53 @@ export type Database = {
           },
         ]
       }
+      temas_fusion_rechazada: {
+        Row: {
+          rechazada_en: string
+          tema_a: string
+          tema_b: string
+        }
+        Insert: {
+          rechazada_en?: string
+          tema_a: string
+          tema_b: string
+        }
+        Update: {
+          rechazada_en?: string
+          tema_a?: string
+          tema_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temas_fusion_rechazada_tema_a_fkey"
+            columns: ["tema_a"]
+            isOneToOne: false
+            referencedRelation: "temas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temas_fusion_rechazada_tema_a_fkey"
+            columns: ["tema_a"]
+            isOneToOne: false
+            referencedRelation: "temas_resumen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temas_fusion_rechazada_tema_b_fkey"
+            columns: ["tema_b"]
+            isOneToOne: false
+            referencedRelation: "temas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temas_fusion_rechazada_tema_b_fkey"
+            columns: ["tema_b"]
+            isOneToOne: false
+            referencedRelation: "temas_resumen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teoria_fuentes: {
         Row: {
           material_id: string
@@ -1076,63 +1094,6 @@ export type Database = {
           },
         ]
       }
-      vinculos: {
-        Row: {
-          cita_a: string | null
-          cita_b: string | null
-          creado_en: string
-          decidido_en: string | null
-          decidido_por: string | null
-          estado: string
-          material_a: string
-          material_b: string
-          razon: string | null
-          relevancia: number
-          tipo: string
-        }
-        Insert: {
-          cita_a?: string | null
-          cita_b?: string | null
-          creado_en?: string
-          decidido_en?: string | null
-          decidido_por?: string | null
-          estado?: string
-          material_a: string
-          material_b: string
-          razon?: string | null
-          relevancia: number
-          tipo: string
-        }
-        Update: {
-          cita_a?: string | null
-          cita_b?: string | null
-          creado_en?: string
-          decidido_en?: string | null
-          decidido_por?: string | null
-          estado?: string
-          material_a?: string
-          material_b?: string
-          razon?: string | null
-          relevancia?: number
-          tipo?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vinculos_material_a_fkey"
-            columns: ["material_a"]
-            isOneToOne: false
-            referencedRelation: "materiales"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vinculos_material_b_fkey"
-            columns: ["material_b"]
-            isOneToOne: false
-            referencedRelation: "materiales"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       visitas_clic: {
         Row: {
           dia: string
@@ -1200,6 +1161,7 @@ export type Database = {
       }
     }
     Functions: {
+      borrar_autor: { Args: { p_id: string }; Returns: undefined }
       conectar_instagram: {
         Args: { p_cuenta: string; p_expira_en: string; p_token: string }
         Returns: undefined
@@ -1231,15 +1193,6 @@ export type Database = {
         Returns: string
       }
       crear_categoria: { Args: { p_nombre: string }; Returns: string }
-      editar_autor: {
-        Args: {
-          p_alias: string[]
-          p_credencial: string
-          p_id: string
-          p_nombre: string
-        }
-        Returns: undefined
-      }
       editar_guion_como_coni: {
         Args: {
           p_guion: string
@@ -1443,6 +1396,7 @@ export type Database = {
       }
       marcar_disparo_fallido: { Args: { p_id: string }; Returns: undefined }
       olvidar_visitas_clic: { Args: { p_antes_de: string }; Returns: number }
+      recalcular_tema: { Args: { p_tema: string }; Returns: undefined }
       registrar_clic: {
         Args: { p_dia: string; p_enlace: string; p_visitante: string }
         Returns: boolean

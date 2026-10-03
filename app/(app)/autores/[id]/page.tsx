@@ -4,6 +4,7 @@ import { ListaDeAfirmaciones } from "@/components/lista-de-afirmaciones"
 import { leerAutor, listarAutores } from "@/lib/ingesta/autores"
 import { leerSesion } from "@/lib/sesion/miembro"
 import { BotonOcultar } from "../../temas/boton-ocultar"
+import { BorrarAutor } from "./borrar-autor"
 import { UnirAutores } from "./unir-autores"
 
 export default async function Autor({ params }: { params: Promise<{ id: string }> }) {
@@ -12,7 +13,7 @@ export default async function Autor({ params }: { params: Promise<{ id: string }
   const { id } = await params
   const [leido, autores] = await Promise.all([leerAutor(sesion.db, id), listarAutores(sesion.db)])
   if (!leido) notFound()
-  const { autor, grupos, ocultas } = leido
+  const { autor, materiales, grupos, ocultas } = leido
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
@@ -46,12 +47,15 @@ export default async function Autor({ params }: { params: Promise<{ id: string }
       ) : null}
 
       {autor.tipo === "coni" ? null : (
-        <UnirAutores
-          origen={{ id: autor.id, nombre: autor.nombre }}
-          otros={autores
-            .filter((otro) => otro.id !== autor.id)
-            .map(({ id: otroId, nombre }) => ({ id: otroId, nombre }))}
-        />
+        <>
+          <UnirAutores
+            origen={{ id: autor.id, nombre: autor.nombre }}
+            otros={autores
+              .filter((otro) => otro.id !== autor.id)
+              .map(({ id: otroId, nombre }) => ({ id: otroId, nombre }))}
+          />
+          {materiales === 0 ? <BorrarAutor autor={{ id: autor.id, nombre: autor.nombre }} /> : null}
+        </>
       )}
     </main>
   )

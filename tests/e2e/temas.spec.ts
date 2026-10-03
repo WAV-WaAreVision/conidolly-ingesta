@@ -72,8 +72,31 @@ test("Coni sees the topics ordered by authors, with badges and the evidence mix,
   expect(data).toEqual({ excluida: true, tema_id: null })
 })
 
-test("Coni opens a topic that does not exist and finds a 404", async ({ page }) => {
-  expect((await page.goto("/temas/00000000-0000-4000-8000-000000000000"))?.status()).toBe(404)
+test("hiding the last claim of a topic removes it and sends Coni back to the topics list without an error", async ({
+  page,
+}) => {
+  const autor = await sembrarAutor("Autor De Tema Efimero")
+  const material = await sembrarMaterialListo(autor)
+  const tema = await sembrarTema("Tema Efimero")
+  const unica = await sembrarAfirmacionDe(material, autor, tema, { texto: "La unica del tema efimero." })
+
+  await page.goto(`/temas/${tema}`)
+  await page.getByRole("button", { name: "Ocultar" }).click()
+
+  await expect(page).toHaveURL(/\/temas$/)
+  await expect(page.getByRole("heading", { name: "Temas" })).toBeVisible()
+  await expect(page.getByText(`${PREFIJO_DE_PRUEBA}Tema Efimero`)).toHaveCount(0)
+  const gone = await clienteDeServicio().from("temas").select("id").eq("id", tema)
+  expect(gone.data).toEqual([])
+  const { data } = await clienteDeServicio().from("afirmaciones").select("excluida").eq("id", unica).single()
+  expect(data?.excluida).toBe(true)
+  await page.goto(`/autores/${autor}`)
+  await expect(page.getByRole("heading", { name: "Ocultas" })).toBeVisible()
+})
+
+test("Coni opens a topic that does not exist and lands on the topics list", async ({ page }) => {
+  await page.goto("/temas/00000000-0000-4000-8000-000000000000")
+  await expect(page).toHaveURL(/\/temas$/)
 })
 
 test("a merged topic leads to the topic that absorbed it", async ({ page }) => {

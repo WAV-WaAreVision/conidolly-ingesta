@@ -2,6 +2,7 @@ import Link from "next/link"
 import { NavegacionPrincipal } from "@/components/navegacion-principal"
 import { resumirAutores } from "@/lib/ingesta/autores"
 import { leerSesion } from "@/lib/sesion/miembro"
+import { BorrarAutor } from "./[id]/borrar-autor"
 
 const TIPO_DE_AUTOR: Record<string, string> = {
   coni: "Coni",
@@ -44,6 +45,9 @@ export default async function Autores() {
                     </li>
                   ))}
                 </ul>
+              ) : null}
+              {autor.materiales === 0 && autor.tipo !== "coni" ? (
+                <BorrarAutor autor={{ id: autor.id, nombre: autor.nombre }} />
               ) : null}
             </li>
           ))}

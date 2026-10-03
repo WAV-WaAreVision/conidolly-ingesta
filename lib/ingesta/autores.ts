@@ -18,6 +18,7 @@ const esquemaDeAutorNuevo = z.object({
 
 const COLUMNAS = "id, nombre, credencial, tipo, alias"
 const CODIGO_INEXISTENTE = "P0002"
+const CODIGO_REGLA_DE_NEGOCIO = "22023"
 const AUTOR_INEXISTENTE = "Ese autor ya no existe."
 
 /** `jsonb` that is not the shape the database writes is read as empty rather than breaking the whole page. */
@@ -54,6 +55,9 @@ export async function crearAutor(
     p_tipo: leida.data.tipo,
   })
   if (error) {
+    if (error.code === CODIGO_REGLA_DE_NEGOCIO && error.message === "tipo_coni_reservado") {
+      return { ok: false, error: "La autora Coni ya existe y no se puede crear otra." }
+    }
     console.error("No pude crear el autor", error)
     return { ok: false, error: ERROR_GENERICO }
   }
@@ -131,6 +135,7 @@ export interface AfirmacionDeAutor {
 
 export interface AutorLeido {
   autor: AutorDeLista
+  materiales: number
   /** Its visible claims by topic, the topic with most claims first; the ones without topic come last. */
   grupos: { tema: { id: string; nombre: string } | null; afirmaciones: AfirmacionDeAutor[] }[]
   /** The ones Coni or WAV hid: this is where they can be shown again. */
@@ -142,6 +147,13 @@ export async function leerAutor(db: Db, id: string): Promise<AutorLeido | null> 
   const { data: autor, error } = await db.from("autores").select(COLUMNAS).eq("id", id).maybeSingle()
   if (error) throw new Error(`No pude leer el autor ${id}: ${error.message}`, { cause: error })
   if (!autor) return null
+
+  const { count, error: errorDeConteo } = await db
+    .from("materiales")
+    .select("id", { count: "exact", head: true })
+    .eq("autor_id", id)
+  if (errorDeConteo)
+    throw new Error(`No pude contar los materiales del autor ${id}: ${errorDeConteo.message}`, { cause: errorDeConteo })
 
   const filas = await leerTodas(`las afirmaciones del autor ${id}`, (desde, hasta) =>
     db
@@ -169,6 +181,7 @@ export async function leerAutor(db: Db, id: string): Promise<AutorLeido | null> 
   }
   return {
     autor,
+    materiales: count ?? 0,
     grupos: [...grupos.values()].sort(
       (a, b) =>
         Number(a.tema === null) - Number(b.tema === null) ||
@@ -209,6 +222,31 @@ export async function fusionarAutores(deps: Pick<DepsSubir, "db">, entrada: unkn
   if (error) {
     if (error.code === CODIGO_INEXISTENTE) return { ok: false, error: AUTOR_INEXISTENTE }
     console.error(`No pude unir el autor ${origen} con ${destino}`, error)
+    return { ok: false, error: ERROR_GENERICO }
+  }
+  return { ok: true }
+}
+
+const esquemaDeBorrado = z.object({ id: z.string().uuid() })
+
+const MOTIVOS_DE_BORRADO: Record<string, string> = {
+  autor_coni_protegido: "La autora Coni no se puede borrar.",
+  autor_con_materiales: "No se puede borrar: este autor tiene materiales.",
+}
+
+/** Deletes an author with `borrar_autor`, which refuses Coni herself and any author that still has materials. */
+export async function borrarAutor(deps: Pick<DepsSubir, "db">, entrada: unknown): Promise<Resultado> {
+  const miembro = await exigirMiembro(deps.db, "borrarAutor")
+  if (!miembro.ok) return miembro
+  const leida = esquemaDeBorrado.safeParse(entrada)
+  if (!leida.success) return { ok: false, error: ERROR_SOLICITUD }
+
+  const { error } = await deps.db.rpc("borrar_autor", { p_id: leida.data.id })
+  if (error) {
+    if (error.code === CODIGO_INEXISTENTE) return { ok: false, error: AUTOR_INEXISTENTE }
+    const motivo = error.code === CODIGO_REGLA_DE_NEGOCIO ? MOTIVOS_DE_BORRADO[error.message] : undefined
+    if (motivo) return { ok: false, error: motivo }
+    console.error(`No pude borrar el autor ${leida.data.id}`, error)
     return { ok: false, error: ERROR_GENERICO }
   }
   return { ok: true }

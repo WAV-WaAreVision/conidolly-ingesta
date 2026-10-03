@@ -78,6 +78,54 @@ test("Coni joins an author into another after an in-page confirmation, and the c
   expect((await page.goto(`/autores/${origen}`))?.status()).toBe(404)
 })
 
+test("only an author without materials, and not Coni, can be deleted, from the list and from its page", async ({
+  page,
+}) => {
+  const vacio = await sembrarAutor("Autor Sin Material")
+  const vacioDelDetalle = await sembrarAutor("Autor Sin Material Detalle")
+  const conMaterial = await sembrarAutor("Autor Con Material")
+  await sembrarMaterialListo(conMaterial)
+  const tarjetaDe = (nombre: string) =>
+    page
+      .getByRole("listitem")
+      .filter({ hasText: `${PREFIJO_DE_PRUEBA}${nombre}` })
+      .first()
+
+  await page.goto("/autores")
+  await expect(tarjetaDe("Autor Con Material").getByRole("button", { name: "Borrar autor" })).toHaveCount(0)
+  await expect(
+    page.getByRole("listitem").filter({ hasText: "Coni" }).getByRole("button", { name: "Borrar autor" }),
+  ).toHaveCount(0)
+
+  const abrir = tarjetaDe("Autor Sin Material").getByRole("button", { name: "Borrar autor" })
+  await abrir.click()
+  await expect(page.getByRole("button", { name: "Sí, borrar" })).toBeFocused()
+  await page.getByRole("button", { name: "Cancelar" }).click()
+  await expect(abrir).toBeFocused()
+  expect((await clienteDeServicio().from("autores").select("id").eq("id", vacio)).data).toHaveLength(1)
+
+  await abrir.click()
+  await page.getByRole("button", { name: "Sí, borrar" }).click()
+  await expect(page).toHaveURL(/\/autores$/)
+  await expect(page.getByText(`${PREFIJO_DE_PRUEBA}Autor Sin Material`, { exact: true })).toHaveCount(0)
+  expect((await clienteDeServicio().from("autores").select("id").eq("id", vacio)).data).toEqual([])
+
+  await page.goto(`/autores/${conMaterial}`)
+  await expect(page.getByRole("button", { name: "Borrar autor" })).toHaveCount(0)
+
+  await page.goto(`/autores/${vacioDelDetalle}`)
+  await page.getByRole("button", { name: "Borrar autor" }).click()
+  await page.getByRole("button", { name: "Sí, borrar" }).click()
+  await expect(page).toHaveURL(/\/autores$/)
+  expect((await clienteDeServicio().from("autores").select("id").eq("id", vacioDelDetalle)).data).toEqual([])
+})
+
+test("Coni's own page offers no way to delete her", async ({ page }) => {
+  const { data } = await clienteDeServicio().from("autores").select("id").eq("tipo", "coni").single()
+  await page.goto(`/autores/${data?.id}`)
+  await expect(page.getByRole("button", { name: "Borrar autor" })).toHaveCount(0)
+})
+
 test("the graph and theory routes are gone", async ({ page }) => {
   expect((await page.goto("/grafo"))?.status()).toBe(404)
   expect((await page.goto("/teorias"))?.status()).toBe(404)

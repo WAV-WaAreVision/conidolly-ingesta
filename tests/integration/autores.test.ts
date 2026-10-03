@@ -2,7 +2,14 @@ import { randomUUID } from "node:crypto"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest"
 import { almacenEnMemoria } from "@/lib/almacen/almacen"
-import { crearAutor, fusionarAutores, leerAutor, listarAutores, resumirAutores } from "@/lib/ingesta/autores"
+import {
+  borrarAutor,
+  crearAutor,
+  fusionarAutores,
+  leerAutor,
+  listarAutores,
+  resumirAutores,
+} from "@/lib/ingesta/autores"
 import type { DepsSubir } from "@/lib/ingesta/subir"
 import type { Database } from "@/lib/supabase/database.types"
 import { clienteDeConi, clienteDeOtraPersona, clienteDeServicio, clienteDeWav } from "./sesion"
@@ -129,12 +136,11 @@ describe("crearAutor", () => {
     const creada = await crearAutor({ db: coni }, { nombre: nombre(), credencial: "", tipo: "persona" })
     if (!creada.ok) throw new Error(creada.error)
     const alias = `${PREFIJO}Apodo ${randomUUID().slice(0, 6)}`
-    await coni.rpc("editar_autor", {
-      p_id: creada.autor.id,
-      p_nombre: creada.autor.nombre,
-      p_credencial: "",
-      p_alias: [alias],
-    })
+    const { error } = await servicio
+      .from("autores")
+      .update({ alias: [alias] })
+      .eq("id", creada.autor.id)
+    if (error) throw new Error(error.message)
 
     const buscada = await crearAutor({ db: wav }, { nombre: alias, credencial: "", tipo: "persona" })
 
@@ -152,6 +158,23 @@ describe("crearAutor", () => {
     const resultado = await crearAutor({ db: coni }, { nombre: nombre(), credencial: "", tipo })
 
     expect(resultado).toEqual({ ok: false, error: "Elige si es una persona, una cuenta o una institución." })
+  })
+
+  it("says in plain Spanish that Coni cannot be created if the database ever refuses the type", async () => {
+    const rechazaTipoConi = new Proxy(coni, {
+      get: (objetivo, propiedad) =>
+        propiedad === "rpc"
+          ? (nombreRpc: never, argumentos: never) =>
+              nombreRpc === "crear_autor"
+                ? Promise.resolve({ data: null, error: { code: "22023", message: "tipo_coni_reservado" } })
+                : objetivo.rpc(nombreRpc, argumentos)
+          : Reflect.get(objetivo, propiedad),
+    })
+
+    expect(await crearAutor({ db: rechazaTipoConi }, { nombre: nombre(), credencial: "", tipo: "persona" })).toEqual({
+      ok: false,
+      error: "La autora Coni ya existe y no se puede crear otra.",
+    })
   })
 
   it("refuses anyone who is neither Coni nor WAV and creates nothing", async () => {
@@ -257,6 +280,16 @@ describe("leerAutor", () => {
     expect(leido?.ocultas.map((f) => f.id)).toEqual([oculta])
   })
 
+  it("counts the author's materials, so the page knows whether it can be deleted", async () => {
+    const sinMateriales = await autorNuevo()
+    const conMateriales = await autorNuevo()
+    await sembrarMaterial(conMateriales)
+    await sembrarMaterial(conMateriales)
+
+    expect((await leerAutor(coni, sinMateriales))?.materiales).toBe(0)
+    expect((await leerAutor(coni, conMateriales))?.materiales).toBe(2)
+  })
+
   it("answers null for an author that does not exist or that she cannot see", async () => {
     const autor = await autorNuevo()
 
@@ -318,6 +351,56 @@ describe("fusionarAutores", () => {
 
     expect(await fusionarAutores(deps(otra), { origen, destino })).toEqual({ ok: false, error: SOLO_PARA_MIEMBROS })
     const sigue = await servicio.from("autores").select("id").eq("id", origen)
+    expect(sigue.data).toHaveLength(1)
+  })
+})
+
+describe("borrarAutor", () => {
+  it("deletes an author without materials, as Coni or as WAV", async () => {
+    const deConi = await autorNuevo()
+    const deWav = await autorNuevo()
+
+    expect(await borrarAutor(deps(coni), { id: deConi })).toEqual({ ok: true })
+    expect(await borrarAutor(deps(wav), { id: deWav })).toEqual({ ok: true })
+
+    const quedan = await servicio.from("autores").select("id").in("id", [deConi, deWav])
+    expect(quedan.data).toEqual([])
+  })
+
+  it("refuses an author that has materials and keeps it", async () => {
+    const autor = await autorNuevo()
+    await sembrarMaterial(autor)
+
+    expect(await borrarAutor(deps(coni), { id: autor })).toEqual({
+      ok: false,
+      error: "No se puede borrar: este autor tiene materiales.",
+    })
+    const sigue = await servicio.from("autores").select("id").eq("id", autor)
+    expect(sigue.data).toHaveLength(1)
+  })
+
+  it("never deletes Coni herself", async () => {
+    const { data } = await servicio.from("autores").select("id").eq("tipo", "coni").single()
+    const coniId = data?.id ?? ""
+
+    expect(await borrarAutor(deps(coni), { id: coniId })).toEqual({
+      ok: false,
+      error: "La autora Coni no se puede borrar.",
+    })
+    const sigue = await servicio.from("autores").select("id").eq("id", coniId)
+    expect(sigue.data).toHaveLength(1)
+  })
+
+  it("says the author is gone when it does not exist, and rejects a malformed id", async () => {
+    expect(await borrarAutor(deps(coni), { id: randomUUID() })).toEqual({ ok: false, error: "Ese autor ya no existe." })
+    expect((await borrarAutor(deps(coni), { id: "no-es-uuid" })).ok).toBe(false)
+  })
+
+  it("refuses anyone who is not a member and deletes nothing", async () => {
+    const autor = await autorNuevo()
+
+    expect(await borrarAutor(deps(otra), { id: autor })).toEqual({ ok: false, error: SOLO_PARA_MIEMBROS })
+    const sigue = await servicio.from("autores").select("id").eq("id", autor)
     expect(sigue.data).toHaveLength(1)
   })
 })

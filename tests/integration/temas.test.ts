@@ -215,6 +215,21 @@ describe("excluirAfirmacion", () => {
     expect(visible.data).toEqual({ excluida: false })
   })
 
+  it("removes the topic when its last visible claim is hidden, and keeps it while another claim is left", async () => {
+    const autor = await sembrarAutor("Ultima")
+    const material = await sembrarMaterial(autor)
+    const tema = await sembrarTema()
+    const primera = await sembrarAfirmacion(material, autor, tema)
+    const segunda = await sembrarAfirmacion(material, autor, tema)
+
+    await excluirAfirmacion(deps(coni), { id: primera, excluida: true })
+    expect(await destinoDeTema(coni, tema)).toBe(tema)
+
+    await excluirAfirmacion(deps(coni), { id: segunda, excluida: true })
+    expect(await destinoDeTema(coni, tema)).toBeNull()
+    expect(await leerTema(coni, tema)).toBeNull()
+  })
+
   it("says the claim is gone when it does not exist", async () => {
     expect(await excluirAfirmacion(deps(coni), { id: randomUUID(), excluida: true })).toEqual({
       ok: false,

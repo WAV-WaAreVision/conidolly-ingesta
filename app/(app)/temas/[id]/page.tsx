@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { notFound, redirect } from "next/navigation"
+import { redirect } from "next/navigation"
 import { ListaDeAfirmaciones } from "@/components/lista-de-afirmaciones"
 import { destinoDeTema, leerTema } from "@/lib/ingesta/temas"
 import { leerSesion } from "@/lib/sesion/miembro"
@@ -10,10 +10,11 @@ export default async function Tema({ params }: { params: Promise<{ id: string }>
   if (sesion.estado !== "miembro") return null
   const { id } = await params
   const destino = await destinoDeTema(sesion.db, id)
-  if (destino === null) notFound()
+  // A topic disappears when its last claim is hidden, so a missing topic is not an error: back to the list.
+  if (destino === null) redirect("/temas")
   if (destino !== id) redirect(`/temas/${destino}`)
   const leido = await leerTema(sesion.db, id)
-  if (!leido) notFound()
+  if (!leido) redirect("/temas")
   const { tema, autores } = leido
 
   return (
