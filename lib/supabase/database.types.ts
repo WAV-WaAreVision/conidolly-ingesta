@@ -113,6 +113,7 @@ export type Database = {
           enlaces: Json
           hora_publicacion: string
           id: boolean
+          ideas_por_semana: number
           meta: string
           meta_cuenta_id: string | null
           meta_token_expira_en: string | null
@@ -128,6 +129,7 @@ export type Database = {
           enlaces?: Json
           hora_publicacion?: string
           id?: boolean
+          ideas_por_semana?: number
           meta?: string
           meta_cuenta_id?: string | null
           meta_token_expira_en?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           enlaces?: Json
           hora_publicacion?: string
           id?: boolean
+          ideas_por_semana?: number
           meta?: string
           meta_cuenta_id?: string | null
           meta_token_expira_en?: string | null
@@ -506,9 +509,13 @@ export type Database = {
           fuerza: string
           gancho: string
           id: string
+          motivo_descarte: string | null
           numero: number | null
+          origen: string
           pilar: Database["public"]["Enums"]["pilar"]
+          semana: string | null
           tema: string
+          teoria_id: string | null
         }
         Insert: {
           alertas?: Json
@@ -520,9 +527,13 @@ export type Database = {
           fuerza: string
           gancho: string
           id?: string
+          motivo_descarte?: string | null
           numero?: number | null
+          origen?: string
           pilar: Database["public"]["Enums"]["pilar"]
+          semana?: string | null
           tema?: string
+          teoria_id?: string | null
         }
         Update: {
           alertas?: Json
@@ -534,11 +545,23 @@ export type Database = {
           fuerza?: string
           gancho?: string
           id?: string
+          motivo_descarte?: string | null
           numero?: number | null
+          origen?: string
           pilar?: Database["public"]["Enums"]["pilar"]
+          semana?: string | null
           tema?: string
+          teoria_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ideas_teoria_id_fkey"
+            columns: ["teoria_id"]
+            isOneToOne: false
+            referencedRelation: "teorias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       intervenciones: {
         Row: {
@@ -602,8 +625,6 @@ export type Database = {
           texto_pegado: string | null
           tipo: string
           titulo: string | null
-          vinculos_intentos: number
-          vinculos_pendientes: boolean
         }
         Insert: {
           archivo_clave?: string | null
@@ -628,8 +649,6 @@ export type Database = {
           texto_pegado?: string | null
           tipo: string
           titulo?: string | null
-          vinculos_intentos?: number
-          vinculos_pendientes?: boolean
         }
         Update: {
           archivo_clave?: string | null
@@ -654,8 +673,6 @@ export type Database = {
           texto_pegado?: string | null
           tipo?: string
           titulo?: string | null
-          vinculos_intentos?: number
-          vinculos_pendientes?: boolean
         }
         Relationships: [
           {
@@ -774,6 +791,39 @@ export type Database = {
           creado_en?: string
           rol?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      motor_corridas: {
+        Row: {
+          costo_usd: number
+          creada_en: string
+          estado: string
+          id: string
+          motivo_fallo: string | null
+          resumen: Json
+          semana: string
+          terminada_en: string | null
+        }
+        Insert: {
+          costo_usd?: number
+          creada_en?: string
+          estado?: string
+          id?: string
+          motivo_fallo?: string | null
+          resumen?: Json
+          semana: string
+          terminada_en?: string | null
+        }
+        Update: {
+          costo_usd?: number
+          creada_en?: string
+          estado?: string
+          id?: string
+          motivo_fallo?: string | null
+          resumen?: Json
+          semana?: string
+          terminada_en?: string | null
         }
         Relationships: []
       }
@@ -1043,6 +1093,39 @@ export type Database = {
           },
         ]
       }
+      teoria_afirmaciones: {
+        Row: {
+          afirmacion_id: string
+          aporte: string
+          teoria_id: string
+        }
+        Insert: {
+          afirmacion_id: string
+          aporte: string
+          teoria_id: string
+        }
+        Update: {
+          afirmacion_id?: string
+          aporte?: string
+          teoria_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teoria_afirmaciones_afirmacion_id_fkey"
+            columns: ["afirmacion_id"]
+            isOneToOne: false
+            referencedRelation: "afirmaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teoria_afirmaciones_teoria_id_fkey"
+            columns: ["teoria_id"]
+            isOneToOne: false
+            referencedRelation: "teorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teoria_fuentes: {
         Row: {
           material_id: string
@@ -1075,8 +1158,10 @@ export type Database = {
       }
       teorias: {
         Row: {
+          advertencias: Json
           argumentos: Json | null
           categoria_id: string | null
+          componentes: Json | null
           contradicciones: Json | null
           creada_en: string
           creada_por: string | null
@@ -1085,13 +1170,21 @@ export type Database = {
           id: string
           motivo_codigo: string | null
           motivo_fallo: string | null
+          nivel_evidencia: string | null
+          origen: string
+          por_que: string | null
+          puntaje: number | null
+          semana: string | null
           sintetizando_desde: string
+          temas: string[]
           tesis: string | null
           titulo: string | null
         }
         Insert: {
+          advertencias?: Json
           argumentos?: Json | null
           categoria_id?: string | null
+          componentes?: Json | null
           contradicciones?: Json | null
           creada_en?: string
           creada_por?: string | null
@@ -1100,13 +1193,21 @@ export type Database = {
           id?: string
           motivo_codigo?: string | null
           motivo_fallo?: string | null
+          nivel_evidencia?: string | null
+          origen?: string
+          por_que?: string | null
+          puntaje?: number | null
+          semana?: string | null
           sintetizando_desde?: string
+          temas?: string[]
           tesis?: string | null
           titulo?: string | null
         }
         Update: {
+          advertencias?: Json
           argumentos?: Json | null
           categoria_id?: string | null
+          componentes?: Json | null
           contradicciones?: Json | null
           creada_en?: string
           creada_por?: string | null
@@ -1115,7 +1216,13 @@ export type Database = {
           id?: string
           motivo_codigo?: string | null
           motivo_fallo?: string | null
+          nivel_evidencia?: string | null
+          origen?: string
+          por_que?: string | null
+          puntaje?: number | null
+          semana?: string | null
           sintetizando_desde?: string
+          temas?: string[]
           tesis?: string | null
           titulo?: string | null
         }
@@ -1253,33 +1360,7 @@ export type Database = {
       }
     }
     Functions: {
-      aceptar_vinculo: {
-        Args: {
-          p_a: string
-          p_b: string
-          p_relevancia?: number
-          p_tipo?: string
-        }
-        Returns: {
-          cita_a: string | null
-          cita_b: string | null
-          creado_en: string
-          decidido_en: string | null
-          decidido_por: string | null
-          estado: string
-          material_a: string
-          material_b: string
-          razon: string | null
-          relevancia: number
-          tipo: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "vinculos"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      archivar_ideas_del_motor: { Args: { p_semanas: number }; Returns: number }
       borrar_autor: { Args: { p_id: string }; Returns: undefined }
       conectar_instagram: {
         Args: { p_cuenta: string; p_expira_en: string; p_token: string }
@@ -1312,55 +1393,9 @@ export type Database = {
         Returns: string
       }
       crear_categoria: { Args: { p_nombre: string }; Returns: string }
-      crear_vinculo: {
-        Args: {
-          p_a: string
-          p_b: string
-          p_razon: string
-          p_relevancia: number
-          p_tipo: string
-        }
-        Returns: {
-          cita_a: string | null
-          cita_b: string | null
-          creado_en: string
-          decidido_en: string | null
-          decidido_por: string | null
-          estado: string
-          material_a: string
-          material_b: string
-          razon: string | null
-          relevancia: number
-          tipo: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "vinculos"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      descartar_vinculo: {
-        Args: { p_a: string; p_b: string }
-        Returns: {
-          cita_a: string | null
-          cita_b: string | null
-          creado_en: string
-          decidido_en: string | null
-          decidido_por: string | null
-          estado: string
-          material_a: string
-          material_b: string
-          razon: string | null
-          relevancia: number
-          tipo: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "vinculos"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+      descartar_idea: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
       }
       editar_guion_como_coni: {
         Args: {
@@ -1537,15 +1572,6 @@ export type Database = {
         Args: { p_nombre: string; p_valor: string }
         Returns: undefined
       }
-      guardar_teoria: {
-        Args: {
-          p_categoria?: string
-          p_id: string
-          p_tesis: string
-          p_titulo: string
-        }
-        Returns: undefined
-      }
       guardar_token_meta: {
         Args: { p_expira_en: string; p_token: string }
         Returns: undefined
@@ -1573,26 +1599,48 @@ export type Database = {
         }
       }
       marcar_disparo_fallido: { Args: { p_id: string }; Returns: undefined }
-      marcar_teoria_disparo_fallido: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
-      materiales_cercanos: {
-        Args: { p_limite?: number; p_material: string }
+      motor_afirmaciones_de_tema: {
+        Args: { p_limite: number; p_tema: string }
         Returns: {
-          distancia: number
-          material_id: string
+          autor: string
+          cita: string
+          dolor: string
+          emocion: string
+          evidencia: string
+          id: string
+          publico: string
+          texto: string
+          tipo: string
+        }[]
+      }
+      motor_pares: {
+        Args: { p_minimo_autores: number }
+        Returns: {
+          a: string
+          autores_comunes: number
+          b: string
+          puente: number
+        }[]
+      }
+      motor_temas: {
+        Args: never
+        Returns: {
+          afirmaciones: number
+          autores: number
+          cubierto_por_coni: boolean
+          evidencia_fuerte: number
+          nombre: string
+          pilar: string
+          tema_id: string
         }[]
       }
       olvidar_visitas_clic: { Args: { p_antes_de: string }; Returns: number }
-      pedir_teoria: { Args: { p_materiales: string[] }; Returns: string }
       recalcular_tema: { Args: { p_tema: string }; Returns: undefined }
       registrar_clic: {
         Args: { p_dia: string; p_enlace: string; p_visitante: string }
         Returns: boolean
       }
       reintentar_material: { Args: { p_id: string }; Returns: undefined }
-      reintentar_teoria: { Args: { p_id: string }; Returns: undefined }
       renombrar_categoria: {
         Args: { p_id: string; p_nombre: string }
         Returns: undefined

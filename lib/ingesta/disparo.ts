@@ -3,7 +3,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { idempotencyKeys, tasks } from "@trigger.dev/sdk"
 import { FallaDeConfiguracion } from "@/lib/dominio/falla"
-import type { ProcesarMaterial } from "./tarea"
+import type { MotorManual, ProcesarMaterial } from "./tarea"
 
 type Entorno = Record<string, string | undefined>
 
@@ -47,6 +47,30 @@ export async function dispararProcesarMaterial(
       idempotencyKey: await idempotencyKeys.create(`procesar-material:${materialId}${intento ? `:${intento}` : ""}`, {
         scope: "global",
       }),
+      idempotencyKeyTTL: "10m",
+    },
+  )
+}
+
+/**
+ * Starts the weekly engine by hand ("Proponer ahora"). The key is per week and holds for ten minutes: it only guards
+ * a double tap or two devices, since the engine itself answers a finished week with nothing to do. In test mode it
+ * writes the run to a file instead.
+ */
+export async function dispararMotor(semana: string, entorno: Entorno = process.env): Promise<void> {
+  const archivo = archivoDeDisparoDePrueba(entorno)
+  if (archivo) {
+    appendFileSync(archivo, `${JSON.stringify({ tarea: "motor-manual", semana })}\n`)
+    return
+  }
+  if (!entorno.TRIGGER_SECRET_KEY) {
+    throw new FallaDeConfiguracion("Falta TRIGGER_SECRET_KEY: la app no puede pedirle ideas al motor.")
+  }
+  await tasks.trigger<MotorManual>(
+    "motor-manual",
+    { manual: true },
+    {
+      idempotencyKey: await idempotencyKeys.create(`motor:${semana}`, { scope: "global" }),
       idempotencyKeyTTL: "10m",
     },
   )
