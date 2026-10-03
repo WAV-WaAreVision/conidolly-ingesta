@@ -1,0 +1,15 @@
+# Claude Code: archivos excluidos del contexto
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+*.mp4
+tests/e2e/fixtures/*.png
+lib/supabase/database.types.ts

@@ -1,0 +1,6 @@
+allowBuilds:
+  sharp: true
+  '@biomejs/biome': true
+  unrs-resolver: true
+  msw: false
+  esbuild: false
