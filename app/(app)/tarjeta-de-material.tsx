@@ -1,12 +1,12 @@
 import Link from "next/link"
 import type { MaterialDeLista } from "@/lib/ingesta/materiales"
 import { cn } from "@/lib/utils"
-import { ESTADO, ETIQUETA_DE_TIPO, esperaConfirmacion, sePuedeReintentar } from "./estado-de-material"
+import { ETIQUETA_DE_TIPO, esperaConfirmacion, estadoVisible, sePuedeReintentar } from "./estado-de-material"
 import { BotonConfirmarCosto } from "./materiales/boton-confirmar-costo"
 import { BotonReintentar } from "./materiales/boton-reintentar"
 
 export function TarjetaDeMaterial({ material }: { material: MaterialDeLista }) {
-  const estado = ESTADO[material.estado] ?? { texto: material.estado, clases: "bg-hundido text-apagado" }
+  const estado = estadoVisible(material)
   return (
     <li className="grid gap-1.5 rounded-lg border border-linea bg-superficie p-4">
       <Link href={`/materiales/${material.id}`} className="grid gap-1.5">
