@@ -54,7 +54,6 @@ test("Coni uploads a PDF straight to the store and sees it as Procesando", async
     firmada: true,
   })
   expect(disparosRegistrados()).toEqual([{ tarea: "procesar-material", materialId: material.id }])
-  await capturar(page, "ingesta-materiales")
 })
 
 test("Coni uploads two images in the order she chose", async ({ page }) => {

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import type { Rol } from "@/lib/acciones/ingreso"
 import { ERROR_GENERICO, type Resultado } from "@/lib/acciones/resultado"
 import { type Almacen, claveMaterial } from "@/lib/almacen/almacen"
 import { consultarRol, SOLO_PARA_MIEMBROS } from "@/lib/sesion/miembro"
@@ -20,7 +21,8 @@ export interface DepsSubir {
   /** The client of the signed-in person: row level security is what lets her write, not this code. */
   db: Db
   almacen: Almacen
-  disparar: (materialId: string) => Promise<void>
+  /** Starts the processing; a retry passes its own `intento` so it never reuses the run that failed. */
+  disparar: (materialId: string, intento?: string) => Promise<void>
   ahora: () => Date
   nuevoId: () => string
 }
@@ -30,10 +32,14 @@ const FALTA_EL_ARCHIVO = "No encontré el archivo que subiste. Inténtalo de nue
 const PESA_DEMASIADO = "Ese archivo pesa más de 2 GB."
 const CLAVE_FORANEA = "23503"
 
-/** Whether the signed-in person is Coni or WAV; a failed check is logged and answered as a plain failure. */
-async function exigirMiembro(db: Db, accion: string): Promise<{ ok: true } | { ok: false; error: string }> {
+/** Whether the signed-in person is Coni or WAV (and which); a failed check is logged and answered as a plain failure. */
+export async function exigirMiembro(
+  db: Db,
+  accion: string,
+): Promise<{ ok: true; rol: Rol } | { ok: false; error: string }> {
   try {
-    return (await consultarRol(db)) ? { ok: true } : { ok: false, error: SOLO_PARA_MIEMBROS }
+    const rol = await consultarRol(db)
+    return rol ? { ok: true, rol } : { ok: false, error: SOLO_PARA_MIEMBROS }
   } catch (error) {
     console.error(`La acción ${accion} no pudo comprobar quién entró`, error)
     return { ok: false, error: ERROR_GENERICO }
@@ -41,7 +47,7 @@ async function exigirMiembro(db: Db, accion: string): Promise<{ ok: true } | { o
 }
 
 /** The signed-in person's id; materials are only ever acted on by whoever uploaded them. */
-async function idDelUsuario(db: Db): Promise<string | null> {
+export async function idDelUsuario(db: Db): Promise<string | null> {
   const { data, error } = await db.auth.getUser()
   if (error) console.error("No pude leer quién entró", error)
   return data.user?.id ?? null

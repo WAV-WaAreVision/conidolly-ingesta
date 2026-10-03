@@ -49,4 +49,22 @@ describe("dispararProcesarMaterial", () => {
       { idempotencyKey: `clave-creada:procesar-material:${ID}`, idempotencyKeyTTL: "10m" },
     )
   })
+
+  it("uses a key of its own for each retry attempt, so a failed run is never reused", async () => {
+    await dispararProcesarMaterial(ID, { TRIGGER_SECRET_KEY: "tr_dev_x" }, "intento-2")
+
+    expect(idempotencyKeys.create).toHaveBeenCalledWith(`procesar-material:${ID}:intento-2`, { scope: "global" })
+  })
+
+  it("records the attempt in test mode too", async () => {
+    const archivo = join(mkdtempSync(join(tmpdir(), "disparos-")), "registro.jsonl")
+
+    await dispararProcesarMaterial(ID, { DISPARO_DE_PRUEBA: "1", DISPARO_DE_PRUEBA_ARCHIVO: archivo }, "intento-2")
+
+    expect(JSON.parse(readFileSync(archivo, "utf-8").trim())).toEqual({
+      tarea: "procesar-material",
+      materialId: ID,
+      intento: "intento-2",
+    })
+  })
 })

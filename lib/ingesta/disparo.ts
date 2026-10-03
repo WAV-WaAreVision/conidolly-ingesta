@@ -19,13 +19,21 @@ function archivoDeDisparoDePrueba(entorno: Entorno): string | null {
 }
 
 /**
- * Starts the processing of an uploaded material. The key holds for ten minutes: a double tap starts one run, and
- * the retry of a failed material a while later starts a new one. In test mode it writes the run to a file instead.
+ * Starts the processing of an uploaded material. The key holds for ten minutes: a double tap starts one run. A retry
+ * passes its own `intento` so the key is new and the failed run is never reused. In test mode it writes the run to a
+ * file instead.
  */
-export async function dispararProcesarMaterial(materialId: string, entorno: Entorno = process.env): Promise<void> {
+export async function dispararProcesarMaterial(
+  materialId: string,
+  entorno: Entorno = process.env,
+  intento?: string,
+): Promise<void> {
   const archivo = archivoDeDisparoDePrueba(entorno)
   if (archivo) {
-    appendFileSync(archivo, `${JSON.stringify({ tarea: "procesar-material", materialId })}\n`)
+    appendFileSync(
+      archivo,
+      `${JSON.stringify({ tarea: "procesar-material", materialId, ...(intento ? { intento } : {}) })}\n`,
+    )
     return
   }
   if (!entorno.TRIGGER_SECRET_KEY) {
@@ -36,7 +44,9 @@ export async function dispararProcesarMaterial(materialId: string, entorno: Ento
     { materialId },
     {
       // `scope: "global"`: the key is the same whichever request asks, so two devices or a double tap start one run.
-      idempotencyKey: await idempotencyKeys.create(`procesar-material:${materialId}`, { scope: "global" }),
+      idempotencyKey: await idempotencyKeys.create(`procesar-material:${materialId}${intento ? `:${intento}` : ""}`, {
+        scope: "global",
+      }),
       idempotencyKeyTTL: "10m",
     },
   )

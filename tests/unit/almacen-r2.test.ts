@@ -113,3 +113,106 @@ describe("almacenDeEntorno", () => {
     )
   })
 })
+
+const MATERIAL = "11111111-2222-4333-8444-555555555555"
+const TEXTO = `materiales/${MATERIAL}/texto.txt`
+
+describe("urlFirmada", () => {
+  it("signs a GET after checking the object is there, with the download name and the expiry asked for", async () => {
+    servidor.use(
+      http.head(`${ANFITRION}/${BALDE}/${TEXTO}`, () => new HttpResponse(null, { headers: { "Content-Length": "3" } })),
+    )
+
+    const url = new URL((await r2().urlFirmada(TEXTO, 300, { descargarComo: "texto.txt" })) ?? "")
+
+    expect(url.pathname).toBe(`/${BALDE}/${TEXTO}`)
+    expect(url.searchParams.get("X-Amz-Expires")).toBe("300")
+    expect(url.searchParams.get("response-content-disposition")).toBe('attachment; filename="texto.txt"')
+    expect(url.href).not.toContain(SECRETO)
+  })
+
+  it("is null, signing nothing, when the object is not there", async () => {
+    servidor.use(http.head(`${ANFITRION}/${BALDE}/${TEXTO}`, () => new HttpResponse(null, { status: 404 })))
+
+    expect(await r2().urlFirmada(TEXTO, 300)).toBeNull()
+  })
+
+  it("refuses a key that is not a text of a material, without calling R2", async () => {
+    await expect(r2().urlFirmada(CLAVE, 300)).rejects.toThrow(FallaDeConfiguracion)
+    await expect(r2().urlFirmada(`materiales/${MATERIAL}/../x/texto.txt`, 300)).rejects.toThrow(FallaDeConfiguracion)
+  })
+
+  it("refuses a long expiry: a download link is for right now", async () => {
+    await expect(r2().urlFirmada(TEXTO, 3601)).rejects.toThrow(FallaDeConfiguracion)
+  })
+})
+
+function listado(claves: string[], siguiente?: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?><ListBucketResult><IsTruncated>${siguiente ? "true" : "false"}</IsTruncated>${
+    siguiente ? `<NextContinuationToken>${siguiente}</NextContinuationToken>` : ""
+  }${claves.map((k) => `<Contents><Key>${k}</Key><Size>1</Size></Contents>`).join("")}</ListBucketResult>`
+}
+
+describe("borrarCarpeta", () => {
+  it("lists the exact folder of the material, page after page, and deletes each object", async () => {
+    const prefijos: (string | null)[] = []
+    const borradas: string[] = []
+    servidor.use(
+      http.get(`${ANFITRION}/${BALDE}`, ({ request }) => {
+        const url = new URL(request.url)
+        prefijos.push(url.searchParams.get("prefix"))
+        return HttpResponse.xml(
+          url.searchParams.get("continuation-token")
+            ? listado([`materiales/${MATERIAL}/texto.txt`])
+            : listado([`materiales/${MATERIAL}/original.pdf`], "pagina-2"),
+        )
+      }),
+      http.delete(`${ANFITRION}/${BALDE}/*`, ({ request }) => {
+        borradas.push(decodeURIComponent(new URL(request.url).pathname.slice(`/${BALDE}/`.length)))
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    expect(await r2().borrarCarpeta(MATERIAL)).toBe(2)
+
+    expect(prefijos).toEqual([`materiales/${MATERIAL}/`, `materiales/${MATERIAL}/`])
+    expect(borradas.sort()).toEqual([`materiales/${MATERIAL}/original.pdf`, `materiales/${MATERIAL}/texto.txt`])
+  })
+
+  it("never deletes a key outside the folder even if the listing returned it", async () => {
+    const borradas: string[] = []
+    servidor.use(
+      http.get(`${ANFITRION}/${BALDE}`, () =>
+        HttpResponse.xml(listado([`materiales/${MATERIAL}/texto.txt`, "materiales/otro/x.txt"])),
+      ),
+      http.delete(`${ANFITRION}/${BALDE}/*`, ({ request }) => {
+        borradas.push(decodeURIComponent(new URL(request.url).pathname.slice(`/${BALDE}/`.length)))
+        return new HttpResponse(null, { status: 204 })
+      }),
+    )
+
+    expect(await r2().borrarCarpeta(MATERIAL)).toBe(1)
+    expect(borradas).toEqual([`materiales/${MATERIAL}/texto.txt`])
+  })
+
+  it("refuses an id that is not a UUID without calling R2", async () => {
+    await expect(r2().borrarCarpeta("../materiales")).rejects.toThrow(FallaDeConfiguracion)
+  })
+
+  it("fails when R2 refuses a delete, without the credentials in the message", async () => {
+    servidor.use(
+      http.get(`${ANFITRION}/${BALDE}`, () => HttpResponse.xml(listado([TEXTO]))),
+      http.delete(`${ANFITRION}/${BALDE}/*`, () => new HttpResponse(null, { status: 403 })),
+    )
+
+    const error = await r2()
+      .borrarCarpeta(MATERIAL)
+      .then(
+        () => null,
+        (e: unknown) => e,
+      )
+
+    expect(error).toBeInstanceOf(Error)
+    expect(String((error as Error).message)).not.toContain(SECRETO)
+  })
+})

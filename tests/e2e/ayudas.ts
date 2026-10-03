@@ -6,6 +6,7 @@ import { createClient } from "@supabase/supabase-js"
 import { z } from "zod"
 import {
   ARCHIVO_DE_DISPAROS,
+  BALDE_DE_PRUEBA,
   BUZON,
   CARPETA_DE_CAPTURAS,
   CLAVE_ANONIMA,
@@ -58,6 +59,16 @@ const Objetos = z.record(z.string(), z.object({ bytes: z.number(), tipo: z.strin
 /** What the fake R2 received: the path of each object with its size and content type. */
 export async function objetosDelAlmacen() {
   return Objetos.parse(await (await fetch(`${URL_DEL_ALMACEN}/__objetos`)).json())
+}
+
+/** Puts a file in the fake store, as the background task does when it writes the text of a material. */
+export async function ponerObjetoEnElAlmacen(clave: string, contenido: string): Promise<void> {
+  const respuesta = await fetch(`${URL_DEL_ALMACEN}/${BALDE_DE_PRUEBA}/${clave}`, {
+    method: "PUT",
+    headers: { "content-type": "text/plain" },
+    body: contenido,
+  })
+  if (!respuesta.ok) throw new Error(`No pude poner ${clave} en el almacén falso: ${respuesta.status}`)
 }
 
 export function clienteDeServicio() {

@@ -1,10 +1,18 @@
-import { HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3"
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { FallaDeConfiguracion } from "@/lib/dominio/falla"
 import { exigirEnv } from "@/lib/env"
 
-// The minimum of `lib/proveedores/almacen.ts` of estudio-coni that an upload needs: the key of a material, a presigned
-// PUT and the size of what arrived. The repos do not import each other: keep `claveMaterial` identical in both.
+// The minimum of `lib/proveedores/almacen.ts` of estudio-coni that this app needs: the key of a material, a presigned
+// PUT, the size of what arrived, a presigned GET of its text and the deletion of its folder. The repos do not import
+// each other: keep `claveMaterial` identical in both.
 
 /** Private object storage: Cloudflare R2 in production, memory in tests. */
 export interface Almacen {
@@ -12,6 +20,10 @@ export interface Almacen {
   urlDeSubida(clave: string, segundos: number, tipo: string): Promise<string>
   /** The size in bytes of the object, `null` when it is not there; any other failure rejects. */
   tamano(clave: string): Promise<number | null>
+  /** A presigned GET of a text of a material that downloads as `descargarComo`; null when the object is not there. */
+  urlFirmada(clave: string, segundos: number, opciones?: { descargarComo?: string }): Promise<string | null>
+  /** Deletes every object under `materiales/<id>/` and returns how many; it touches no other folder. */
+  borrarCarpeta(materialId: string): Promise<number>
 }
 
 const PREFIJO_DE_MATERIALES = "materiales/"
@@ -59,6 +71,38 @@ function exigirSubida(clave: string, segundos: number): void {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+const TEXTO_DE_MATERIAL = new RegExp(
+  `^${PREFIJO_DE_MATERIALES}[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/texto(-original)?\\.txt$`,
+)
+
+/** A download link is for right now: five minutes is plenty and an hour is the most it may ask. */
+const VIGENCIA_MAXIMA_DESCARGA_SEGUNDOS = 60 * 60
+
+/** A name that goes inside a quoted header value: plain letters, digits, dots and dashes. */
+const NOMBRE_DE_DESCARGA = /^[\w.-]{1,100}$/
+
+function exigirDescarga(clave: string, segundos: number, nombre: string | undefined): void {
+  if (!TEXTO_DE_MATERIAL.test(clave)) {
+    throw new FallaDeConfiguracion(
+      `Solo se firma la descarga de ${PREFIJO_DE_MATERIALES}<uuid>/texto.txt o texto-original.txt: ${clave}`,
+    )
+  }
+  if (!Number.isInteger(segundos) || segundos <= 0 || segundos > VIGENCIA_MAXIMA_DESCARGA_SEGUNDOS) {
+    throw new FallaDeConfiguracion(
+      `Un link de descarga necesita una vigencia de 1 a ${VIGENCIA_MAXIMA_DESCARGA_SEGUNDOS} segundos enteros: ${segundos}`,
+    )
+  }
+  if (nombre !== undefined && !NOMBRE_DE_DESCARGA.test(nombre)) {
+    throw new FallaDeConfiguracion(`Nombre de descarga inválido: ${JSON.stringify(nombre)}`)
+  }
+}
+
+/** The folder of a material, with the id checked: the only prefix this app ever lists or deletes. */
+function carpetaDeMaterial(materialId: string): string {
+  if (!UUID.test(materialId)) throw new FallaDeConfiguracion(`El id del material no es un UUID: ${materialId}`)
+  return `${PREFIJO_DE_MATERIALES}${materialId.toLowerCase()}/`
+}
+
 /** The original of a material; the images of a multi-image material carry their order (1..20) as two digits. */
 export function claveMaterial(materialId: string, extension: string, orden?: number): string {
   if (!UUID.test(materialId)) throw new FallaDeConfiguracion(`El id del material no es un UUID: ${materialId}`)
@@ -74,6 +118,8 @@ export function claveMaterial(materialId: string, extension: string, orden?: num
 
 export interface AlmacenEnMemoria extends Almacen {
   obtener(clave: string): { datos: Uint8Array; tipo: string } | undefined
+  /** Puts an object straight in, as the background task does when it writes the text of a material. */
+  poner(clave: string, datos: Uint8Array, tipo: string): void
   claves(): string[]
   /** What the browser's PUT does against a URL from `urlDeSubida`; `{ bytes }` pretends a big object without its data. */
   simularSubida(url: string, datos: Uint8Array | { bytes: number }): void
@@ -99,6 +145,21 @@ export function almacenEnMemoria(): AlmacenEnMemoria {
     },
     async tamano(clave) {
       return objetos.get(clave)?.bytes ?? null
+    },
+    async urlFirmada(clave, segundos, opciones = {}) {
+      exigirDescarga(clave, segundos, opciones.descargarComo)
+      if (!objetos.has(clave)) return null
+      const descarga = opciones.descargarComo ? `&descarga=${opciones.descargarComo}` : ""
+      return `https://almacen.test/${clave}?expira=${segundos}${descarga}`
+    },
+    async borrarCarpeta(materialId) {
+      const prefijo = carpetaDeMaterial(materialId)
+      const claves = [...objetos.keys()].filter((clave) => clave.startsWith(prefijo))
+      for (const clave of claves) objetos.delete(clave)
+      return claves.length
+    },
+    poner(clave, datos, tipo) {
+      objetos.set(clave, { datos: new Uint8Array(datos), tipo, bytes: datos.byteLength })
     },
     obtener: (clave) => objetos.get(clave),
     claves: () => [...objetos.keys()],
@@ -170,6 +231,58 @@ export function almacenR2(opciones: OpcionesR2): Almacen {
         if (esNoEncontrado(error)) return null
         throw fallaDeR2("medir", clave, error, secretos)
       }
+    },
+    urlFirmada: async (clave, segundos, opciones = {}) => {
+      exigirDescarga(clave, segundos, opciones.descargarComo)
+      try {
+        // The same contract as the in-memory store: no link for an object that is not there.
+        await cliente.send(new HeadObjectCommand({ Bucket: balde, Key: clave }))
+      } catch (error) {
+        if (esNoEncontrado(error)) return null
+        throw fallaDeR2("firmar", clave, error, secretos)
+      }
+      try {
+        return await getSignedUrl(
+          cliente,
+          new GetObjectCommand({
+            Bucket: balde,
+            Key: clave,
+            ...(opciones.descargarComo
+              ? { ResponseContentDisposition: `attachment; filename="${opciones.descargarComo}"` }
+              : {}),
+          }),
+          { expiresIn: segundos },
+        )
+      } catch (error) {
+        throw fallaDeR2("firmar", clave, error, secretos)
+      }
+    },
+    borrarCarpeta: async (materialId) => {
+      const prefijo = carpetaDeMaterial(materialId)
+      const claves: string[] = []
+      try {
+        // https://developers.cloudflare.com/r2/api/s3/api/ : ListObjectsV2 with `prefix` and `continuation-token`.
+        let siguiente: string | undefined
+        do {
+          const pagina = await cliente.send(
+            new ListObjectsV2Command({ Bucket: balde, Prefix: prefijo, ContinuationToken: siguiente }),
+          )
+          for (const objeto of pagina.Contents ?? []) {
+            if (objeto.Key?.startsWith(prefijo)) claves.push(objeto.Key)
+          }
+          siguiente = pagina.IsTruncated ? pagina.NextContinuationToken : undefined
+        } while (siguiente !== undefined)
+      } catch (error) {
+        throw fallaDeR2("listar", prefijo, error, secretos)
+      }
+      for (const clave of claves) {
+        try {
+          await cliente.send(new DeleteObjectCommand({ Bucket: balde, Key: clave }))
+        } catch (error) {
+          throw fallaDeR2("borrar", clave, error, secretos)
+        }
+      }
+      return claves.length
     },
   }
 }

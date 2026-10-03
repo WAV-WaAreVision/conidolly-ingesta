@@ -1,61 +1,45 @@
 import Link from "next/link"
+import { ActualizarMientras } from "@/components/actualizar-mientras"
 import { clasesDeBoton } from "@/components/ui/clases-de-boton"
+import { hayFiltros, leerFiltros } from "@/lib/ingesta/filtros"
+import { autoresDeMateriales, listarMateriales } from "@/lib/ingesta/materiales"
 import { leerSesion } from "@/lib/sesion/miembro"
-import { cn } from "@/lib/utils"
+import { estaProcesando } from "./estado-de-material"
+import { FiltrosDeLaLista } from "./filtros-de-materiales"
+import { TarjetaDeMaterial } from "./tarjeta-de-material"
 
-const ETIQUETA_DE_TIPO: Record<string, string> = {
-  documento: "Documento",
-  link: "Link",
-  audio: "Audio",
-  video: "Video",
-  imagen: "Imagen",
-  post: "Post",
-}
-
-const ESTADO: Record<string, { texto: string; clases: string }> = {
-  procesando: { texto: "Procesando", clases: "bg-aviso-fondo text-aviso-tinta" },
-  listo: { texto: "Listo", clases: "bg-ok-fondo text-ok-tinta" },
-  fallido: { texto: "No se pudo procesar", clases: "bg-error-fondo text-error-tinta" },
-}
-
-export default async function Material() {
+export default async function Material({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   const sesion = await leerSesion()
   if (sesion.estado !== "miembro") return null
-  const { data, error } = await sesion.db
-    .from("materiales")
-    .select("id, titulo, autor, tipo, estado, motivo_fallo, creado_en")
-    .order("creado_en", { ascending: false })
-    .limit(50)
-  if (error) throw new Error(`No pude leer el material: ${error.message}`, { cause: error })
+  const filtros = leerFiltros(await searchParams)
+  const [materiales, autores, categorias] = await Promise.all([
+    listarMateriales(sesion.db, filtros),
+    autoresDeMateriales(sesion.db),
+    sesion.db.from("categorias").select("id, nombre").order("nombre"),
+  ])
+  if (categorias.error) throw new Error(`No pude leer las categorías: ${categorias.error.message}`)
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
+      <ActualizarMientras activo={materiales.some(estaProcesando)} />
       <h1 className="font-serif text-display text-balance">Material de Coni</h1>
       <Link href="/subir" className={clasesDeBoton()}>
         Subir material
       </Link>
-      {data.length === 0 ? (
-        <p className="text-apagado">Aún no hay material. Sube el primero.</p>
+      <FiltrosDeLaLista filtros={filtros} categorias={categorias.data} autores={autores} />
+      {materiales.length === 0 ? (
+        <p className="text-apagado">
+          {hayFiltros(filtros) ? "Ningún material coincide con esos filtros." : "Aún no hay material. Sube el primero."}
+        </p>
       ) : (
         <ul className="grid gap-3">
-          {data.map((material) => {
-            const estado = ESTADO[material.estado] ?? { texto: material.estado, clases: "bg-hundido text-apagado" }
-            return (
-              <li key={material.id} className="grid gap-1.5 rounded-lg border border-linea bg-superficie p-4">
-                <p className="font-semibold text-balance">{material.titulo ?? "Sin título"}</p>
-                <p className="text-meta text-apagado">
-                  {ETIQUETA_DE_TIPO[material.tipo] ?? material.tipo}
-                  {material.autor ? ` · ${material.autor}` : ""}
-                </p>
-                <p className={cn("w-fit rounded-sm px-2.5 py-1 text-meta font-semibold", estado.clases)}>
-                  {estado.texto}
-                </p>
-                {material.estado === "fallido" && material.motivo_fallo ? (
-                  <p className="text-meta text-apagado">{material.motivo_fallo}</p>
-                ) : null}
-              </li>
-            )
-          })}
+          {materiales.map((material) => (
+            <TarjetaDeMaterial key={material.id} material={material} />
+          ))}
         </ul>
       )}
     </main>

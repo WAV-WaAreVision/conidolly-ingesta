@@ -1,14 +1,15 @@
-// The R2 of the E2E run: a tiny S3 on this machine that accepts the presigned PUT of the browser and answers the HEAD
-// of the server, so the app signs and measures with its real code and nothing real is reachable. It keeps only the
-// size and content type of each object. GET /__objetos lists them.
+// The R2 of the E2E run: a tiny S3 on this machine that accepts the presigned PUT of the browser, answers the HEAD
+// of the server, serves a GET (honouring response-content-disposition), lists a prefix and deletes a key, so the app
+// signs, measures, downloads and deletes with its real code and nothing real is reachable. GET /__objetos lists what
+// it holds with the size and content type of each object.
 import { createServer } from "node:http"
 
 const PUERTO = Number(process.env.PUERTO_ALMACEN_FALSO ?? 3101)
-const objetos = new Map<string, { bytes: number; tipo: string; firmada: boolean }>()
+const objetos = new Map<string, { bytes: number; tipo: string; firmada: boolean; datos: Buffer }>()
 
 const CORS = {
   "access-control-allow-origin": "*",
-  "access-control-allow-methods": "PUT, HEAD, OPTIONS",
+  "access-control-allow-methods": "PUT, HEAD, GET, DELETE, OPTIONS",
   "access-control-allow-headers": "content-type",
   "access-control-expose-headers": "etag",
 }
@@ -29,19 +30,61 @@ const servidor = createServer((req, res) => {
   }
   if (url.pathname === "/__objetos") {
     res.writeHead(200, { "content-type": "application/json", ...CORS })
-    res.end(JSON.stringify(Object.fromEntries(objetos)))
+    res.end(
+      JSON.stringify(
+        Object.fromEntries([...objetos].map(([k, { bytes, tipo, firmada }]) => [k, { bytes, tipo, firmada }])),
+      ),
+    )
+    return
+  }
+  if (req.method === "GET" && url.searchParams.get("list-type") === "2") {
+    // ListObjectsV2 of one bucket: the keys under `prefix`, without the bucket in front.
+    const base = `${url.pathname.replace(/\/$/, "")}/`
+    const prefijo = url.searchParams.get("prefix") ?? ""
+    const contenidos = [...objetos]
+      .filter(([k]) => k.startsWith(`${base}${prefijo}`))
+      .map(([k, { bytes }]) => `<Contents><Key>${k.slice(base.length)}</Key><Size>${bytes}</Size></Contents>`)
+    res.writeHead(200, { "content-type": "application/xml", ...CORS })
+    res.end(
+      `<?xml version="1.0" encoding="UTF-8"?><ListBucketResult><IsTruncated>false</IsTruncated>${contenidos.join("")}</ListBucketResult>`,
+    )
+    return
+  }
+  if (req.method === "GET") {
+    const objeto = objetos.get(clave)
+    if (!objeto) {
+      res.writeHead(404, CORS)
+      res.end()
+      return
+    }
+    const descarga = url.searchParams.get("response-content-disposition")
+    res.writeHead(200, {
+      ...CORS,
+      "content-type": objeto.tipo || "application/octet-stream",
+      "content-length": String(objeto.bytes),
+      ...(descarga ? { "content-disposition": descarga } : {}),
+    })
+    res.end(objeto.datos)
+    return
+  }
+  if (req.method === "DELETE") {
+    objetos.delete(clave)
+    res.writeHead(204, CORS)
+    res.end()
     return
   }
   if (req.method === "PUT") {
-    let bytes = 0
+    const trozos: Buffer[] = []
     req.on("data", (trozo: Buffer) => {
-      bytes += trozo.byteLength
+      trozos.push(trozo)
     })
     req.on("end", () => {
+      const datos = Buffer.concat(trozos)
       objetos.set(clave, {
-        bytes,
+        bytes: datos.byteLength,
         tipo: req.headers["content-type"] ?? "",
         firmada: url.searchParams.has("X-Amz-Signature"),
+        datos,
       })
       res.writeHead(200, { ...CORS, etag: '"falso"' })
       res.end()

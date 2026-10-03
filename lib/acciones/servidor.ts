@@ -28,8 +28,10 @@ export async function conSesion<T extends object>(
     almacen: {
       urlDeSubida: (clave, segundos, tipo) => almacenDeEntorno().urlDeSubida(clave, segundos, tipo),
       tamano: (clave) => almacenDeEntorno().tamano(clave),
+      urlFirmada: (clave, segundos, opciones) => almacenDeEntorno().urlFirmada(clave, segundos, opciones),
+      borrarCarpeta: (materialId) => almacenDeEntorno().borrarCarpeta(materialId),
     },
-    disparar: (materialId) => dispararProcesarMaterial(materialId),
+    disparar: (materialId, intento) => dispararProcesarMaterial(materialId, process.env, intento),
     ahora: () => new Date(),
     nuevoId: randomUUID,
   })
