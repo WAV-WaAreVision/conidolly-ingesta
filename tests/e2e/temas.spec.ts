@@ -75,3 +75,15 @@ test("Coni sees the topics ordered by authors, with badges and the evidence mix,
 test("Coni opens a topic that does not exist and finds a 404", async ({ page }) => {
   expect((await page.goto("/temas/00000000-0000-4000-8000-000000000000"))?.status()).toBe(404)
 })
+
+test("a merged topic leads to the topic that absorbed it", async ({ page }) => {
+  const viejo = await sembrarTema("Tema Absorbido")
+  const vivo = await sembrarTema("Tema Sobreviviente")
+  const { error } = await clienteDeServicio().from("temas").update({ fusionado_en: vivo }).eq("id", viejo)
+  if (error) throw new Error(error.message)
+
+  await page.goto(`/temas/${viejo}`)
+
+  await expect(page).toHaveURL(new RegExp(`/temas/${vivo}$`))
+  await expect(page.getByRole("heading", { name: `${PREFIJO_DE_PRUEBA}Tema Sobreviviente` })).toBeVisible()
+})

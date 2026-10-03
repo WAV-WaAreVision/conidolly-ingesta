@@ -1,7 +1,7 @@
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { ListaDeAfirmaciones } from "@/components/lista-de-afirmaciones"
-import { leerTema } from "@/lib/ingesta/temas"
+import { destinoDeTema, leerTema } from "@/lib/ingesta/temas"
 import { leerSesion } from "@/lib/sesion/miembro"
 import { BotonOcultar } from "../boton-ocultar"
 
@@ -9,6 +9,9 @@ export default async function Tema({ params }: { params: Promise<{ id: string }>
   const sesion = await leerSesion()
   if (sesion.estado !== "miembro") return null
   const { id } = await params
+  const destino = await destinoDeTema(sesion.db, id)
+  if (destino === null) notFound()
+  if (destino !== id) redirect(`/temas/${destino}`)
   const leido = await leerTema(sesion.db, id)
   if (!leido) notFound()
   const { tema, autores } = leido

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest"
 import { almacenEnMemoria } from "@/lib/almacen/almacen"
 import type { DepsSubir } from "@/lib/ingesta/subir"
-import { excluirAfirmacion, leerTema, listarPilares, listarTemas } from "@/lib/ingesta/temas"
+import { destinoDeTema, excluirAfirmacion, leerTema, listarPilares, listarTemas } from "@/lib/ingesta/temas"
 import type { Database } from "@/lib/supabase/database.types"
 import { clienteDeConi, clienteDeOtraPersona, clienteDeServicio, clienteDeWav } from "./sesion"
 
@@ -234,5 +234,36 @@ describe("excluirAfirmacion", () => {
     })
     const fila = await servicio.from("afirmaciones").select("excluida").eq("id", id).single()
     expect(fila.data).toEqual({ excluida: false })
+  })
+})
+
+describe("destinoDeTema", () => {
+  it("answers the topic itself when it is not merged", async () => {
+    const tema = await sembrarTema({ nombre: "Vivo" })
+
+    expect(await destinoDeTema(coni, tema)).toBe(tema)
+  })
+
+  it("follows fusionado_en to the topic that absorbed it, through a chain", async () => {
+    const [a, b, c] = [
+      await sembrarTema({ nombre: "A" }),
+      await sembrarTema({ nombre: "B" }),
+      await sembrarTema({ nombre: "C" }),
+    ]
+    await servicio.from("temas").update({ fusionado_en: b }).eq("id", a)
+    await servicio.from("temas").update({ fusionado_en: c }).eq("id", b)
+
+    expect(await destinoDeTema(coni, a)).toBe(c)
+  })
+
+  it("answers null for a missing topic, a loop and one she cannot see", async () => {
+    const [x, y] = [await sembrarTema({ nombre: "X" }), await sembrarTema({ nombre: "Y" })]
+    await servicio.from("temas").update({ fusionado_en: y }).eq("id", x)
+    await servicio.from("temas").update({ fusionado_en: x }).eq("id", y)
+    const visible = await sembrarTema({ nombre: "Visible2" })
+
+    expect(await destinoDeTema(coni, randomUUID())).toBeNull()
+    expect(await destinoDeTema(coni, x)).toBeNull()
+    expect(await destinoDeTema(otra, visible)).toBeNull()
   })
 })

@@ -45,6 +45,24 @@ export interface TemaLeido {
   autores: { autor: { id: string; nombre: string; credencial: string | null }; afirmaciones: AfirmacionDeTema[] }[]
 }
 
+const PASOS_MAXIMOS_DE_FUSION = 5
+
+/**
+ * The topic that is alive where `id` leads: itself, or the one that absorbed it following `fusionado_en`. Null when a
+ * step is missing or not hers to see, or when the chain does not end within a few steps (a loop).
+ */
+export async function destinoDeTema(db: Db, id: string): Promise<string | null> {
+  let actual = id
+  for (let paso = 0; paso <= PASOS_MAXIMOS_DE_FUSION; paso++) {
+    const { data, error } = await db.from("temas").select("id, fusionado_en").eq("id", actual).maybeSingle()
+    if (error) throw new Error(`No pude leer el tema ${actual}: ${error.message}`, { cause: error })
+    if (!data) return null
+    if (data.fusionado_en === null) return data.id
+    actual = data.fusionado_en
+  }
+  return null
+}
+
 const cuentas = z.record(z.string(), z.number())
 
 /** `jsonb` that is not the shape the database writes is read as empty rather than breaking the whole list. */
