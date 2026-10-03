@@ -62,8 +62,8 @@ export interface SemanaLeida {
 
 const YA_PROPUSO = "El motor ya propuso ideas esta semana. Vuelve el domingo."
 const NO_ARRANCO = "No pude pedirle ideas al motor. Inténtalo de nuevo en unos minutos."
-/** The engine lasts ten minutes at most: a run that says it is going for longer than this died without saying so. */
-const MINUTOS_DE_UNA_CORRIDA_VIVA = 15
+/** The engine retakes a run stuck in `corriendo` after this long (`MINUTOS_PARA_RETOMAR` in estudio-coni): until then it is alive. */
+const MINUTOS_DE_UNA_CORRIDA_VIVA = 30
 const MS_POR_MINUTO = 60_000
 
 const Resumen = z.object({

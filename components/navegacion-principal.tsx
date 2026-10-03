@@ -19,7 +19,7 @@ export function NavegacionPrincipal({ actual }: { actual: Seccion }) {
           href={seccion.ruta}
           aria-current={seccion.clave === actual ? "page" : undefined}
           className={cn(
-            "flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-md border border-linea px-1 text-[0.875rem] font-semibold",
+            "flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-md border border-linea px-1 text-nav font-semibold",
             "focus-visible:outline-3 focus-visible:outline-acento",
             seccion.clave === actual
               ? "border-acento bg-acento-suave text-acento-profundo"

@@ -189,20 +189,20 @@ describe("proponerAhora", () => {
     expect(disparos).toEqual([])
   })
 
-  it("says the same while a recent run is still going", async () => {
+  it("says the same until the engine itself would retake a stuck run, 30 minutes", async () => {
     await sembrarCorrida(ESTA_SEMANA, {
       estado: "corriendo",
-      creada_en: new Date(AHORA.getTime() - 60_000).toISOString(),
+      creada_en: new Date(AHORA.getTime() - 29 * 60_000).toISOString(),
     })
 
     expect(await proponerAhora(deps(coni))).toEqual({ ok: false, error: YA_PROPUSO })
     expect(disparos).toEqual([])
   })
 
-  it("starts again when a run has been going for far longer than the engine can last", async () => {
+  it("starts again once a run has been going for more than the 30 minutes the engine waits", async () => {
     await sembrarCorrida(ESTA_SEMANA, {
       estado: "corriendo",
-      creada_en: new Date(AHORA.getTime() - 3 * 60 * 60_000).toISOString(),
+      creada_en: new Date(AHORA.getTime() - 31 * 60_000).toISOString(),
     })
 
     expect(await proponerAhora(deps(coni))).toEqual({ ok: true })
