@@ -30,6 +30,14 @@ describe("UnirAutores", () => {
     expect(confirmar).not.toHaveBeenCalled()
   })
 
+  it("moves focus to the destination select when the confirmation opens", () => {
+    render(<UnirAutores origen={ORIGEN} otros={OTROS} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Unir con otro autor" }))
+
+    expect(screen.getByLabelText("Unir con")).toHaveFocus()
+  })
+
   it("needs a destination before it merges", async () => {
     render(<UnirAutores origen={ORIGEN} otros={OTROS} />)
     fireEvent.click(screen.getByRole("button", { name: "Unir con otro autor" }))

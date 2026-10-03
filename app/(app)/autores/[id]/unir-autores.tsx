@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useId, useRef, useState } from "react"
 import { Campo, CLASES_DE_CAMPO } from "@/components/campo"
 import { Boton } from "@/components/ui/boton"
 import { fusionarAutoresAccion } from "../acciones"
@@ -17,6 +17,20 @@ export function UnirAutores({ origen, otros }: Propiedades) {
   const [destino, setDestino] = useState("")
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const idDelBotonDeAbrir = useId()
+  const selectorDeDestino = useRef<HTMLSelectElement>(null)
+  const devolverFocoAlCerrar = useRef(false)
+
+  useEffect(() => {
+    if (abierto) {
+      selectorDeDestino.current?.focus()
+      return
+    }
+    if (devolverFocoAlCerrar.current) {
+      devolverFocoAlCerrar.current = false
+      document.getElementById(idDelBotonDeAbrir)?.focus()
+    }
+  }, [abierto, idDelBotonDeAbrir])
 
   async function unir() {
     if (destino === "") {
@@ -36,7 +50,7 @@ export function UnirAutores({ origen, otros }: Propiedades) {
 
   if (!abierto) {
     return (
-      <Boton variante="linea" onClick={() => setAbierto(true)}>
+      <Boton id={idDelBotonDeAbrir} variante="linea" onClick={() => setAbierto(true)}>
         Unir con otro autor
       </Boton>
     )
@@ -50,6 +64,7 @@ export function UnirAutores({ origen, otros }: Propiedades) {
       <Campo id="unir-destino" etiqueta="Unir con">
         <select
           id="unir-destino"
+          ref={selectorDeDestino}
           value={destino}
           onChange={(evento) => setDestino(evento.target.value)}
           className={CLASES_DE_CAMPO}
@@ -70,7 +85,14 @@ export function UnirAutores({ origen, otros }: Propiedades) {
       <Boton cargando={cargando} onClick={() => void unir()}>
         Sí, unir
       </Boton>
-      <Boton variante="callado" deshabilitado={cargando} onClick={() => setAbierto(false)}>
+      <Boton
+        variante="callado"
+        deshabilitado={cargando}
+        onClick={() => {
+          devolverFocoAlCerrar.current = true
+          setAbierto(false)
+        }}
+      >
         Cancelar
       </Boton>
     </section>
