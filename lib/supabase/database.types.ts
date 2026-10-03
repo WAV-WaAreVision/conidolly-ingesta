@@ -428,6 +428,8 @@ export type Database = {
           categoria_id: string
           corrida_desde: string | null
           corrida_id: string | null
+          costo_confirmado_en: string | null
+          costo_estimado_usd: number | null
           creado_en: string
           declaracion_sin_pacientes_en: string
           estado: string
@@ -448,6 +450,8 @@ export type Database = {
           categoria_id: string
           corrida_desde?: string | null
           corrida_id?: string | null
+          costo_confirmado_en?: string | null
+          costo_estimado_usd?: number | null
           creado_en?: string
           declaracion_sin_pacientes_en: string
           estado?: string
@@ -468,6 +472,8 @@ export type Database = {
           categoria_id?: string
           corrida_desde?: string | null
           corrida_id?: string | null
+          costo_confirmado_en?: string | null
+          costo_estimado_usd?: number | null
           creado_en?: string
           declaracion_sin_pacientes_en?: string
           estado?: string
@@ -799,6 +805,7 @@ export type Database = {
         Args: { p_cuenta: string; p_expira_en: string; p_token: string }
         Returns: undefined
       }
+      confirmar_costo_material: { Args: { p_id: string }; Returns: undefined }
       confirmar_gasto: {
         Args: { p_clave: string; p_real: number }
         Returns: {

@@ -14,12 +14,27 @@ export const ETIQUETA_DE_TIPO: Record<string, string> = {
   post: "Post",
 }
 
+interface EstadoDeProceso {
+  estado: string
+  motivo_fallo: string | null
+  costo_estimado_usd: number | null
+  costo_confirmado_en: string | null
+}
+
+/** A long material the task stopped before spending: it waits for a person to confirm what it will cost. */
+export function esperaConfirmacion(material: EstadoDeProceso): boolean {
+  return (
+    material.estado === "procesando" && material.costo_estimado_usd !== null && material.costo_confirmado_en === null
+  )
+}
+
 /** A material that failed, or that the monthly cap stopped (still `procesando`, but with the reason): retryable. */
-export function sePuedeReintentar(material: { estado: string; motivo_fallo: string | null }): boolean {
+export function sePuedeReintentar(material: EstadoDeProceso): boolean {
+  if (esperaConfirmacion(material)) return false
   return material.estado === "fallido" || (material.estado === "procesando" && material.motivo_fallo !== null)
 }
 
-/** Really working on it: the page keeps asking while any material is. A cap-stopped one waits for a retry instead. */
-export function estaProcesando(material: { estado: string; motivo_fallo: string | null }): boolean {
+/** Really working on it: the page keeps asking while any material is. A cap-stopped or waiting one does not. */
+export function estaProcesando(material: EstadoDeProceso): boolean {
   return material.estado === "procesando" && material.motivo_fallo === null
 }

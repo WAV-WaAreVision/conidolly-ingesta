@@ -5,6 +5,7 @@ import { almacenEnMemoria } from "@/lib/almacen/almacen"
 import {
   autoresDeMateriales,
   borrarMaterial,
+  confirmarCosto,
   editarFicha,
   leerMaterialConFicha,
   listarMateriales,
@@ -233,6 +234,98 @@ describe("reintentarMaterial", () => {
     })
     expect(await reintentarMaterial(deps(coni), { materialId: id })).toEqual({ ok: true })
     expect(disparos).toHaveLength(1)
+  })
+})
+
+describe("confirmarCosto", () => {
+  const esperando = (extra: Partial<Database["public"]["Tables"]["materiales"]["Insert"]> = {}) =>
+    sembrar({
+      estado: "procesando",
+      motivo_fallo: "Este material es largo: procesarlo cuesta cerca de US$ 0,80. Confírmalo para seguir.",
+      costo_estimado_usd: 0.8,
+      ...extra,
+    })
+
+  it("as Coni, confirms the cost, clears the reason and starts a run with its own attempt key", async () => {
+    const id = await esperando()
+
+    const resultado = await confirmarCosto(deps(coni, { nuevoId: () => "intento-costo" }), { materialId: id })
+
+    expect(resultado).toEqual({ ok: true })
+    const material = await fila(id)
+    expect(material).toMatchObject({ estado: "procesando", motivo_fallo: null })
+    expect(material?.costo_confirmado_en).not.toBeNull()
+    expect(disparos).toEqual([{ id, intento: "intento-costo" }])
+  })
+
+  it("lets WAV confirm too", async () => {
+    const id = await esperando()
+
+    expect(await confirmarCosto(deps(wav), { materialId: id })).toEqual({ ok: true })
+  })
+
+  it("starts one run for a double tap", async () => {
+    const id = await esperando()
+    await confirmarCosto(deps(coni), { materialId: id })
+
+    const segundo = await confirmarCosto(deps(coni), { materialId: id })
+
+    expect(segundo).toEqual({ ok: false, error: "Ese material ya no espera confirmación." })
+    expect(disparos).toHaveLength(1)
+  })
+
+  it("refuses a material that never had an estimate, and starts nothing", async () => {
+    const id = await sembrar({ estado: "fallido", motivo_fallo: "x" })
+
+    expect(await confirmarCosto(deps(coni), { materialId: id })).toEqual({
+      ok: false,
+      error: "Ese material ya no espera confirmación.",
+    })
+    expect(disparos).toEqual([])
+  })
+
+  it("refuses anyone who is neither Coni nor WAV, and changes nothing", async () => {
+    const id = await esperando()
+
+    expect(await confirmarCosto(deps(otra), { materialId: id })).toEqual({ ok: false, error: SOLO_PARA_MIEMBROS })
+    expect((await fila(id))?.costo_confirmado_en).toBeNull()
+    expect(disparos).toEqual([])
+  })
+
+  it("refuses an id that is not a UUID", async () => {
+    expect(await confirmarCosto(deps(coni), { materialId: "no" })).toMatchObject({ ok: false })
+    expect(disparos).toEqual([])
+  })
+
+  it("says so, and leaves it retryable, when the run could not be started after confirming", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined)
+    const id = await esperando()
+
+    const resultado = await confirmarCosto(
+      deps(coni, {
+        disparar: async () => {
+          throw new Error("trigger caído")
+        },
+      }),
+      { materialId: id },
+    )
+
+    expect(resultado).toMatchObject({ ok: false, error: expect.stringContaining("No pude iniciar el procesamiento") })
+    expect(error).toHaveBeenCalledWith(expect.stringContaining(id), expect.any(Error))
+    expect(await fila(id)).toMatchObject({
+      estado: "procesando",
+      motivo_fallo: "No pude iniciar el procesamiento. Reintenta.",
+    })
+    expect(await reintentarMaterial(deps(coni), { materialId: id })).toEqual({ ok: true })
+  })
+
+  it("lists and reads the estimate with the material", async () => {
+    const id = await esperando()
+
+    const lista = await listarMateriales(coni, {})
+    expect(lista.find((m) => m.id === id)).toMatchObject({ costo_estimado_usd: 0.8, costo_confirmado_en: null })
+    const leido = await leerMaterialConFicha(coni, id)
+    expect(leido?.material).toMatchObject({ costo_estimado_usd: 0.8, costo_confirmado_en: null })
   })
 })
 

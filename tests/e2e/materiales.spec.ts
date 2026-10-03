@@ -48,6 +48,7 @@ interface Semilla {
   categoria?: string
   conFicha?: boolean
   conTextos?: boolean
+  costoEstimado?: number
 }
 
 /** A material the way the background task leaves it, written with the service role: nothing is processed for real. */
@@ -67,6 +68,7 @@ async function sembrar(semilla: Semilla): Promise<string> {
     estado,
     motivo_fallo: semilla.motivo ?? null,
     idioma_original: estado === "listo" ? (semilla.idioma ?? "en") : null,
+    costo_estimado_usd: semilla.costoEstimado ?? null,
   })
   if (error) throw new Error(error.message)
   if (semilla.conFicha ?? estado === "listo") {
@@ -181,6 +183,53 @@ test("Coni retries a failed material and a cap-stopped one, and each starts a ru
       .map((d) => d.materialId)
       .sort(),
   ).toEqual([fallido, tope].sort())
+})
+
+test("Coni confirms the cost of a long material from the list and the card, and it starts a run", async ({ page }) => {
+  const motivo = "Este material es largo: procesarlo cuesta cerca de US$ 0,80. Confírmalo para seguir."
+  const enLista = await sembrar({
+    titulo: "Largo en lista",
+    estado: "procesando",
+    motivo,
+    costoEstimado: 0.8,
+    conTextos: false,
+  })
+  const enFicha = await sembrar({
+    titulo: "Largo en ficha",
+    estado: "procesando",
+    motivo,
+    costoEstimado: 1.25,
+    conTextos: false,
+  })
+  const tarjeta = (nombre: string) => page.getByRole("listitem").filter({ hasText: `${PREFIJO_DE_PRUEBA}${nombre}` })
+
+  await page.goto("/")
+  await expect(tarjeta("Largo en lista").getByText(motivo)).toBeVisible()
+  await expect(tarjeta("Largo en lista").getByRole("button", { name: "Reintentar" })).toHaveCount(0)
+  await tarjeta("Largo en lista").getByRole("button", { name: "Procesar por ~US$ 0,80" }).click()
+  await expect(tarjeta("Largo en lista").getByText("Procesando", { exact: true })).toBeVisible()
+  await expect(tarjeta("Largo en lista").getByText(motivo)).toHaveCount(0)
+  await expect(tarjeta("Largo en lista").getByRole("button")).toHaveCount(0)
+
+  await page.goto(`/materiales/${enFicha}`)
+  await page.getByRole("button", { name: "Procesar por ~US$ 1,25" }).click()
+  await expect(page.getByRole("button", { name: /Procesar por/ })).toHaveCount(0)
+  await expect(page.getByText(motivo)).toHaveCount(0)
+
+  const { data } = await clienteDeServicio()
+    .from("materiales")
+    .select("id, estado, motivo_fallo, costo_confirmado_en")
+    .in("id", [enLista, enFicha])
+  expect(data).toHaveLength(2)
+  for (const fila of data ?? []) {
+    expect(fila).toMatchObject({ estado: "procesando", motivo_fallo: null })
+    expect(fila.costo_confirmado_en).not.toBeNull()
+  }
+  expect(
+    disparosRegistrados()
+      .map((d) => d.materialId)
+      .sort(),
+  ).toEqual([enLista, enFicha].sort())
 })
 
 test("a material that is processing makes the list ask again until it is done", async ({ page }) => {

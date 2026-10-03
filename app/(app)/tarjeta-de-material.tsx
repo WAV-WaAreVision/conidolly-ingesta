@@ -1,7 +1,8 @@
 import Link from "next/link"
 import type { MaterialDeLista } from "@/lib/ingesta/materiales"
 import { cn } from "@/lib/utils"
-import { ESTADO, ETIQUETA_DE_TIPO, sePuedeReintentar } from "./estado-de-material"
+import { ESTADO, ETIQUETA_DE_TIPO, esperaConfirmacion, sePuedeReintentar } from "./estado-de-material"
+import { BotonConfirmarCosto } from "./materiales/boton-confirmar-costo"
 import { BotonReintentar } from "./materiales/boton-reintentar"
 
 export function TarjetaDeMaterial({ material }: { material: MaterialDeLista }) {
@@ -18,6 +19,9 @@ export function TarjetaDeMaterial({ material }: { material: MaterialDeLista }) {
       </Link>
       <p className={cn("w-fit rounded-sm px-2.5 py-1 text-meta font-semibold", estado.clases)}>{estado.texto}</p>
       {material.motivo_fallo ? <p className="text-meta text-apagado">{material.motivo_fallo}</p> : null}
+      {esperaConfirmacion(material) && material.costo_estimado_usd !== null ? (
+        <BotonConfirmarCosto materialId={material.id} costoUsd={material.costo_estimado_usd} />
+      ) : null}
       {sePuedeReintentar(material) ? <BotonReintentar materialId={material.id} /> : null}
     </li>
   )
