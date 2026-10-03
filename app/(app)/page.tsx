@@ -30,12 +30,6 @@ export default async function Material({
       <Link href="/subir" className={clasesDeBoton()}>
         Subir material
       </Link>
-      <Link href="/grafo" className={clasesDeBoton({ variante: "linea" })}>
-        Ver vínculos
-      </Link>
-      <Link href="/teorias" className={clasesDeBoton({ variante: "linea" })}>
-        Ver teorías
-      </Link>
       <FiltrosDeLaLista filtros={filtros} categorias={categorias.data} autores={autores} />
       {materiales.length === 0 ? (
         <p className="text-apagado">

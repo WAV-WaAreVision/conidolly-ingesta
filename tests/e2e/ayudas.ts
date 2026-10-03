@@ -41,35 +41,28 @@ export async function leerCodigo(correo: string): Promise<string> {
   throw new Error(`No llegó ningún código a ${correo} al buzón local.`)
 }
 
-const DisparoDeMaterial = z.object({ tarea: z.literal("procesar-material"), materialId: z.string() })
-const DisparoDeTeoria = z.object({
-  tarea: z.literal("sintetizar-teoria"),
-  teoriaId: z.string(),
+const DisparoDeMaterial = z.object({
+  tarea: z.literal("procesar-material"),
+  materialId: z.string(),
   intento: z.string().optional(),
 })
-const Disparo = z.discriminatedUnion("tarea", [DisparoDeMaterial, DisparoDeTeoria])
 
 export function limpiarDisparos(): void {
   mkdirSync(dirname(ARCHIVO_DE_DISPAROS), { recursive: true })
   rmSync(ARCHIVO_DE_DISPAROS, { force: true })
 }
 
-function leerDisparos(): z.infer<typeof Disparo>[] {
+function leerDisparos(): z.infer<typeof DisparoDeMaterial>[] {
   if (!existsSync(ARCHIVO_DE_DISPAROS)) return []
   return readFileSync(ARCHIVO_DE_DISPAROS, "utf-8")
     .split("\n")
     .filter((linea) => linea.trim() !== "")
-    .map((linea) => Disparo.parse(JSON.parse(linea)))
+    .map((linea) => DisparoDeMaterial.parse(JSON.parse(linea)))
 }
 
 /** The material runs the app would have started (Trigger.dev is never called in tests). */
 export function disparosRegistrados(): z.infer<typeof DisparoDeMaterial>[] {
-  return leerDisparos().filter((disparo) => disparo.tarea === "procesar-material")
-}
-
-/** The theory syntheses the app would have started. */
-export function disparosDeTeoria(): z.infer<typeof DisparoDeTeoria>[] {
-  return leerDisparos().filter((disparo) => disparo.tarea === "sintetizar-teoria")
+  return leerDisparos()
 }
 
 const Objetos = z.record(z.string(), z.object({ bytes: z.number(), tipo: z.string(), firmada: z.boolean() }))

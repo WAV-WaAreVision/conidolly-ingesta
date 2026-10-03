@@ -9,6 +9,101 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      afirmaciones: {
+        Row: {
+          autor_id: string
+          cita: string
+          creada_en: string
+          dolor: string | null
+          emocion: string | null
+          evidencia: string
+          excluida: boolean
+          gancho: string | null
+          id: string
+          idioma: string | null
+          material_id: string
+          postura: string | null
+          publico: string | null
+          tema_id: string | null
+          texto: string
+          tipo: string
+          tramo: number
+          ubicacion: Json
+          vector: string | null
+        }
+        Insert: {
+          autor_id: string
+          cita: string
+          creada_en?: string
+          dolor?: string | null
+          emocion?: string | null
+          evidencia: string
+          excluida?: boolean
+          gancho?: string | null
+          id?: string
+          idioma?: string | null
+          material_id: string
+          postura?: string | null
+          publico?: string | null
+          tema_id?: string | null
+          texto: string
+          tipo: string
+          tramo: number
+          ubicacion: Json
+          vector?: string | null
+        }
+        Update: {
+          autor_id?: string
+          cita?: string
+          creada_en?: string
+          dolor?: string | null
+          emocion?: string | null
+          evidencia?: string
+          excluida?: boolean
+          gancho?: string | null
+          id?: string
+          idioma?: string | null
+          material_id?: string
+          postura?: string | null
+          publico?: string | null
+          tema_id?: string | null
+          texto?: string
+          tipo?: string
+          tramo?: number
+          ubicacion?: Json
+          vector?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "afirmaciones_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "autores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "afirmaciones_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "afirmaciones_tema_id_fkey"
+            columns: ["tema_id"]
+            isOneToOne: false
+            referencedRelation: "temas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "afirmaciones_tema_id_fkey"
+            columns: ["tema_id"]
+            isOneToOne: false
+            referencedRelation: "temas_resumen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ajustes: {
         Row: {
           avatar_visto_en: string | null
@@ -54,6 +149,39 @@ export type Database = {
           produccion?: Json
           tope_mensual_usd?: number
           zona?: string
+        }
+        Relationships: []
+      }
+      autores: {
+        Row: {
+          alias: string[]
+          creado_en: string
+          creado_por: string | null
+          credencial: string | null
+          id: string
+          nombre: string
+          nombre_normalizado: string | null
+          tipo: string
+        }
+        Insert: {
+          alias?: string[]
+          creado_en?: string
+          creado_por?: string | null
+          credencial?: string | null
+          id?: string
+          nombre: string
+          nombre_normalizado?: string | null
+          tipo: string
+        }
+        Update: {
+          alias?: string[]
+          creado_en?: string
+          creado_por?: string | null
+          credencial?: string | null
+          id?: string
+          nombre?: string
+          nombre_normalizado?: string | null
+          tipo?: string
         }
         Relationships: []
       }
@@ -454,7 +582,8 @@ export type Database = {
         Row: {
           archivo_clave: string | null
           autor: string | null
-          categoria_id: string
+          autor_id: string
+          categoria_id: string | null
           corrida_desde: string | null
           corrida_id: string | null
           costo_confirmado_en: string | null
@@ -467,18 +596,18 @@ export type Database = {
           idioma_original: string | null
           motivo_fallo: string | null
           origen_url: string | null
+          rol: string
           subido_por: string
           texto_clave: string | null
           texto_pegado: string | null
           tipo: string
           titulo: string | null
-          vinculos_intentos: number
-          vinculos_pendientes: boolean
         }
         Insert: {
           archivo_clave?: string | null
           autor?: string | null
-          categoria_id: string
+          autor_id: string
+          categoria_id?: string | null
           corrida_desde?: string | null
           corrida_id?: string | null
           costo_confirmado_en?: string | null
@@ -491,18 +620,18 @@ export type Database = {
           idioma_original?: string | null
           motivo_fallo?: string | null
           origen_url?: string | null
+          rol?: string
           subido_por?: string
           texto_clave?: string | null
           texto_pegado?: string | null
           tipo: string
           titulo?: string | null
-          vinculos_intentos?: number
-          vinculos_pendientes?: boolean
         }
         Update: {
           archivo_clave?: string | null
           autor?: string | null
-          categoria_id?: string
+          autor_id?: string
+          categoria_id?: string | null
           corrida_desde?: string | null
           corrida_id?: string | null
           costo_confirmado_en?: string | null
@@ -515,15 +644,21 @@ export type Database = {
           idioma_original?: string | null
           motivo_fallo?: string | null
           origen_url?: string | null
+          rol?: string
           subido_por?: string
           texto_clave?: string | null
           texto_pegado?: string | null
           tipo?: string
           titulo?: string | null
-          vinculos_intentos?: number
-          vinculos_pendientes?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "materiales_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "autores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "materiales_categoria_id_fkey"
             columns: ["categoria_id"]
@@ -794,6 +929,67 @@ export type Database = {
         }
         Relationships: []
       }
+      temas: {
+        Row: {
+          actualizado_en: string
+          alias: string[]
+          categoria_id: string | null
+          centroide: string
+          creado_en: string
+          descripcion: string | null
+          fusionado_en: string | null
+          id: string
+          nombre: string
+          nombre_normalizado: string | null
+        }
+        Insert: {
+          actualizado_en?: string
+          alias?: string[]
+          categoria_id?: string | null
+          centroide: string
+          creado_en?: string
+          descripcion?: string | null
+          fusionado_en?: string | null
+          id?: string
+          nombre: string
+          nombre_normalizado?: string | null
+        }
+        Update: {
+          actualizado_en?: string
+          alias?: string[]
+          categoria_id?: string | null
+          centroide?: string
+          creado_en?: string
+          descripcion?: string | null
+          fusionado_en?: string | null
+          id?: string
+          nombre?: string
+          nombre_normalizado?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temas_fusionado_en_fkey"
+            columns: ["fusionado_en"]
+            isOneToOne: false
+            referencedRelation: "temas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temas_fusionado_en_fkey"
+            columns: ["fusionado_en"]
+            isOneToOne: false
+            referencedRelation: "temas_resumen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teoria_fuentes: {
         Row: {
           material_id: string
@@ -977,35 +1173,33 @@ export type Database = {
           },
         ]
       }
+      temas_resumen: {
+        Row: {
+          actualizado_en: string | null
+          afirmaciones: number | null
+          alias: string[] | null
+          autores: number | null
+          categoria_id: string | null
+          creado_en: string | null
+          cubierto_por_coni: boolean | null
+          descripcion: string | null
+          evidencia: Json | null
+          id: string | null
+          nombre: string | null
+          ultima_afirmacion: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      aceptar_vinculo: {
-        Args: {
-          p_a: string
-          p_b: string
-          p_relevancia?: number
-          p_tipo?: string
-        }
-        Returns: {
-          cita_a: string | null
-          cita_b: string | null
-          creado_en: string
-          decidido_en: string | null
-          decidido_por: string | null
-          estado: string
-          material_a: string
-          material_b: string
-          razon: string | null
-          relevancia: number
-          tipo: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "vinculos"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       conectar_instagram: {
         Args: { p_cuenta: string; p_expira_en: string; p_token: string }
         Returns: undefined
@@ -1032,56 +1226,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      crear_categoria: { Args: { p_nombre: string }; Returns: string }
-      crear_vinculo: {
-        Args: {
-          p_a: string
-          p_b: string
-          p_razon: string
-          p_relevancia: number
-          p_tipo: string
-        }
-        Returns: {
-          cita_a: string | null
-          cita_b: string | null
-          creado_en: string
-          decidido_en: string | null
-          decidido_por: string | null
-          estado: string
-          material_a: string
-          material_b: string
-          razon: string | null
-          relevancia: number
-          tipo: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "vinculos"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+      crear_autor: {
+        Args: { p_credencial: string; p_nombre: string; p_tipo: string }
+        Returns: string
       }
-      descartar_vinculo: {
-        Args: { p_a: string; p_b: string }
-        Returns: {
-          cita_a: string | null
-          cita_b: string | null
-          creado_en: string
-          decidido_en: string | null
-          decidido_por: string | null
-          estado: string
-          material_a: string
-          material_b: string
-          razon: string | null
-          relevancia: number
-          tipo: string
+      crear_categoria: { Args: { p_nombre: string }; Returns: string }
+      editar_autor: {
+        Args: {
+          p_alias: string[]
+          p_credencial: string
+          p_id: string
+          p_nombre: string
         }
-        SetofOptions: {
-          from: "*"
-          to: "vinculos"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+        Returns: undefined
       }
       editar_guion_como_coni: {
         Args: {
@@ -1188,6 +1345,18 @@ export type Database = {
       }
       es_coni: { Args: never; Returns: boolean }
       es_mantenedor: { Args: never; Returns: boolean }
+      excluir_afirmacion: {
+        Args: { p_excluida: boolean; p_id: string }
+        Returns: undefined
+      }
+      fusionar_autores: {
+        Args: { p_destino: string; p_origen: string }
+        Returns: undefined
+      }
+      fusionar_par_de_temas: {
+        Args: { p_ganador: string; p_perdedor: string }
+        Returns: undefined
+      }
       guardar_borrador: {
         Args: {
           p_clave: string
@@ -1246,15 +1415,6 @@ export type Database = {
         Args: { p_nombre: string; p_valor: string }
         Returns: undefined
       }
-      guardar_teoria: {
-        Args: {
-          p_categoria?: string
-          p_id: string
-          p_tesis: string
-          p_titulo: string
-        }
-        Returns: undefined
-      }
       guardar_token_meta: {
         Args: { p_expira_en: string; p_token: string }
         Returns: undefined
@@ -1282,29 +1442,17 @@ export type Database = {
         }
       }
       marcar_disparo_fallido: { Args: { p_id: string }; Returns: undefined }
-      marcar_teoria_disparo_fallido: {
-        Args: { p_id: string }
-        Returns: undefined
-      }
-      materiales_cercanos: {
-        Args: { p_limite?: number; p_material: string }
-        Returns: {
-          distancia: number
-          material_id: string
-        }[]
-      }
       olvidar_visitas_clic: { Args: { p_antes_de: string }; Returns: number }
-      pedir_teoria: { Args: { p_materiales: string[] }; Returns: string }
       registrar_clic: {
         Args: { p_dia: string; p_enlace: string; p_visitante: string }
         Returns: boolean
       }
       reintentar_material: { Args: { p_id: string }; Returns: undefined }
-      reintentar_teoria: { Args: { p_id: string }; Returns: undefined }
       renombrar_categoria: {
         Args: { p_id: string; p_nombre: string }
         Returns: undefined
       }
+      reprocesar_material: { Args: { p_id: string }; Returns: undefined }
       reservar_gasto: {
         Args: {
           p_ahora?: string
@@ -1361,6 +1509,21 @@ export type Database = {
         }
       }
       siguiente_version_de_guion: { Args: { p_pieza: string }; Returns: number }
+      tema_mas_cercano: {
+        Args: { p_umbral: number; p_vector: string }
+        Returns: {
+          similitud: number
+          tema_id: string
+        }[]
+      }
+      temas_parecidos: {
+        Args: { p_umbral: number }
+        Returns: {
+          a: string
+          b: string
+          similitud: number
+        }[]
+      }
       tomar_para_publicar: {
         Args: { p_ahora: string; p_arriendo_segundos?: number }
         Returns: {

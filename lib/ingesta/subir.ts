@@ -23,8 +23,6 @@ export interface DepsSubir {
   almacen: Almacen
   /** Starts the processing; a retry passes its own `intento` so it never reuses the run that failed. */
   disparar: (materialId: string, intento?: string) => Promise<void>
-  /** Starts the synthesis of a theory, with the same rule about `intento`. */
-  dispararTeoria: (teoriaId: string, intento?: string) => Promise<void>
   ahora: () => Date
   nuevoId: () => string
 }
