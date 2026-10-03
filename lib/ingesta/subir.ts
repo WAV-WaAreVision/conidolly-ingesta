@@ -4,15 +4,7 @@ import { ERROR_GENERICO, type Resultado } from "@/lib/acciones/resultado"
 import { type Almacen, claveMaterial } from "@/lib/almacen/almacen"
 import { consultarRol, SOLO_PARA_MIEMBROS } from "@/lib/sesion/miembro"
 import type { Database } from "@/lib/supabase/database.types"
-import {
-  ERROR_SOLICITUD,
-  esquemaDeCategoria,
-  esquemaDeId,
-  extensionDe,
-  leerEntrada,
-  TAMANO_MAXIMO_BYTES,
-  tipoDeContenido,
-} from "./modelo"
+import { ERROR_SOLICITUD, esquemaDeId, extensionDe, leerEntrada, TAMANO_MAXIMO_BYTES, tipoDeContenido } from "./modelo"
 import type { SubidaFirmada } from "./subida-cliente"
 
 type Db = SupabaseClient<Database>
@@ -94,9 +86,8 @@ export async function crearMaterial(
       id: materialId,
       tipo: datos.tipo,
       titulo: datos.titulo,
-      autor: datos.autor,
-      categoria_id: datos.categoriaId,
-      etiquetas: datos.etiquetas,
+      autor_id: datos.autorId,
+      rol: datos.rol,
       origen_url: datos.url ?? datos.referencia,
       archivo_clave: claves[0] ?? null,
       texto_pegado: datos.textoPegado,
@@ -105,7 +96,7 @@ export async function crearMaterial(
     .select("id")
     .single()
   if (error) {
-    if (error.code === CLAVE_FORANEA) return { ok: false, error: "Esa categoría ya no existe. Elige otra." }
+    if (error.code === CLAVE_FORANEA) return { ok: false, error: "Ese autor ya no existe. Elígelo de nuevo." }
     console.error("No pude crear el material", error)
     return { ok: false, error: ERROR_GENERICO }
   }
@@ -223,35 +214,4 @@ export async function descartarMaterial(deps: DepsSubir, entrada: unknown): Prom
     return { ok: false, error: ERROR_GENERICO }
   }
   return { ok: true }
-}
-
-export type CategoriaCreada = { id: string; nombre: string }
-
-/** Adds a category through `crear_categoria`, which answers the existing one when the name was already taken. */
-export async function crearCategoria(
-  deps: Pick<DepsSubir, "db">,
-  entrada: unknown,
-): Promise<Resultado<{ categoria: CategoriaCreada }>> {
-  const miembro = await exigirMiembro(deps.db, "crearCategoria")
-  if (!miembro.ok) return miembro
-  const datos = esquemaDeCategoria.safeParse(entrada, { error: () => ERROR_SOLICITUD })
-  if (!datos.success) return { ok: false, error: datos.error.issues[0]?.message ?? ERROR_SOLICITUD }
-  const nombre = datos.data.nombre.trim()
-  if (nombre === "") return { ok: false, error: "Escribe el nombre de la categoría." }
-
-  const { data: id, error } = await deps.db.rpc("crear_categoria", { p_nombre: nombre })
-  if (error) {
-    console.error("No pude crear la categoría", error)
-    return { ok: false, error: ERROR_GENERICO }
-  }
-  const { data: categoria, error: errorDeLectura } = await deps.db
-    .from("categorias")
-    .select("id, nombre")
-    .eq("id", id)
-    .single()
-  if (errorDeLectura) {
-    console.error("No pude leer la categoría que creé", errorDeLectura)
-    return { ok: false, error: ERROR_GENERICO }
-  }
-  return { ok: true, categoria }
 }

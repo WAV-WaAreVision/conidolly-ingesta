@@ -1,20 +1,24 @@
 import { describe, expect, it } from "vitest"
 import { hayFiltros, leerFiltros } from "@/lib/ingesta/filtros"
 
-const CATEGORIA = "11111111-2222-4333-8444-555555555555"
+const AUTOR = "11111111-2222-4333-8444-555555555555"
 
 describe("leerFiltros", () => {
-  it("reads category, author, type and state from the search params", () => {
-    expect(leerFiltros({ categoria: CATEGORIA, autor: " Esther Perel ", tipo: "audio", estado: "listo" })).toEqual({
-      categoria: CATEGORIA,
-      autor: "Esther Perel",
+  it("reads author, role, type and state from the search params", () => {
+    expect(leerFiltros({ autor: AUTOR, rol: "evidencia", tipo: "audio", estado: "listo" })).toEqual({
+      autor: AUTOR,
+      rol: "evidencia",
       tipo: "audio",
       estado: "listo",
     })
   })
 
   it("ignores what is not a valid value instead of failing", () => {
-    expect(leerFiltros({ categoria: "no-es-uuid", autor: "", tipo: "zip", estado: "roto" })).toEqual({})
+    expect(leerFiltros({ autor: "Esther Perel", rol: "jefa", tipo: "zip", estado: "roto" })).toEqual({})
+  })
+
+  it("no longer reads a category", () => {
+    expect(leerFiltros({ categoria: AUTOR })).toEqual({})
   })
 
   it("takes the first of a repeated param", () => {

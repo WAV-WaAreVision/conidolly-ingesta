@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs"
 import { dirname, join } from "node:path"
 import type { BrowserContext, Page } from "@playwright/test"
@@ -140,32 +139,17 @@ export async function idDeConi(): Promise<string> {
   return id
 }
 
-/** A ready material with its card, written with the service role: nothing is processed for real. */
-export async function sembrarMaterial(titulo: string, autor: string): Promise<string> {
+/** An author of the test (its name starts with the test prefix, so the cleanup finds it); the same name is one author. */
+export async function sembrarAutor(
+  nombre: string,
+  tipo: "persona" | "cuenta" | "institucion" = "persona",
+): Promise<string> {
   const servicio = clienteDeServicio()
-  const id = randomUUID()
-  const categoria = await servicio.from("categorias").select("id").eq("slug", "general").single()
-  if (categoria.error) throw new Error(categoria.error.message)
-  const material = await servicio.from("materiales").insert({
-    id,
-    tipo: "documento",
-    titulo: `${PREFIJO_DE_PRUEBA}${titulo}`,
-    autor,
-    categoria_id: categoria.data.id,
-    texto_pegado: "x",
-    declaracion_sin_pacientes_en: new Date().toISOString(),
-    subido_por: await idDeConi(),
-    estado: "listo",
-    idioma_original: "es",
-  })
-  if (material.error) throw new Error(material.error.message)
-  const ficha = await servicio.from("fichas").insert({
-    material_id: id,
-    resumen: "Un resumen de prueba.",
-    ideas_clave: ["uno", "dos", "tres", "cuatro", "cinco"],
-    citas: [{ texto: "Una cita de prueba.", ubicacion: { pagina: 3 } }],
-    fuente: { autor, anio: 2020, enlace: null },
-  })
-  if (ficha.error) throw new Error(ficha.error.message)
-  return id
+  const completo = `${PREFIJO_DE_PRUEBA}${nombre}`
+  const existente = await servicio.from("autores").select("id").eq("nombre", completo).maybeSingle()
+  if (existente.error) throw new Error(existente.error.message)
+  if (existente.data) return existente.data.id
+  const creado = await servicio.from("autores").insert({ nombre: completo, tipo }).select("id").single()
+  if (creado.error) throw new Error(creado.error.message)
+  return creado.data.id
 }

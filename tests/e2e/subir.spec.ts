@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test"
+import { expect, type Page, test } from "@playwright/test"
 import {
   capturar,
   clienteDeServicio,
@@ -7,6 +7,7 @@ import {
   objetosDelAlmacen,
   PDF_MINIMO,
   PNG_MINIMO,
+  sembrarAutor,
 } from "./ayudas"
 import { BALDE_DE_PRUEBA, CARPETA_DE_DOCUMENTACION, PREFIJO_DE_PRUEBA } from "./entorno"
 
@@ -20,8 +21,15 @@ async function filaPorTitulo(titulo: string) {
   return data
 }
 
+async function elegirAutorYPapel(page: Page, autor: string, papel: RegExp) {
+  await page.getByLabel("Autor", { exact: true }).fill(autor)
+  await page.getByRole("button", { name: new RegExp(autor) }).click()
+  await page.getByRole("radio", { name: papel }).check({ force: true })
+}
+
 test("Coni uploads a PDF straight to the store and sees it as Procesando", async ({ page }) => {
   const titulo = `${PREFIJO_DE_PRUEBA}Apego adulto`
+  const autorId = await sembrarAutor("Esther Perel")
   await page.goto("/")
   await page.getByRole("link", { name: "Subir material" }).click()
   await expect(page).toHaveURL(/\/subir$/)
@@ -29,9 +37,7 @@ test("Coni uploads a PDF straight to the store and sees it as Procesando", async
 
   await page.getByLabel("Archivo").setInputFiles({ name: "apego.pdf", mimeType: "application/pdf", buffer: PDF_MINIMO })
   await page.getByLabel(/^Título/).fill(titulo)
-  await page.getByLabel(/^Autor/).fill("Esther Perel")
-  await page.getByLabel("Categoría", { exact: true }).selectOption({ label: "General" })
-  await page.getByLabel("Etiquetas").fill("apego, pareja")
+  await elegirAutorYPapel(page, `${PREFIJO_DE_PRUEBA}Esther Perel`, /Estudio o libro/)
   await page.getByRole("checkbox", { name: "Este material no contiene datos de pacientes" }).check()
   await page.evaluate(() => window.scrollTo(0, 0))
   await capturar(page, "ingesta-subir", CARPETA_DE_DOCUMENTACION)
@@ -44,8 +50,7 @@ test("Coni uploads a PDF straight to the store and sees it as Procesando", async
   await expect(tarjeta.getByText("Procesando")).toBeVisible()
 
   const material = await filaPorTitulo(titulo)
-  expect(material).toMatchObject({ tipo: "documento", estado: "procesando", autor: "Esther Perel" })
-  expect(material.etiquetas).toEqual(["apego", "pareja"])
+  expect(material).toMatchObject({ tipo: "documento", estado: "procesando", autor_id: autorId, rol: "evidencia" })
   expect(material.archivo_clave).toMatch(/^materiales\/[0-9a-f-]{36}\/original\.pdf$/)
   const objetos = await objetosDelAlmacen()
   expect(objetos[`/${BALDE_DE_PRUEBA}/${material.archivo_clave}`]).toEqual({
@@ -58,20 +63,20 @@ test("Coni uploads a PDF straight to the store and sees it as Procesando", async
 
 test("Coni uploads two images in the order she chose", async ({ page }) => {
   const titulo = `${PREFIJO_DE_PRUEBA}Carrusel`
+  await sembrarAutor("@cuenta_referente", "cuenta")
   await page.goto("/subir")
   await page.getByRole("radio", { name: "Imagen" }).check({ force: true })
-  await expect(page.getByText("Ej: @cuenta")).toBeVisible()
+  await expect(page.getByLabel("Link de referencia (no se abre)")).toBeVisible()
 
   await page.getByLabel("Imágenes").setInputFiles([
     { name: "primera.png", mimeType: "image/png", buffer: PNG_MINIMO },
     { name: "segunda.png", mimeType: "image/png", buffer: PNG_MINIMO },
   ])
-  await expect(page.getByRole("listitem")).toHaveCount(2)
+  await expect(page.locator("li[data-nombre]")).toHaveCount(2)
   await page.getByRole("button", { name: "Mover la imagen 2 antes" }).click()
-  await expect(page.getByRole("listitem").first()).toHaveAttribute("data-nombre", "segunda.png")
+  await expect(page.locator("li[data-nombre]").first()).toHaveAttribute("data-nombre", "segunda.png")
   await page.getByLabel(/^Título/).fill(titulo)
-  await page.getByLabel(/^Autor/).fill("@cuenta_referente")
-  await page.getByLabel("Categoría", { exact: true }).selectOption({ label: "General" })
+  await elegirAutorYPapel(page, `${PREFIJO_DE_PRUEBA}@cuenta_referente`, /Referente/)
   await page.getByRole("checkbox", { name: "Este material no contiene datos de pacientes" }).check()
 
   await page.getByRole("button", { name: "Subir material" }).click()
@@ -91,27 +96,14 @@ test("Coni uploads two images in the order she chose", async ({ page }) => {
   expect(disparosRegistrados()).toEqual([{ tarea: "procesar-material", materialId: material.id }])
 })
 
-test("Coni adds a category from the form and uses it", async ({ page }) => {
-  const nombre = `${PREFIJO_DE_PRUEBA}Apego ${Date.now()}`
-  await page.goto("/subir")
-
-  await page.getByLabel("Categoría", { exact: true }).selectOption({ label: "Agregar categoría nueva" })
-  await page.getByLabel("Nombre de la categoría").fill(nombre)
-  await page.getByRole("button", { name: "Agregar", exact: true }).click()
-
-  await expect(page.getByLabel("Categoría", { exact: true })).toHaveValue(/[0-9a-f-]{36}/)
-  await expect(page.getByLabel("Categoría", { exact: true }).locator("option:checked")).toHaveText(nombre)
-  const { error } = await clienteDeServicio().from("categorias").delete().eq("nombre", nombre)
-  expect(error).toBeNull()
-})
-
 test("a link needs no file: it is saved and processed right away", async ({ page }) => {
   const titulo = `${PREFIJO_DE_PRUEBA}Nota`
+  await sembrarAutor("Autor del link")
   await page.goto("/subir")
   await page.getByRole("radio", { name: "Link" }).check({ force: true })
   await page.getByLabel("Dirección del link").fill("https://example.com/nota")
   await page.getByLabel(/^Título/).fill(titulo)
-  await page.getByLabel("Categoría", { exact: true }).selectOption({ label: "General" })
+  await elegirAutorYPapel(page, `${PREFIJO_DE_PRUEBA}Autor del link`, /Lo dijo Coni/)
 
   await page.getByRole("button", { name: "Subir material" }).click()
   await expect(
@@ -122,6 +114,11 @@ test("a link needs no file: it is saved and processed right away", async ({ page
 
   await expect(page).toHaveURL(/\/$/)
   const material = await filaPorTitulo(titulo)
-  expect(material).toMatchObject({ tipo: "link", origen_url: "https://example.com/nota", archivo_clave: null })
+  expect(material).toMatchObject({
+    tipo: "link",
+    origen_url: "https://example.com/nota",
+    archivo_clave: null,
+    rol: "voz_propia",
+  })
   expect(disparosRegistrados()).toEqual([{ tarea: "procesar-material", materialId: material.id }])
 })

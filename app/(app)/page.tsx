@@ -1,8 +1,9 @@
 import Link from "next/link"
 import { ActualizarMientras } from "@/components/actualizar-mientras"
 import { clasesDeBoton } from "@/components/ui/clases-de-boton"
+import { listarAutores } from "@/lib/ingesta/autores"
 import { hayFiltros, leerFiltros } from "@/lib/ingesta/filtros"
-import { autoresDeMateriales, listarMateriales } from "@/lib/ingesta/materiales"
+import { listarMateriales } from "@/lib/ingesta/materiales"
 import { leerSesion } from "@/lib/sesion/miembro"
 import { estaProcesando } from "./estado-de-material"
 import { FiltrosDeLaLista } from "./filtros-de-materiales"
@@ -16,12 +17,7 @@ export default async function Material({
   const sesion = await leerSesion()
   if (sesion.estado !== "miembro") return null
   const filtros = leerFiltros(await searchParams)
-  const [materiales, autores, categorias] = await Promise.all([
-    listarMateriales(sesion.db, filtros),
-    autoresDeMateriales(sesion.db),
-    sesion.db.from("categorias").select("id, nombre").order("nombre"),
-  ])
-  if (categorias.error) throw new Error(`No pude leer las categorías: ${categorias.error.message}`)
+  const [materiales, autores] = await Promise.all([listarMateriales(sesion.db, filtros), listarAutores(sesion.db)])
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
@@ -30,7 +26,7 @@ export default async function Material({
       <Link href="/subir" className={clasesDeBoton()}>
         Subir material
       </Link>
-      <FiltrosDeLaLista filtros={filtros} categorias={categorias.data} autores={autores} />
+      <FiltrosDeLaLista filtros={filtros} autores={autores} />
       {materiales.length === 0 ? (
         <p className="text-apagado">
           {hayFiltros(filtros) ? "Ningún material coincide con esos filtros." : "Aún no hay material. Sube el primero."}

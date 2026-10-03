@@ -5,6 +5,8 @@ import { PREFIJO_DE_PRUEBA } from "./entorno"
 export default async function limpiar(): Promise<void> {
   const { error } = await clienteDeServicio().from("materiales").delete().like("titulo", `${PREFIJO_DE_PRUEBA}%`)
   if (error) throw new Error(`No pude limpiar los materiales de la prueba: ${error.message}`)
-  const categorias = await clienteDeServicio().from("categorias").delete().like("nombre", `${PREFIJO_DE_PRUEBA}%`)
-  if (categorias.error) throw new Error(`No pude limpiar las categorías de la prueba: ${categorias.error.message}`)
+  const temas = await clienteDeServicio().from("temas").delete().like("nombre", `${PREFIJO_DE_PRUEBA}%`)
+  if (temas.error) throw new Error(`No pude limpiar los temas de la prueba: ${temas.error.message}`)
+  const autores = await clienteDeServicio().from("autores").delete().like("nombre", `${PREFIJO_DE_PRUEBA}%`)
+  if (autores.error) throw new Error(`No pude limpiar los autores de la prueba: ${autores.error.message}`)
 }

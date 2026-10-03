@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   confirmarMaterialAccion,
-  crearCategoriaAccion,
+  crearAutorAccion,
   crearMaterialAccion,
   descartarMaterialAccion,
 } from "@/app/(app)/subir/acciones"
@@ -14,17 +14,29 @@ vi.mock("@/app/(app)/subir/acciones", () => ({
   crearMaterialAccion: vi.fn(),
   confirmarMaterialAccion: vi.fn(),
   descartarMaterialAccion: vi.fn(),
-  crearCategoriaAccion: vi.fn(),
+  crearAutorAccion: vi.fn(),
 }))
 
 const crear = vi.mocked(crearMaterialAccion)
 const confirmar = vi.mocked(confirmarMaterialAccion)
 const descartar = vi.mocked(descartarMaterialAccion)
-const crearCategoria = vi.mocked(crearCategoriaAccion)
+const crearAutor = vi.mocked(crearAutorAccion)
 
-const CATEGORIAS = [
-  { id: "11111111-2222-4333-8444-555555555551", nombre: "Pareja y conversación" },
-  { id: "11111111-2222-4333-8444-555555555552", nombre: "General" },
+const AUTORES = [
+  {
+    id: "11111111-2222-4333-8444-555555555551",
+    nombre: "Esther Perel",
+    credencial: "Psicoterapeuta",
+    tipo: "persona",
+    alias: [],
+  },
+  {
+    id: "11111111-2222-4333-8444-555555555552",
+    nombre: "Constanza del Rosario",
+    credencial: null,
+    tipo: "coni",
+    alias: [],
+  },
 ]
 const MATERIAL = "99999999-2222-4333-8444-555555555555"
 
@@ -42,8 +54,17 @@ function elegirTipo(nombre: string) {
   fireEvent.click(screen.getByRole("radio", { name: nombre }))
 }
 
+function elegirAutor(nombre = "Esther Perel") {
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(nombre) }))
+}
+
+function elegirRol(nombre = "Referente") {
+  fireEvent.click(screen.getByRole("radio", { name: new RegExp(nombre) }))
+}
+
 function completarLoBasico() {
-  fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: CATEGORIAS[0]?.id } })
+  elegirAutor()
+  elegirRol()
   fireEvent.click(screen.getByRole("checkbox", { name: "Este material no contiene datos de pacientes" }))
 }
 
@@ -59,7 +80,7 @@ beforeEach(() => {
 
 describe("FormularioSubida: tipos", () => {
   it("offers the six types and starts on documento", () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
 
     const tipos = within(screen.getByRole("radiogroup", { name: "Tipo de material" })).getAllByRole("radio")
     expect(tipos.map((t) => t.getAttribute("aria-label") ?? t.closest("label")?.textContent)).toEqual([
@@ -75,7 +96,7 @@ describe("FormularioSubida: tipos", () => {
   })
 
   it("asks for the address for a link, with no file", () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirTipo("Link")
 
     expect(screen.getByLabelText("Dirección del link")).toBeInTheDocument()
@@ -83,71 +104,81 @@ describe("FormularioSubida: tipos", () => {
   })
 
   it("asks for the pasted text and an optional video for a post", () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirTipo("Post")
 
     expect(screen.getByLabelText("Texto del post")).toBeInTheDocument()
     expect(screen.getByLabelText("Video (opcional)")).toBeInTheDocument()
   })
 
-  it.each(["Video", "Imagen"])("hints the author as @account and offers a reference link for %s", (tipo) => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+  it.each(["Video", "Imagen"])("offers a reference link for %s", (tipo) => {
+    render(<FormularioSubida autores={AUTORES} />)
     elegirTipo(tipo)
 
-    expect(screen.getByText("Ej: @cuenta")).toBeInTheDocument()
     expect(screen.getByLabelText("Link de referencia (no se abre)")).toBeInTheDocument()
   })
 
-  it("does not hint @account nor offer a reference link for a document", () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+  it("does not offer a reference link for a document", () => {
+    render(<FormularioSubida autores={AUTORES} />)
 
-    expect(screen.queryByText("Ej: @cuenta")).not.toBeInTheDocument()
     expect(screen.queryByLabelText("Link de referencia (no se abre)")).not.toBeInTheDocument()
   })
 })
 
-describe("FormularioSubida: categoría", () => {
-  it("lists the categories and ends with the option to add a new one", () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+describe("FormularioSubida: autor y rol", () => {
+  it("has no category and no tags any more", () => {
+    render(<FormularioSubida autores={AUTORES} />)
 
-    const opciones = within(screen.getByLabelText("Categoría")).getAllByRole("option")
-    expect(opciones.map((o) => o.textContent)).toEqual([
-      "Elige una categoría",
-      "Pareja y conversación",
-      "General",
-      "Agregar categoría nueva",
+    expect(screen.queryByLabelText("Categoría")).toBeNull()
+    expect(screen.queryByLabelText("Etiquetas")).toBeNull()
+  })
+
+  it("offers the four roles with one line of help each, and none picked", () => {
+    render(<FormularioSubida autores={AUTORES} />)
+
+    const roles = within(screen.getByRole("radiogroup", { name: "Papel del material" })).getAllByRole("radio")
+    expect(roles.map((rol) => rol.closest("label")?.querySelector("span")?.textContent)).toEqual([
+      "Lo dijo Coni",
+      "Referente",
+      "Estudio o libro",
+      "Estrategia interna",
     ])
+    for (const rol of roles) expect(rol).not.toBeChecked()
+    expect(screen.getByText("Un estudio, libro o artículo que respalda con datos lo que se dice.")).toBeInTheDocument()
   })
 
-  it("creates the category through the action and selects it", async () => {
-    crearCategoria.mockResolvedValue({ ok: true, categoria: { id: "nueva-id", nombre: "Apego" } })
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+  it("searches the authors and creates a new one through the action", async () => {
+    crearAutor.mockResolvedValue({
+      ok: true,
+      autor: { id: "nuevo-id", nombre: "Brené Brown", credencial: null, tipo: "persona", alias: [] },
+    })
+    render(<FormularioSubida autores={AUTORES} />)
 
-    fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: "__nueva__" } })
-    fireEvent.change(screen.getByLabelText("Nombre de la categoría"), { target: { value: "Apego" } })
-    fireEvent.click(screen.getByRole("button", { name: "Agregar" }))
+    fireEvent.change(screen.getByLabelText("Autor"), { target: { value: "Brené Brown" } })
+    fireEvent.click(screen.getByRole("button", { name: "Autor nuevo" }))
+    fireEvent.click(screen.getByRole("button", { name: "Crear autor" }))
 
-    await waitFor(() => expect(crearCategoria).toHaveBeenCalledWith({ nombre: "Apego" }))
-    expect(await screen.findByRole("option", { name: "Apego" })).toBeInTheDocument()
-    expect(screen.getByLabelText("Categoría")).toHaveValue("nueva-id")
+    await waitFor(() =>
+      expect(crearAutor).toHaveBeenCalledWith({ nombre: "Brené Brown", credencial: "", tipo: "persona" }),
+    )
+    expect(await screen.findByRole("button", { name: "Cambiar autor" })).toBeInTheDocument()
   })
 
-  it("shows the error when the category cannot be created", async () => {
-    crearCategoria.mockResolvedValue({ ok: false, error: "Escribe el nombre de la categoría." })
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+  it("does not send the form when Enter is pressed in the author search", () => {
+    render(<FormularioSubida autores={AUTORES} />)
 
-    fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: "__nueva__" } })
-    fireEvent.click(screen.getByRole("button", { name: "Agregar" }))
+    fireEvent.keyDown(screen.getByLabelText("Autor"), { key: "Enter" })
 
-    expect(await screen.findByText("Escribe el nombre de la categoría.")).toBeInTheDocument()
+    expect(crear).not.toHaveBeenCalled()
   })
 })
 
 describe("FormularioSubida: reglas antes de subir", () => {
   it("does not start without the declaration of no patient data", async () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirArchivos("Archivo", [archivo("tesis.pdf")])
-    fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: CATEGORIAS[0]?.id } })
+    elegirAutor()
+    elegirRol()
 
     fireEvent.click(screen.getByRole("button", { name: "Subir material" }))
 
@@ -156,7 +187,7 @@ describe("FormularioSubida: reglas antes de subir", () => {
   })
 
   it("refuses a file over 2 GB right away", () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
 
     elegirArchivos("Archivo", [archivo("clase.mp4", "video/mp4", 2 * 1024 ** 3 + 1)])
 
@@ -164,14 +195,27 @@ describe("FormularioSubida: reglas antes de subir", () => {
     expect(screen.queryByText("clase.mp4")).not.toBeInTheDocument()
   })
 
-  it("asks for a category before starting", async () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+  it("asks for an author before starting", async () => {
+    render(<FormularioSubida autores={AUTORES} />)
     elegirArchivos("Archivo", [archivo("tesis.pdf")])
+    elegirRol()
     fireEvent.click(screen.getByRole("checkbox", { name: "Este material no contiene datos de pacientes" }))
 
     fireEvent.click(screen.getByRole("button", { name: "Subir material" }))
 
-    expect(await screen.findByText("Elige una categoría.")).toBeInTheDocument()
+    expect(await screen.findByText("Elige el autor.")).toBeInTheDocument()
+    expect(crear).not.toHaveBeenCalled()
+  })
+
+  it("asks for a role before starting", async () => {
+    render(<FormularioSubida autores={AUTORES} />)
+    elegirArchivos("Archivo", [archivo("tesis.pdf")])
+    elegirAutor()
+    fireEvent.click(screen.getByRole("checkbox", { name: "Este material no contiene datos de pacientes" }))
+
+    fireEvent.click(screen.getByRole("button", { name: "Subir material" }))
+
+    expect(await screen.findByText("Elige qué papel cumple este material.")).toBeInTheDocument()
     expect(crear).not.toHaveBeenCalled()
   })
 })
@@ -179,12 +223,14 @@ describe("FormularioSubida: reglas antes de subir", () => {
 describe("FormularioSubida: imágenes", () => {
   const fotos = ["a.jpg", "b.jpg", "c.jpg"].map((nombre) => archivo(nombre, "image/jpeg"))
 
+  const fotosEnLista = () => Array.from(document.querySelectorAll("li[data-nombre]"))
+
   function nombresEnOrden() {
-    return screen.getAllByRole("listitem").map((item) => item.getAttribute("data-nombre"))
+    return fotosEnLista().map((item) => item.getAttribute("data-nombre"))
   }
 
   it("shows thumbnails in the order chosen and lets her move and remove them", () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirTipo("Imagen")
     elegirArchivos("Imágenes", fotos)
 
@@ -202,7 +248,7 @@ describe("FormularioSubida: imágenes", () => {
   })
 
   it("cannot move the first one earlier nor the last one later", () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirTipo("Imagen")
     elegirArchivos("Imágenes", fotos)
 
@@ -211,14 +257,14 @@ describe("FormularioSubida: imágenes", () => {
   })
 
   it("keeps the first twenty and says so when she picks more", () => {
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirTipo("Imagen")
     elegirArchivos(
       "Imágenes",
       Array.from({ length: 22 }, (_, i) => archivo(`${i}.jpg`, "image/jpeg")),
     )
 
-    expect(screen.getAllByRole("listitem")).toHaveLength(20)
+    expect(fotosEnLista()).toHaveLength(20)
     expect(screen.getByRole("alert")).toHaveTextContent("Puedes subir hasta 20 imágenes.")
   })
 })
@@ -231,12 +277,12 @@ describe("FormularioSubida: subir", () => {
       subidas: [{ orden: 1, url: "https://r2.test/firmada", tipoContenido: "application/pdf" }],
     })
     confirmar.mockResolvedValue({ ok: true })
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirArchivos("Archivo", [archivo("tesis.pdf")])
     fireEvent.change(screen.getByLabelText(/^Título/), { target: { value: "Apego adulto" } })
-    fireEvent.change(screen.getByLabelText(/^Autor/), { target: { value: "Esther Perel" } })
-    fireEvent.change(screen.getByLabelText("Etiquetas"), { target: { value: "apego, pareja" } })
-    completarLoBasico()
+    elegirAutor()
+    elegirRol("Estudio o libro")
+    fireEvent.click(screen.getByRole("checkbox", { name: "Este material no contiene datos de pacientes" }))
 
     fireEvent.click(screen.getByRole("button", { name: "Subir material" }))
 
@@ -244,9 +290,8 @@ describe("FormularioSubida: subir", () => {
     expect(crear).toHaveBeenCalledWith({
       tipo: "documento",
       titulo: "Apego adulto",
-      autor: "Esther Perel",
-      categoriaId: CATEGORIAS[0]?.id,
-      etiquetas: ["apego", "pareja"],
+      autorId: AUTORES[0]?.id,
+      rol: "evidencia",
       declaracion: true,
       url: "",
       textoPegado: "",
@@ -272,7 +317,7 @@ describe("FormularioSubida: subir", () => {
       ],
     })
     confirmar.mockResolvedValue({ ok: true })
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirTipo("Imagen")
     elegirArchivos("Imágenes", [archivo("a.jpg", "image/jpeg"), archivo("b.jpg", "image/jpeg")])
     fireEvent.click(screen.getByRole("button", { name: "Mover la imagen 2 antes" }))
@@ -289,7 +334,7 @@ describe("FormularioSubida: subir", () => {
   it("needs no upload for a link: it creates and confirms", async () => {
     crear.mockResolvedValue({ ok: true, materialId: MATERIAL, subidas: [] })
     confirmar.mockResolvedValue({ ok: true })
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirTipo("Link")
     fireEvent.change(screen.getByLabelText("Dirección del link"), { target: { value: "https://example.com/nota" } })
     completarLoBasico()
@@ -303,7 +348,7 @@ describe("FormularioSubida: subir", () => {
 
   it("shows the error of the server and uploads nothing", async () => {
     crear.mockResolvedValue({ ok: false, error: "Esta app es solo para Coni y WAV." })
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirArchivos("Archivo", [archivo("tesis.pdf")])
     completarLoBasico()
 
@@ -322,7 +367,7 @@ describe("FormularioSubida: subir", () => {
     })
     descartar.mockResolvedValue({ ok: true })
     enviar.mockResolvedValue(new Response(null, { status: 403 }))
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirArchivos("Archivo", [archivo("tesis.pdf")])
     completarLoBasico()
 
@@ -343,7 +388,7 @@ describe("FormularioSubida: subir", () => {
       subidas: [{ orden: 1, url: "https://r2.test/firmada", tipoContenido: "application/pdf" }],
     })
     confirmar.mockResolvedValue({ ok: false, error: "No encontré el archivo que subiste. Inténtalo de nuevo." })
-    render(<FormularioSubida categorias={CATEGORIAS} />)
+    render(<FormularioSubida autores={AUTORES} />)
     elegirArchivos("Archivo", [archivo("tesis.pdf")])
     completarLoBasico()
 

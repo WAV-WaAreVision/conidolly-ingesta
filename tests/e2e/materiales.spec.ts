@@ -8,6 +8,7 @@ import {
   limpiarDisparos,
   objetosDelAlmacen,
   ponerObjetoEnElAlmacen,
+  sembrarAutor,
 } from "./ayudas"
 import { BALDE_DE_PRUEBA, CARPETA_DE_DOCUMENTACION, CORREO_DE_CONI, PREFIJO_DE_PRUEBA } from "./entorno"
 
@@ -31,20 +32,14 @@ async function idDeConi(): Promise<string> {
   return id
 }
 
-async function categoria(slug: string): Promise<string> {
-  const { data, error } = await clienteDeServicio().from("categorias").select("id").eq("slug", slug).single()
-  if (error) throw new Error(error.message)
-  return data.id
-}
-
 interface Semilla {
   titulo: string
   autor?: string
+  rol?: "voz_propia" | "referente" | "evidencia" | "estrategia"
   tipo?: "documento" | "audio" | "video"
   estado?: "procesando" | "listo" | "fallido"
   motivo?: string
   idioma?: string
-  categoria?: string
   conFicha?: boolean
   conTextos?: boolean
   costoEstimado?: number
@@ -59,8 +54,8 @@ async function sembrar(semilla: Semilla): Promise<string> {
     id,
     tipo: semilla.tipo ?? "documento",
     titulo: `${PREFIJO_DE_PRUEBA}${semilla.titulo}`,
-    autor: semilla.autor ?? null,
-    categoria_id: await categoria(semilla.categoria ?? "general"),
+    autor_id: await sembrarAutor(semilla.autor ?? "Autor de prueba"),
+    rol: semilla.rol ?? "referente",
     texto_pegado: "x",
     declaracion_sin_pacientes_en: new Date().toISOString(),
     subido_por: await idDeConi(),
@@ -70,7 +65,7 @@ async function sembrar(semilla: Semilla): Promise<string> {
     costo_estimado_usd: semilla.costoEstimado ?? null,
   })
   if (error) throw new Error(error.message)
-  if (semilla.conFicha ?? estado === "listo") {
+  if (semilla.conFicha ?? (estado === "listo" && semilla.rol === "estrategia")) {
     const ficha = await servicio.from("fichas").insert({
       material_id: id,
       resumen: "Un resumen claro de la charla sobre apego y deseo.",
@@ -89,38 +84,28 @@ async function sembrar(semilla: Semilla): Promise<string> {
   return id
 }
 
-test("Coni filters the list by category, author, type and state, and the URL keeps the filters", async ({ page }) => {
-  const nombreDeCategoria = `${PREFIJO_DE_PRUEBA}Apego ${Date.now()}`
-  const { data: nueva, error } = await clienteDeServicio()
-    .from("categorias")
-    .insert({ slug: `e2e-${Date.now()}`, nombre: nombreDeCategoria })
-    .select("id")
-    .single()
-  if (error) throw new Error(error.message)
-  await sembrar({ titulo: "Filtro A", autor: "Autora Filtro Uno", tipo: "audio", categoria: "general" })
-  await sembrar({ titulo: "Filtro B", autor: "Autora Filtro Dos", tipo: "video", categoria: "general" })
+test("Coni filters the list by author, role, type and state, and the URL keeps the filters", async ({ page }) => {
+  const autorUno = await sembrarAutor("Autora Filtro Uno")
+  await sembrar({ titulo: "Filtro A", autor: "Autora Filtro Uno", tipo: "audio", rol: "voz_propia" })
+  await sembrar({ titulo: "Filtro B", autor: "Autora Filtro Dos", tipo: "video", rol: "evidencia" })
   await sembrar({
     titulo: "Filtro C",
     autor: "Autora Filtro Uno",
     tipo: "audio",
     estado: "fallido",
     motivo: "El audio no se oye.",
-    categoria: "general",
   })
-  const { error: errorDeCategoria } = await clienteDeServicio()
-    .from("materiales")
-    .update({ categoria_id: nueva.id })
-    .eq("titulo", `${PREFIJO_DE_PRUEBA}Filtro B`)
-  if (errorDeCategoria) throw new Error(errorDeCategoria.message)
   const tarjeta = (nombre: string) => page.getByRole("listitem").filter({ hasText: `${PREFIJO_DE_PRUEBA}${nombre}` })
 
   await page.goto("/")
   await expect(tarjeta("Filtro A")).toBeVisible()
   await expect(tarjeta("Filtro B")).toBeVisible()
+  await expect(tarjeta("Filtro A").getByText(/Lo dijo Coni/)).toBeVisible()
+  await expect(tarjeta("Filtro B").getByText(/Estudio o libro/)).toBeVisible()
 
-  await page.getByLabel("Autor").selectOption("Autora Filtro Uno")
+  await page.getByLabel("Autor").selectOption({ label: `${PREFIJO_DE_PRUEBA}Autora Filtro Uno` })
   await page.getByRole("button", { name: "Filtrar" }).click()
-  await expect(page).toHaveURL(/autor=Autora\+Filtro\+Uno/)
+  await expect(page).toHaveURL(new RegExp(`autor=${autorUno}`))
   await expect(tarjeta("Filtro A")).toBeVisible()
   await expect(tarjeta("Filtro C")).toBeVisible()
   await expect(tarjeta("Filtro B")).toHaveCount(0)
@@ -135,13 +120,13 @@ test("Coni filters the list by category, author, type and state, and the URL kee
 
   await page.getByRole("link", { name: "Quitar filtros" }).click()
   await expect(page).toHaveURL(/\/$/)
-  await page.getByLabel("Categoría").selectOption({ label: nombreDeCategoria })
+  await expect(page.getByLabel("Categoría")).toHaveCount(0)
+  await page.getByLabel("Papel").selectOption("evidencia")
   await page.getByLabel("Tipo").selectOption("video")
   await page.getByRole("button", { name: "Filtrar" }).click()
+  await expect(page).toHaveURL(/rol=evidencia/)
   await expect(tarjeta("Filtro B")).toBeVisible()
   await expect(tarjeta("Filtro A")).toHaveCount(0)
-  await clienteDeServicio().from("materiales").delete().like("titulo", `${PREFIJO_DE_PRUEBA}Filtro%`)
-  await clienteDeServicio().from("categorias").delete().eq("id", nueva.id)
 })
 
 test("Coni retries a failed material and a cap-stopped one, and each starts a run", async ({ page }) => {
@@ -248,7 +233,7 @@ test("a material that is processing makes the list ask again until it is done", 
 })
 
 test("Coni opens a card, edits a key idea, saves and finds it persisted; the texts download", async ({ page }) => {
-  const id = await sembrar({ titulo: "Apego y deseo", autor: "Esther Perel", idioma: "en" })
+  const id = await sembrar({ titulo: "Apego y deseo", autor: "Esther Perel", idioma: "en", rol: "estrategia" })
 
   await page.goto("/")
   await capturar(page, "ingesta-materiales", CARPETA_DE_DOCUMENTACION)
@@ -291,7 +276,7 @@ test("Coni opens a card, edits a key idea, saves and finds it persisted; the tex
 })
 
 test("a material in Spanish says it was only adapted", async ({ page }) => {
-  const id = await sembrar({ titulo: "Ya en español", idioma: "es" })
+  const id = await sembrar({ titulo: "Ya en español", idioma: "es", rol: "estrategia" })
 
   await page.goto(`/materiales/${id}`)
 
@@ -302,7 +287,7 @@ test("a material in Spanish says it was only adapted", async ({ page }) => {
 test("Coni deletes a material after confirming in the page, and its stored files go with it", async ({ page }) => {
   const id = await sembrar({ titulo: "Para borrar" })
   const antes = await objetosDelAlmacen()
-  expect(Object.keys(antes).filter((clave) => clave.includes(id))).toHaveLength(2)
+  expect(Object.keys(antes).filter((clave) => clave.includes(id))).toHaveLength(1)
 
   await page.goto(`/materiales/${id}`)
   await page.getByRole("button", { name: "Borrar material" }).click()
@@ -319,4 +304,124 @@ test("Coni deletes a material after confirming in the page, and its stored files
   const despues = await objetosDelAlmacen()
   expect(Object.keys(despues).filter((clave) => clave.includes(id))).toEqual([])
   expect(Object.keys(despues).every((clave) => clave.startsWith(`/${BALDE_DE_PRUEBA}/`))).toBe(true)
+})
+
+test("a material that is not an internal strategy shows its map, not a card", async ({ page }) => {
+  const id = await sembrar({ titulo: "Con mapa", autor: "Esther Perel", rol: "evidencia" })
+  const servicio = clienteDeServicio()
+  const tema = await servicio
+    .from("temas")
+    .insert({ nombre: `${PREFIJO_DE_PRUEBA}Apego adulto`, centroide: `[${new Array(1024).fill(0).join(",")}]` })
+    .select("id")
+    .single()
+  if (tema.error) throw new Error(tema.error.message)
+  const autorId = await sembrarAutor("Esther Perel")
+  const afirmacion = (extra: Record<string, unknown>) => ({
+    material_id: id,
+    autor_id: autorId,
+    tramo: 0,
+    ubicacion: { pagina: 1 },
+    texto: "El apego se aprende.",
+    cita: "El apego se aprende en la infancia.",
+    ...extra,
+  })
+  const { error } = await servicio
+    .from("afirmaciones")
+    .insert([
+      afirmacion({ tipo: "definicion", evidencia: "estudio", tema_id: tema.data.id }),
+      afirmacion({ tipo: "consejo", evidencia: "clinica", tema_id: tema.data.id }),
+      afirmacion({ tipo: "consejo", evidencia: "clinica", tema_id: null }),
+    ])
+  if (error) throw new Error(error.message)
+
+  await page.goto(`/materiales/${id}`)
+
+  await expect(page.getByRole("heading", { name: "Mapa del material" })).toBeVisible()
+  await expect(page.getByText("3 afirmaciones")).toBeVisible()
+  await expect(page.getByRole("list", { name: "Temas" }).getByRole("listitem")).toHaveText([
+    `${PREFIJO_DE_PRUEBA}Apego adulto2`,
+    "Sin tema todavía1",
+  ])
+  await expect(page.getByRole("list", { name: "Tipos de afirmación" }).getByRole("listitem")).toHaveText([
+    "Consejo2",
+    "Definición1",
+  ])
+  await expect(page.getByRole("list", { name: "Evidencia" }).getByRole("listitem")).toHaveText(["Clínica2", "Estudio1"])
+  await expect(page.getByText(/Estudio o libro/)).toBeVisible()
+  await expect(page.getByRole("button", { name: "Editar" })).toHaveCount(0)
+  await capturar(page, "ingesta-mapa", CARPETA_DE_DOCUMENTACION)
+})
+
+test("Coni changes the author and the role of a material and finds them persisted", async ({ page }) => {
+  const id = await sembrar({ titulo: "Cambia de autor", autor: "Autor Antes", rol: "referente" })
+  const despues = await sembrarAutor("Autora Después")
+  await page.goto(`/materiales/${id}`)
+  await expect(page.getByText(/Autor Antes · Referente/)).toBeVisible()
+
+  await page.getByRole("button", { name: "Cambiar autor o papel" }).click()
+  await page.getByRole("button", { name: "Cambiar autor" }).click()
+  await page.getByLabel("Autor", { exact: true }).fill("Autora Después")
+  await page.getByRole("button", { name: new RegExp(`${PREFIJO_DE_PRUEBA}Autora Después`) }).click()
+  await page.getByRole("radio", { name: /Estudio o libro/ }).check({ force: true })
+  await page.getByRole("button", { name: "Guardar", exact: true }).click()
+
+  await expect(page.getByText(/Autora Después · Estudio o libro/)).toBeVisible()
+  const { data } = await clienteDeServicio().from("materiales").select("autor_id, rol").eq("id", id).single()
+  expect(data).toEqual({ autor_id: despues, rol: "evidencia" })
+})
+
+test("Coni creates a new author from the upload form and uses it", async ({ page }) => {
+  const nombre = `${PREFIJO_DE_PRUEBA}Autora Nueva ${Date.now()}`
+  await page.goto("/subir")
+
+  await page.getByLabel("Autor", { exact: true }).fill(nombre)
+  await page.getByRole("button", { name: "Autor nuevo" }).click()
+  await expect(page.getByLabel("Nombre del autor")).toHaveValue(nombre)
+  await page.getByLabel(/Credencial/).fill("Psicóloga clínica")
+  await page.getByLabel("Tipo de autor").selectOption("persona")
+  await page.getByRole("button", { name: "Crear autor" }).click()
+
+  await expect(page.getByText(nombre, { exact: true })).toBeVisible()
+  await expect(page.getByText("Psicóloga clínica")).toBeVisible()
+  const { data } = await clienteDeServicio().from("autores").select("credencial, tipo").eq("nombre", nombre).single()
+  expect(data).toEqual({ credencial: "Psicóloga clínica", tipo: "persona" })
+})
+
+test("Coni reprocesses a ready material after confirming, and a new run starts", async ({ page }) => {
+  const id = await sembrar({ titulo: "Para reprocesar", rol: "referente" })
+  const servicio = clienteDeServicio()
+  const { error } = await servicio.from("afirmaciones").insert({
+    material_id: id,
+    autor_id: await sembrarAutor("Autor de prueba"),
+    tramo: 0,
+    ubicacion: { pagina: 1 },
+    texto: "Una afirmación.",
+    cita: "Una afirmación, textual.",
+    tipo: "dato",
+    evidencia: "opinion",
+  })
+  if (error) throw new Error(error.message)
+  await page.goto(`/materiales/${id}`)
+  await expect(page.getByText("1 afirmación", { exact: true })).toBeVisible()
+
+  await page.getByRole("button", { name: "Reprocesar" }).click()
+  await expect(page.getByText(/cuesta más o menos lo mismo que la primera vez/)).toBeVisible()
+  await page.getByRole("button", { name: "Cancelar" }).click()
+  expect(disparosRegistrados()).toEqual([])
+  await page.getByRole("button", { name: "Reprocesar" }).click()
+  await page.getByRole("button", { name: "Sí, reprocesar" }).click()
+
+  await expect(page.getByText("Procesando", { exact: true })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Reprocesar" })).toHaveCount(0)
+  const { data } = await servicio.from("materiales").select("estado").eq("id", id).single()
+  expect(data?.estado).toBe("procesando")
+  const { count } = await servicio
+    .from("afirmaciones")
+    .select("id", { count: "exact", head: true })
+    .eq("material_id", id)
+  expect(count).toBe(0)
+  const disparos = disparosRegistrados()
+  expect(disparos).toHaveLength(1)
+  expect(disparos[0]).toMatchObject({ tarea: "procesar-material", materialId: id })
+  expect(disparos[0]?.intento).toBeTruthy()
 })

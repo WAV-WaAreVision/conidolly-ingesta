@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest"
 import {
-  etiquetasDeTexto,
+  AYUDA_DE_ROL,
+  ETIQUETA_DE_ROL,
   leerEntrada,
   MAXIMO_DE_IMAGENES,
+  ROLES,
   TAMANO_MAXIMO_BYTES,
   tipoDeContenido,
 } from "@/lib/ingesta/modelo"
 
-const CATEGORIA = "11111111-2222-4333-8444-555555555555"
-const base = { categoriaId: CATEGORIA, etiquetas: [], declaracion: true }
+const AUTOR = "11111111-2222-4333-8444-555555555555"
+const base = { autorId: AUTOR, rol: "referente", declaracion: true }
 const archivo = (nombre: string, tamano = 1000) => ({ nombre, tamano })
 
 function error(entrada: unknown): string {
@@ -95,17 +97,19 @@ describe("leerEntrada: link y post", () => {
 })
 
 describe("leerEntrada: el resto de los campos", () => {
-  it("trims the title and the author and turns blanks into null", () => {
-    const resultado = leerEntrada({
-      ...base,
-      tipo: "documento",
-      titulo: "  Apego adulto ",
-      autor: "   ",
-      archivos: [archivo("a.pdf")],
-    })
+  it("trims the title and turns a blank one into null", () => {
+    const con = leerEntrada({ ...base, tipo: "documento", titulo: "  Apego adulto ", archivos: [archivo("a.pdf")] })
+    const sin = leerEntrada({ ...base, tipo: "documento", titulo: "   ", archivos: [archivo("a.pdf")] })
 
-    expect(resultado.ok && resultado.datos.titulo).toBe("Apego adulto")
-    expect(resultado.ok && resultado.datos.autor).toBeNull()
+    expect(con.ok && con.datos.titulo).toBe("Apego adulto")
+    expect(sin.ok && sin.datos.titulo).toBeNull()
+  })
+
+  it("keeps the author and the role it was given", () => {
+    const resultado = leerEntrada({ ...base, rol: "voz_propia", tipo: "documento", archivos: [archivo("a.pdf")] })
+
+    expect(resultado.ok && resultado.datos.autorId).toBe(AUTOR)
+    expect(resultado.ok && resultado.datos.rol).toBe("voz_propia")
   })
 
   it("keeps the reference link only for videos and images, and only if it is a web address", () => {
@@ -142,21 +146,42 @@ describe("leerEntrada: el resto de los campos", () => {
     )
   })
 
-  it("refuses a category that is not an id and a type that does not exist", () => {
-    expect(error({ ...base, categoriaId: "x", tipo: "documento", archivos: [archivo("a.pdf")] })).toBe(
-      "Elige una categoría.",
+  it("asks for an author, and refuses one that is not an id", () => {
+    expect(error({ ...base, autorId: "", tipo: "documento", archivos: [archivo("a.pdf")] })).toBe("Elige el autor.")
+    expect(error({ ...base, autorId: "Esther", tipo: "documento", archivos: [archivo("a.pdf")] })).toBe(
+      "Elige el autor.",
     )
-    expect(error({ ...base, tipo: "planilla", archivos: [] })).toBe("Elige qué tipo de material es.")
   })
 
-  it("refuses more than twenty tags and tags over forty characters", () => {
-    const muchas = Array.from({ length: 21 }, (_, i) => `e${i}`)
-    expect(error({ ...base, etiquetas: muchas, tipo: "documento", archivos: [archivo("a.pdf")] })).toBe(
-      "Usa hasta 20 etiquetas.",
+  it.each(ROLES)("accepts the role %s", (rol) => {
+    expect(leerEntrada({ ...base, rol, tipo: "documento", archivos: [archivo("a.pdf")] }).ok).toBe(true)
+  })
+
+  it("asks for a role, and refuses one that does not exist", () => {
+    expect(error({ ...base, rol: "", tipo: "documento", archivos: [archivo("a.pdf")] })).toBe(
+      "Elige qué papel cumple este material.",
     )
-    expect(error({ ...base, etiquetas: ["x".repeat(41)], tipo: "documento", archivos: [archivo("a.pdf")] })).toBe(
-      "Cada etiqueta puede tener hasta 40 letras.",
+    expect(error({ ...base, rol: "jefa", tipo: "documento", archivos: [archivo("a.pdf")] })).toBe(
+      "Elige qué papel cumple este material.",
     )
+  })
+
+  it("no longer reads a category or tags: they are not part of the form", () => {
+    const resultado = leerEntrada({
+      ...base,
+      categoriaId: "x",
+      etiquetas: ["a"],
+      tipo: "documento",
+      archivos: [archivo("a.pdf")],
+    })
+
+    expect(resultado.ok).toBe(true)
+    expect(resultado.ok && Object.keys(resultado.datos)).not.toContain("categoriaId")
+    expect(resultado.ok && Object.keys(resultado.datos)).not.toContain("etiquetas")
+  })
+
+  it("refuses a type that does not exist", () => {
+    expect(error({ ...base, tipo: "planilla", archivos: [] })).toBe("Elige qué tipo de material es.")
   })
 
   it("says it did not understand something that is not even an object", () => {
@@ -164,9 +189,15 @@ describe("leerEntrada: el resto de los campos", () => {
   })
 })
 
-describe("etiquetasDeTexto", () => {
-  it("splits on commas, trims, drops blanks and repeats", () => {
-    expect(etiquetasDeTexto(" pareja, deseo ,, Pareja,  apego ")).toEqual(["pareja", "deseo", "apego"])
+describe("los roles", () => {
+  it("says each of the four in the words of the form, with one line of help", () => {
+    expect(ROLES.map((rol) => ETIQUETA_DE_ROL[rol])).toEqual([
+      "Lo dijo Coni",
+      "Referente",
+      "Estudio o libro",
+      "Estrategia interna",
+    ])
+    for (const rol of ROLES) expect(AYUDA_DE_ROL[rol].length).toBeGreaterThan(10)
   })
 })
 

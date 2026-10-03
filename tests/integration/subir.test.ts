@@ -3,13 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { almacenEnMemoria } from "@/lib/almacen/almacen"
 import { TAMANO_MAXIMO_BYTES } from "@/lib/ingesta/modelo"
-import {
-  confirmarMaterial,
-  crearCategoria,
-  crearMaterial,
-  type DepsSubir,
-  descartarMaterial,
-} from "@/lib/ingesta/subir"
+import { confirmarMaterial, crearMaterial, type DepsSubir, descartarMaterial } from "@/lib/ingesta/subir"
 import type { Database } from "@/lib/supabase/database.types"
 import { clienteDeConi, clienteDeOtraPersona, clienteDeServicio, clienteDeWav } from "./sesion"
 
@@ -26,7 +20,7 @@ const PREFIJO = "Prueba de subir "
 let coni: Db
 let wav: Db
 let otra: Db
-let categoriaId: string
+let autorId: string
 
 const deps = (db: Db): DepsSubir => ({
   db,
@@ -38,7 +32,7 @@ const deps = (db: Db): DepsSubir => ({
   nuevoId: randomUUID,
 })
 
-const base = () => ({ categoriaId, etiquetas: ["apego", "pareja"], declaracion: true })
+const base = () => ({ autorId, rol: "referente", declaracion: true })
 
 async function crearOk(db: Db, entrada: Record<string, unknown>) {
   const resultado = await crearMaterial(deps(db), { ...base(), ...entrada })
@@ -55,9 +49,13 @@ async function fila(id: string) {
 
 beforeAll(async () => {
   ;[coni, wav, otra] = await Promise.all([clienteDeConi(), clienteDeWav(), clienteDeOtraPersona()])
-  const { data, error } = await servicio.from("categorias").select("id").eq("slug", "general").single()
+  const { data, error } = await servicio
+    .from("autores")
+    .insert({ nombre: `${PREFIJO}Esther Perel ${randomUUID().slice(0, 6)}`, tipo: "persona" })
+    .select("id")
+    .single()
   if (error) throw new Error(error.message)
-  categoriaId = data.id
+  autorId = data.id
 })
 
 afterEach(async () => {
@@ -66,7 +64,7 @@ afterEach(async () => {
 })
 
 afterAll(async () => {
-  await servicio.from("categorias").delete().like("nombre", `${PREFIJO}%`)
+  await servicio.from("autores").delete().like("nombre", `${PREFIJO}%`)
 })
 
 describe("crearMaterial", () => {
@@ -74,7 +72,7 @@ describe("crearMaterial", () => {
     const resultado = await crearOk(coni, {
       tipo: "documento",
       titulo: "Apego adulto",
-      autor: "Esther Perel",
+      rol: "evidencia",
       archivos: [{ nombre: "Tesis.PDF", tamano: 5000 }],
     })
 
@@ -82,9 +80,10 @@ describe("crearMaterial", () => {
     expect(material).toMatchObject({
       tipo: "documento",
       titulo: "Apego adulto",
-      autor: "Esther Perel",
-      categoria_id: categoriaId,
-      etiquetas: ["apego", "pareja"],
+      autor_id: autorId,
+      rol: "evidencia",
+      categoria_id: null,
+      etiquetas: [],
       estado: "procesando",
     })
     expect(new Date(material?.declaracion_sin_pacientes_en ?? 0).toISOString()).toBe(AHORA.toISOString())
@@ -159,15 +158,11 @@ describe("crearMaterial", () => {
   it("keeps the reference link of a video, which is never fetched", async () => {
     const resultado = await crearOk(coni, {
       tipo: "video",
-      autor: "@cuenta",
       referencia: "https://instagram.com/reel/x",
       archivos: [{ nombre: "v.mp4", tamano: 10 }],
     })
 
-    expect(await fila(resultado.materialId)).toMatchObject({
-      autor: "@cuenta",
-      origen_url: "https://instagram.com/reel/x",
-    })
+    expect(await fila(resultado.materialId)).toMatchObject({ origen_url: "https://instagram.com/reel/x" })
   })
 
   it("saves each image in order and points archivo_clave at the first", async () => {
@@ -200,16 +195,36 @@ describe("crearMaterial", () => {
     ])
   })
 
-  it("says the category is gone when it does not exist anymore", async () => {
+  it("stores each of the four roles", async () => {
+    for (const rol of ["voz_propia", "referente", "evidencia", "estrategia"]) {
+      const resultado = await crearOk(coni, { rol, tipo: "link", url: `https://example.com/${rol}`, archivos: [] })
+      expect((await fila(resultado.materialId))?.rol).toBe(rol)
+    }
+  })
+
+  it("refuses a material without an author or a role before touching the database", async () => {
+    const sinAutor = await crearMaterial(deps(coni), {
+      ...base(),
+      autorId: "",
+      tipo: "link",
+      url: "https://example.com/a",
+    })
+    const sinRol = await crearMaterial(deps(coni), { ...base(), rol: "", tipo: "link", url: "https://example.com/b" })
+
+    expect(sinAutor).toEqual({ ok: false, error: "Elige el autor." })
+    expect(sinRol).toEqual({ ok: false, error: "Elige qué papel cumple este material." })
+  })
+
+  it("says the author is gone when it does not exist anymore", async () => {
     const resultado = await crearMaterial(deps(coni), {
       ...base(),
-      categoriaId: randomUUID(),
+      autorId: randomUUID(),
       tipo: "link",
       url: "https://example.com/otra",
       archivos: [],
     })
 
-    expect(resultado).toEqual({ ok: false, error: "Esa categoría ya no existe. Elige otra." })
+    expect(resultado).toEqual({ ok: false, error: "Ese autor ya no existe. Elígelo de nuevo." })
   })
 })
 
@@ -347,39 +362,6 @@ describe("descartarMaterial", () => {
       error: SOLO_PARA_MIEMBROS,
     })
     expect(await fila(creado.materialId)).not.toBeNull()
-  })
-})
-
-describe("crearCategoria", () => {
-  it("calls crear_categoria and answers the new category", async () => {
-    const nombre = `${PREFIJO}${randomUUID().slice(0, 6)}`
-
-    const resultado = await crearCategoria(deps(wav), { nombre })
-
-    expect(resultado.ok && resultado.categoria.nombre).toBe(nombre)
-    const { data } = await servicio.from("categorias").select("nombre").eq("nombre", nombre)
-    expect(data).toHaveLength(1)
-  })
-
-  it("answers the existing one when the name was already taken, whatever the accents and case", async () => {
-    const primera = await crearCategoria(deps(coni), { nombre: "Bienestar emocional" })
-    const repetida = await crearCategoria(deps(coni), { nombre: "  bienestar EMOCIONAL " })
-
-    expect(primera.ok && repetida.ok && repetida.categoria.id === primera.categoria.id).toBe(true)
-  })
-
-  it("asks for a name", async () => {
-    expect(await crearCategoria(deps(coni), { nombre: "   " })).toEqual({
-      ok: false,
-      error: "Escribe el nombre de la categoría.",
-    })
-  })
-
-  it("refuses anyone who is neither Coni nor WAV", async () => {
-    expect(await crearCategoria(deps(otra), { nombre: `${PREFIJO}x` })).toEqual({
-      ok: false,
-      error: SOLO_PARA_MIEMBROS,
-    })
   })
 })
 
