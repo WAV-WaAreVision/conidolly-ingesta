@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { ControlesDeVinculo } from "./controles-de-vinculo"
 
 export const SIN_VINCULOS = "Los vínculos aparecen cuando hay al menos dos materiales listos."
+export const AUN_SIN_VINCULOS = "Todavía no hay vínculos. Puedes elegir materiales para sintetizar una teoría."
 
 const CLASES_DE_ESTADO: Record<string, string> = {
   sugerido: "bg-aviso-fondo text-aviso-tinta",
@@ -24,7 +25,7 @@ export function ListaDeVinculos({
   vinculos: VinculoDelGrafo[]
   titulos: Record<string, string>
 }) {
-  if (vinculos.length === 0) return <p className="text-apagado">{SIN_VINCULOS}</p>
+  if (vinculos.length === 0) return <p className="text-apagado">{AUN_SIN_VINCULOS}</p>
   return (
     <ul className="grid gap-3">
       {vinculos.map((vinculo) => (

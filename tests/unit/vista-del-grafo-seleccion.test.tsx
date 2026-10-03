@@ -54,7 +54,18 @@ describe("VistaDelGrafo al elegir materiales", () => {
     render(<VistaDelGrafo materiales={materiales.slice(0, 1)} vinculos={[]} teorias={[]} />)
 
     expect(screen.queryByTestId("grafo")).not.toBeInTheDocument()
+    expect(screen.getByText("Los vínculos aparecen cuando hay al menos dos materiales listos.")).toBeInTheDocument()
     expect(screen.queryByRole("button", { name: "Seleccionar" })).not.toBeInTheDocument()
+  })
+
+  it("says in the list view that there are no links yet and that she can pick materials, when there are two or more", () => {
+    render(<VistaDelGrafo materiales={materiales.slice(0, 2)} vinculos={[]} teorias={[]} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Ver como lista" }))
+
+    expect(
+      screen.getByText("Todavía no hay vínculos. Puedes elegir materiales para sintetizar una teoría."),
+    ).toBeInTheDocument()
   })
 
   it("toggles materials by tapping their nodes while choosing, and highlights them", () => {

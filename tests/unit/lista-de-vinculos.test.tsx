@@ -106,6 +106,8 @@ describe("ListaDeVinculos", () => {
   it("says there are no links yet", () => {
     render(<ListaDeVinculos vinculos={[]} titulos={titulos} />)
 
-    expect(screen.getByText("Los vínculos aparecen cuando hay al menos dos materiales listos.")).toBeInTheDocument()
+    expect(
+      screen.getByText("Todavía no hay vínculos. Puedes elegir materiales para sintetizar una teoría."),
+    ).toBeInTheDocument()
   })
 })
