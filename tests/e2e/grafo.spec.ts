@@ -1,44 +1,7 @@
-import { randomUUID } from "node:crypto"
-import { expect, type Page, test } from "@playwright/test"
-import { capturar, clienteDeServicio } from "./ayudas"
-import { CARPETA_DE_DOCUMENTACION, CORREO_DE_CONI, PREFIJO_DE_PRUEBA } from "./entorno"
-
-async function idDeConi(): Promise<string> {
-  const { data, error } = await clienteDeServicio().auth.admin.listUsers()
-  const id = data?.users.find((usuario) => usuario.email === CORREO_DE_CONI)?.id
-  if (error || !id) throw new Error(`No encontré a ${CORREO_DE_CONI} en el Auth local.`)
-  return id
-}
-
-/** A ready material with its card, written with the service role: nothing is processed for real. */
-async function sembrarMaterial(titulo: string, autor: string): Promise<string> {
-  const servicio = clienteDeServicio()
-  const id = randomUUID()
-  const categoria = await servicio.from("categorias").select("id").eq("slug", "general").single()
-  if (categoria.error) throw new Error(categoria.error.message)
-  const material = await servicio.from("materiales").insert({
-    id,
-    tipo: "documento",
-    titulo: `${PREFIJO_DE_PRUEBA}${titulo}`,
-    autor,
-    categoria_id: categoria.data.id,
-    texto_pegado: "x",
-    declaracion_sin_pacientes_en: new Date().toISOString(),
-    subido_por: await idDeConi(),
-    estado: "listo",
-    idioma_original: "es",
-  })
-  if (material.error) throw new Error(material.error.message)
-  const ficha = await servicio.from("fichas").insert({
-    material_id: id,
-    resumen: "Un resumen de prueba.",
-    ideas_clave: ["uno", "dos", "tres", "cuatro", "cinco"],
-    citas: [{ texto: "Una cita de prueba.", ubicacion: { pagina: 3 } }],
-    fuente: { autor, anio: 2020, enlace: null },
-  })
-  if (ficha.error) throw new Error(ficha.error.message)
-  return id
-}
+import { expect, test } from "@playwright/test"
+import { capturar, clienteDeServicio, idDeConi, sembrarMaterial } from "./ayudas"
+import { dato, lugarDe, type Punto } from "./ayudas-del-grafo"
+import { CARPETA_DE_DOCUMENTACION, PREFIJO_DE_PRUEBA } from "./entorno"
 
 async function sembrarVinculo(x: string, y: string, extra: { estado: string; razon: string; relevancia: number }) {
   const [a, b] = [x, y].sort() as [string, string]
@@ -104,53 +67,6 @@ test("Coni sees the suggested links, accepts one and it reads as accepted; the g
   await fila("Grafo límites").getByRole("button", { name: "Descartar" }).click()
   await expect(fila("Grafo límites")).toHaveCount(0)
 })
-
-interface Punto {
-  x: number
-  y: number
-}
-type Cy = {
-  getElementById: (id: string) => {
-    renderedPosition: () => Punto
-    renderedMidpoint: () => Punto
-    data: (campo: string) => unknown
-    nonempty: () => boolean
-  }
-  nodes: () => { length: number }
-}
-type Contenedor = HTMLElement & { grafo?: Cy }
-
-/** Where an element of the graph is on the page, read from the Cytoscape instance the e2e build exposes. */
-async function lugarDe(page: Page, tipo: "nodo" | "arista", id: string): Promise<Punto> {
-  const lienzo = page.getByTestId("grafo")
-  await lienzo.scrollIntoViewIfNeeded()
-  const handle = await lienzo.elementHandle()
-  if (!handle) throw new Error("No encontré el lienzo del grafo.")
-  await page.waitForFunction(
-    ([el, elemento]) => (el as Contenedor).grafo?.getElementById(String(elemento)).nonempty() === true,
-    [handle, id] as const,
-  )
-  return handle.evaluate(
-    (el, [tipoDeElemento, elemento]) => {
-      const cy = (el as Contenedor).grafo
-      if (!cy) throw new Error("El grafo no está expuesto.")
-      const caja = el.getBoundingClientRect()
-      const e = cy.getElementById(String(elemento))
-      const p = tipoDeElemento === "nodo" ? e.renderedPosition() : e.renderedMidpoint()
-      return { x: caja.left + p.x, y: caja.top + p.y }
-    },
-    [tipo, id] as const,
-  )
-}
-
-async function dato(page: Page, id: string, campo: string): Promise<unknown> {
-  const handle = await page.getByTestId("grafo").elementHandle()
-  if (!handle) throw new Error("No encontré el lienzo del grafo.")
-  return handle.evaluate(
-    (el, [elemento, c]) => (el as Contenedor).grafo?.getElementById(String(elemento)).data(String(c)),
-    [id, campo] as const,
-  )
-}
 
 for (const modo of ["mouse", "touch"] as const) {
   test(`Coni uses the graph with real ${modo} input: card, edge decision and a link by hand`, async ({ page }) => {

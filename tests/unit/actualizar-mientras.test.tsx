@@ -42,4 +42,13 @@ describe("ActualizarMientras", () => {
 
     expect(refrescar).toHaveBeenCalledTimes(1)
   })
+
+  it("asks as often as the page says it needs", () => {
+    render(<ActualizarMientras activo cadaMs={5_000} />)
+
+    vi.advanceTimersByTime(4_999)
+    expect(refrescar).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1)
+    expect(refrescar).toHaveBeenCalledTimes(1)
+  })
 })

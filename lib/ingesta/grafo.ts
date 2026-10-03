@@ -75,7 +75,7 @@ const TAMANO_POR_VINCULO = 6
 const TAMANO_MAXIMO = 62
 const TAMANO_DE_TEORIA = 40
 
-function materialesVisibles(materiales: MaterialDelGrafo[], filtros: FiltrosDelGrafo): MaterialDelGrafo[] {
+export function materialesVisibles(materiales: MaterialDelGrafo[], filtros: FiltrosDelGrafo): MaterialDelGrafo[] {
   return materiales.filter(
     (m) => (!filtros.categoria || m.categoria === filtros.categoria) && (!filtros.autor || m.autor === filtros.autor),
   )

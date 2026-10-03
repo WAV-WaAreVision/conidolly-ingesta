@@ -12,6 +12,8 @@ interface Propiedades {
   elementos: ElementDefinition[]
   /** The node held down, waiting for a second tap to become a link. */
   origen: string | null
+  /** The materials chosen for a theory. */
+  elegidos: string[]
   alTocarNodo: (id: string) => void
   alTocarArista: (id: string) => void
   alMantenerNodo: (id: string) => void
@@ -85,6 +87,10 @@ export function GrafoCytoscape(propiedades: Propiedades) {
             selector: ":selected, .origen",
             style: { "border-width": 4, "border-color": color(TOKEN_DE_SELECCION), "overlay-opacity": 0 },
           },
+          {
+            selector: ".elegido",
+            style: { "border-width": 5, "border-color": color(TOKEN_DE_SELECCION), "overlay-opacity": 0 },
+          },
           { selector: "edge:selected", style: { "line-color": color(TOKEN_DE_SELECCION), opacity: 1 } },
         ],
         layout: { name: "cose", animate: false, padding: 24, nodeRepulsion: () => 9000 },
@@ -116,7 +122,7 @@ export function GrafoCytoscape(propiedades: Propiedades) {
     }
   }, [])
 
-  const { elementos, origen } = propiedades
+  const { elementos, origen, elegidos } = propiedades
   useEffect(() => {
     const instancia = cy.current
     if (!instancia) return
@@ -125,7 +131,15 @@ export function GrafoCytoscape(propiedades: Propiedades) {
       instancia.add(conColores(elementos))
     })
     instancia.layout({ name: "cose", animate: false, padding: 24, nodeRepulsion: () => 9000 }).run()
+    for (const id of alDia.current.elegidos) instancia.getElementById(id).addClass("elegido")
   }, [elementos])
+
+  useEffect(() => {
+    const instancia = cy.current
+    if (!instancia) return
+    instancia.nodes().removeClass("elegido")
+    for (const id of elegidos) instancia.getElementById(id).addClass("elegido")
+  }, [elegidos])
 
   useEffect(() => {
     const instancia = cy.current

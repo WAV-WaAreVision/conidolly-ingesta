@@ -32,6 +32,7 @@ const deps = (db: Db): DepsSubir => ({
   disparar: async () => {},
   ahora: () => new Date("2026-10-03T12:00:00.000Z"),
   nuevoId: randomUUID,
+  dispararTeoria: async () => {},
 })
 
 async function material(): Promise<string> {

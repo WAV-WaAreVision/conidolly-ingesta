@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { idempotencyKeys, tasks } from "@trigger.dev/sdk"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { FallaDeConfiguracion } from "@/lib/dominio/falla"
-import { dispararProcesarMaterial } from "@/lib/ingesta/disparo"
+import { dispararProcesarMaterial, dispararSintetizarTeoria } from "@/lib/ingesta/disparo"
 
 vi.mock("@trigger.dev/sdk", () => ({
   tasks: { trigger: vi.fn(async () => ({ id: "run_1" })) },
@@ -66,5 +66,48 @@ describe("dispararProcesarMaterial", () => {
       materialId: ID,
       intento: "intento-2",
     })
+  })
+})
+
+describe("dispararSintetizarTeoria", () => {
+  it("writes the run, with its attempt, to a file and calls nothing when DISPARO_DE_PRUEBA is on", async () => {
+    const archivo = join(mkdtempSync(join(tmpdir(), "disparos-")), "registro.jsonl")
+
+    await dispararSintetizarTeoria(ID, { DISPARO_DE_PRUEBA: "1", DISPARO_DE_PRUEBA_ARCHIVO: archivo }, "intento-2")
+
+    expect(JSON.parse(readFileSync(archivo, "utf-8").trim())).toEqual({
+      tarea: "sintetizar-teoria",
+      teoriaId: ID,
+      intento: "intento-2",
+    })
+    expect(tasks.trigger).not.toHaveBeenCalled()
+  })
+
+  it("never records instead of starting when it runs on Vercel", async () => {
+    await expect(dispararSintetizarTeoria(ID, { DISPARO_DE_PRUEBA: "1", VERCEL: "1" })).rejects.toThrow(
+      FallaDeConfiguracion,
+    )
+  })
+
+  it("asks for the Trigger.dev key before starting anything for real", async () => {
+    await expect(dispararSintetizarTeoria(ID, {})).rejects.toThrow(/TRIGGER_SECRET_KEY/)
+    expect(tasks.trigger).not.toHaveBeenCalled()
+  })
+
+  it("starts sintetizar-teoria with one idempotency key per theory that holds for ten minutes", async () => {
+    await dispararSintetizarTeoria(ID, { TRIGGER_SECRET_KEY: "tr_dev_x" })
+
+    expect(idempotencyKeys.create).toHaveBeenCalledWith(`sintetizar-teoria:${ID}`, { scope: "global" })
+    expect(tasks.trigger).toHaveBeenCalledWith(
+      "sintetizar-teoria",
+      { teoriaId: ID },
+      { idempotencyKey: `clave-creada:sintetizar-teoria:${ID}`, idempotencyKeyTTL: "10m" },
+    )
+  })
+
+  it("uses a key of its own for each retry attempt", async () => {
+    await dispararSintetizarTeoria(ID, { TRIGGER_SECRET_KEY: "tr_dev_x" }, "intento-2")
+
+    expect(idempotencyKeys.create).toHaveBeenCalledWith(`sintetizar-teoria:${ID}:intento-2`, { scope: "global" })
   })
 })

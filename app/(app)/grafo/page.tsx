@@ -1,20 +1,18 @@
 import Link from "next/link"
 import { clasesDeBoton } from "@/components/ui/clases-de-boton"
-import type { TeoriaDelGrafo } from "@/lib/ingesta/grafo"
 import { listarMateriales } from "@/lib/ingesta/materiales"
+import { teoriasDelGrafo } from "@/lib/ingesta/teorias"
 import { listarVinculos } from "@/lib/ingesta/vinculos"
 import { leerSesion } from "@/lib/sesion/miembro"
 import { VistaDelGrafo } from "./vista-del-grafo"
 
-// The theories arrive with their own table; until then the graph has none.
-const TEORIAS: TeoriaDelGrafo[] = []
-
 export default async function Grafo() {
   const sesion = await leerSesion()
   if (sesion.estado !== "miembro") return null
-  const [materiales, vinculos] = await Promise.all([
+  const [materiales, vinculos, teorias] = await Promise.all([
     listarMateriales(sesion.db, { estado: "listo" }),
     listarVinculos(sesion.db),
+    teoriasDelGrafo(sesion.db),
   ])
 
   return (
@@ -23,7 +21,7 @@ export default async function Grafo() {
         Volver a materiales
       </Link>
       <h1 className="font-serif text-display text-balance">Vínculos entre materiales</h1>
-      <VistaDelGrafo materiales={materiales} vinculos={vinculos} teorias={TEORIAS} />
+      <VistaDelGrafo materiales={materiales} vinculos={vinculos} teorias={teorias} />
     </main>
   )
 }
