@@ -140,6 +140,8 @@ export function GrafoCytoscape(propiedades: Propiedades) {
       role="img"
       aria-label="Grafo de vínculos entre materiales. Para usarlo sin verlo, abre Ver como lista."
       data-testid="grafo"
+      data-grafo-lienzo=""
+      tabIndex={-1}
       className="h-[58dvh] min-h-80 w-full rounded-lg border border-linea bg-superficie"
     />
   )
