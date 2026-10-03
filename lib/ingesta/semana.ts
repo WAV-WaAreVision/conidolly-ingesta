@@ -60,7 +60,7 @@ export interface SemanaLeida {
   queSubir: QueSubir | null
 }
 
-const YA_PROPUSO = "El motor ya propuso ideas esta semana. Vuelve el domingo."
+const YA_PROPUSO = "El motor ya propuso ideas esta semana. Puedes pedir otras desde el lunes."
 const NO_ARRANCO = "No pude pedirle ideas al motor. Inténtalo de nuevo en unos minutos."
 /** The engine retakes a run stuck in `corriendo` after this long (`MINUTOS_PARA_RETOMAR` in estudio-coni): until then it is alive. */
 const MINUTOS_DE_UNA_CORRIDA_VIVA = 30

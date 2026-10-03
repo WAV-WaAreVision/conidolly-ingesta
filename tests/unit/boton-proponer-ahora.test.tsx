@@ -26,13 +26,16 @@ describe("BotonProponerAhora", () => {
   })
 
   it("shows why it did not start, as an alert, and does not refresh", async () => {
-    proponer.mockResolvedValue({ ok: false, error: "El motor ya propuso ideas esta semana. Vuelve el domingo." })
+    proponer.mockResolvedValue({
+      ok: false,
+      error: "El motor ya propuso ideas esta semana. Puedes pedir otras desde el lunes.",
+    })
     render(<BotonProponerAhora />)
 
     fireEvent.click(screen.getByRole("button", { name: "Proponer ahora" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "El motor ya propuso ideas esta semana. Vuelve el domingo.",
+      "El motor ya propuso ideas esta semana. Puedes pedir otras desde el lunes.",
     )
     expect(refrescar).not.toHaveBeenCalled()
   })

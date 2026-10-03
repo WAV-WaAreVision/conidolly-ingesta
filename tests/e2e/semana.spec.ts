@@ -88,7 +88,9 @@ test("Coni reads the latest run, its theories, the discarded crossings and what 
 
   await page.getByRole("button", { name: "Proponer ahora" }).click()
   await expect(
-    page.getByRole("alert").filter({ hasText: "El motor ya propuso ideas esta semana. Vuelve el domingo." }),
+    page
+      .getByRole("alert")
+      .filter({ hasText: "El motor ya propuso ideas esta semana. Puedes pedir otras desde el lunes." }),
   ).toBeVisible()
   expect(disparosDelMotor()).toEqual([])
 
