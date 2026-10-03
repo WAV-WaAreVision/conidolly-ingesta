@@ -331,6 +331,10 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
                 checked={rol === opcion}
                 onChange={() => {
                   setRol(opcion)
+                  // What Coni says is by Coni: the seeded author is the obvious pick while none is chosen.
+                  if (opcion === "voz_propia" && autorId === "") {
+                    setAutorId(autores.find((autor) => autor.tipo === "coni")?.id ?? "")
+                  }
                   setError(null)
                 }}
                 className="sr-only"

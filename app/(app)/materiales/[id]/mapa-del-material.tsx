@@ -1,21 +1,5 @@
+import { EVIDENCIA, TIPO_DE_AFIRMACION } from "@/lib/ingesta/etiquetas"
 import type { MapaDelMaterial as Mapa } from "@/lib/ingesta/materiales"
-
-const TIPO_DE_AFIRMACION: Record<string, string> = {
-  definicion: "Definición",
-  causa: "Causa",
-  consecuencia: "Consecuencia",
-  mito: "Mito",
-  consejo: "Consejo",
-  dato: "Dato",
-  experiencia: "Experiencia",
-}
-
-const EVIDENCIA: Record<string, string> = {
-  estudio: "Estudio",
-  clinica: "Clínica",
-  opinion: "Opinión",
-  testimonio: "Testimonio",
-}
 
 function Recuento({ titulo, filas }: { titulo: string; filas: { clave: string; texto: string; cantidad: number }[] }) {
   return (

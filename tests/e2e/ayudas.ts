@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs"
 import { dirname, join } from "node:path"
 import type { BrowserContext, Page } from "@playwright/test"
@@ -152,4 +153,64 @@ export async function sembrarAutor(
   const creado = await servicio.from("autores").insert({ nombre: completo, tipo }).select("id").single()
   if (creado.error) throw new Error(creado.error.message)
   return creado.data.id
+}
+
+/** A material of the test with no file, already processed: the screens of authors and topics only read its claims. */
+export async function sembrarMaterialListo(
+  autorId: string,
+  rol: "voz_propia" | "referente" | "evidencia" = "referente",
+): Promise<string> {
+  const id = randomUUID()
+  const { error } = await clienteDeServicio()
+    .from("materiales")
+    .insert({
+      id,
+      tipo: "documento",
+      titulo: `${PREFIJO_DE_PRUEBA}Material de ${id.slice(0, 6)}`,
+      autor_id: autorId,
+      rol,
+      texto_pegado: "x",
+      declaracion_sin_pacientes_en: new Date().toISOString(),
+      subido_por: await idDeConi(),
+      estado: "listo",
+    })
+  if (error) throw new Error(error.message)
+  return id
+}
+
+/** A topic of the test (its name starts with the test prefix, so the cleanup finds it). */
+export async function sembrarTema(nombre: string, extra: { descripcion?: string; categoria_id?: string } = {}) {
+  const { data, error } = await clienteDeServicio()
+    .from("temas")
+    .insert({ nombre: `${PREFIJO_DE_PRUEBA}${nombre}`, centroide: `[${new Array(1024).fill(0).join(",")}]`, ...extra })
+    .select("id")
+    .single()
+  if (error) throw new Error(error.message)
+  return data.id
+}
+
+export async function sembrarAfirmacionDe(
+  materialId: string,
+  autorId: string,
+  temaId: string | null,
+  extra: Record<string, unknown> = {},
+): Promise<string> {
+  const { data, error } = await clienteDeServicio()
+    .from("afirmaciones")
+    .insert({
+      material_id: materialId,
+      autor_id: autorId,
+      tema_id: temaId,
+      tramo: 0,
+      ubicacion: { pagina: 4 },
+      texto: "El apego se aprende en la infancia.",
+      cita: "El apego se aprende en la infancia, escribió ella.",
+      tipo: "definicion",
+      evidencia: "estudio",
+      ...extra,
+    })
+    .select("id")
+    .single()
+  if (error) throw new Error(error.message)
+  return data.id
 }

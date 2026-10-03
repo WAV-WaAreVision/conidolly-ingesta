@@ -147,6 +147,33 @@ describe("FormularioSubida: autor y rol", () => {
     expect(screen.getByText("Un estudio, libro o artículo que respalda con datos lo que se dice.")).toBeInTheDocument()
   })
 
+  it("picks Coni as the author when she chooses 'Lo dijo Coni' and no author is chosen yet", () => {
+    render(<FormularioSubida autores={AUTORES} />)
+
+    elegirRol("Lo dijo Coni")
+
+    expect(screen.getByText("Constanza del Rosario")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Cambiar autor" })).toBeInTheDocument()
+  })
+
+  it("keeps the author already chosen when she picks 'Lo dijo Coni'", () => {
+    render(<FormularioSubida autores={AUTORES} />)
+    elegirAutor("Esther Perel")
+
+    elegirRol("Lo dijo Coni")
+
+    expect(screen.getByText("Esther Perel")).toBeInTheDocument()
+    expect(screen.queryByText("Constanza del Rosario")).toBeNull()
+  })
+
+  it("does not pick any author for the other roles", () => {
+    render(<FormularioSubida autores={AUTORES} />)
+
+    elegirRol("Referente")
+
+    expect(screen.queryByRole("button", { name: "Cambiar autor" })).toBeNull()
+  })
+
   it("searches the authors and creates a new one through the action", async () => {
     crearAutor.mockResolvedValue({
       ok: true,
