@@ -205,6 +205,8 @@ test("Coni confirms the cost of a long material from the list and the card, and 
 
   await page.goto("/")
   await expect(tarjeta("Largo en lista").getByText(motivo)).toBeVisible()
+  await expect(tarjeta("Largo en lista").getByText("Espera tu OK", { exact: true })).toBeVisible()
+  await expect(tarjeta("Largo en lista").getByText("Procesando", { exact: true })).toHaveCount(0)
   await expect(tarjeta("Largo en lista").getByRole("button", { name: "Reintentar" })).toHaveCount(0)
   await tarjeta("Largo en lista").getByRole("button", { name: "Procesar por ~US$ 0,80" }).click()
   await expect(tarjeta("Largo en lista").getByText("Procesando", { exact: true })).toBeVisible()
@@ -212,7 +214,9 @@ test("Coni confirms the cost of a long material from the list and the card, and 
   await expect(tarjeta("Largo en lista").getByRole("button")).toHaveCount(0)
 
   await page.goto(`/materiales/${enFicha}`)
+  await expect(page.getByText("Espera tu OK", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Procesar por ~US$ 1,25" }).click()
+  await expect(page.getByText("Procesando", { exact: true })).toBeVisible()
   await expect(page.getByRole("button", { name: /Procesar por/ })).toHaveCount(0)
   await expect(page.getByText(motivo)).toHaveCount(0)
 

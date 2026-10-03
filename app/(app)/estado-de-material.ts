@@ -38,3 +38,11 @@ export function sePuedeReintentar(material: EstadoDeProceso): boolean {
 export function estaProcesando(material: EstadoDeProceso): boolean {
   return material.estado === "procesando" && material.motivo_fallo === null
 }
+
+const ESPERA_TU_OK = { texto: "Espera tu OK", clases: "bg-hundido text-apagado" }
+
+/** The chip of a material: one waiting for the cost to be confirmed says so instead of "Procesando". */
+export function estadoVisible(material: EstadoDeProceso): { texto: string; clases: string } {
+  if (esperaConfirmacion(material)) return ESPERA_TU_OK
+  return ESTADO[material.estado] ?? { texto: material.estado, clases: "bg-hundido text-apagado" }
+}

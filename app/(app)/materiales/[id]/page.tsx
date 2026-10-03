@@ -6,7 +6,7 @@ import { leerMaterialConFicha } from "@/lib/ingesta/materiales"
 import { esquemaDeId } from "@/lib/ingesta/modelo"
 import { leerSesion } from "@/lib/sesion/miembro"
 import { cn } from "@/lib/utils"
-import { ESTADO, ETIQUETA_DE_TIPO, esperaConfirmacion, sePuedeReintentar } from "../../estado-de-material"
+import { ETIQUETA_DE_TIPO, esperaConfirmacion, estadoVisible, sePuedeReintentar } from "../../estado-de-material"
 import { BotonConfirmarCosto } from "../boton-confirmar-costo"
 import { BotonReintentar } from "../boton-reintentar"
 import { BorrarMaterial } from "./borrar-material"
@@ -20,7 +20,7 @@ export default async function FichaDeMaterial({ params }: { params: Promise<{ id
   const leido = await leerMaterialConFicha(sesion.db, id.data.materialId)
   if (!leido) notFound()
   const { material, ficha } = leido
-  const estado = ESTADO[material.estado] ?? { texto: material.estado, clases: "bg-hundido text-apagado" }
+  const estado = estadoVisible(material)
   const enlace = `/materiales/${material.id}/texto`
 
   return (

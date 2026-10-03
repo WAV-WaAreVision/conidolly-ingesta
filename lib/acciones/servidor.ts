@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { almacenDeEntorno } from "@/lib/almacen/almacen"
-import { dispararProcesarMaterial } from "@/lib/ingesta/disparo"
+import { dispararProcesarMaterial, dispararSintetizarTeoria } from "@/lib/ingesta/disparo"
 import type { DepsSubir } from "@/lib/ingesta/subir"
 import { createActionClient } from "@/lib/supabase/action"
 import { ERROR_GENERICO, ERROR_SESION_VENCIDA, type Resultado } from "./resultado"
@@ -32,6 +32,7 @@ export async function conSesion<T extends object>(
       borrarCarpeta: (materialId) => almacenDeEntorno().borrarCarpeta(materialId),
     },
     disparar: (materialId, intento) => dispararProcesarMaterial(materialId, process.env, intento),
+    dispararTeoria: (teoriaId, intento) => dispararSintetizarTeoria(teoriaId, process.env, intento),
     ahora: () => new Date(),
     nuevoId: randomUUID,
   })

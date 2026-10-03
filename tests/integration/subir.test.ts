@@ -36,6 +36,7 @@ const deps = (db: Db): DepsSubir => ({
   },
   ahora: () => AHORA,
   nuevoId: randomUUID,
+  dispararTeoria: async () => {},
 })
 
 const base = () => ({ categoriaId, etiquetas: ["apego", "pareja"], declaracion: true })

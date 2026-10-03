@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto"
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs"
 import { dirname, join } from "node:path"
 import type { BrowserContext, Page } from "@playwright/test"
@@ -11,6 +12,8 @@ import {
   CARPETA_DE_CAPTURAS,
   CLAVE_ANONIMA,
   CLAVE_DE_SERVICIO,
+  CORREO_DE_CONI,
+  PREFIJO_DE_PRUEBA,
   SUPABASE_URL,
   URL_DE_LA_APP,
   URL_DEL_ALMACEN,
@@ -38,20 +41,35 @@ export async function leerCodigo(correo: string): Promise<string> {
   throw new Error(`No llegó ningún código a ${correo} al buzón local.`)
 }
 
-const Disparo = z.object({ tarea: z.literal("procesar-material"), materialId: z.string() })
+const DisparoDeMaterial = z.object({ tarea: z.literal("procesar-material"), materialId: z.string() })
+const DisparoDeTeoria = z.object({
+  tarea: z.literal("sintetizar-teoria"),
+  teoriaId: z.string(),
+  intento: z.string().optional(),
+})
+const Disparo = z.discriminatedUnion("tarea", [DisparoDeMaterial, DisparoDeTeoria])
 
 export function limpiarDisparos(): void {
   mkdirSync(dirname(ARCHIVO_DE_DISPAROS), { recursive: true })
   rmSync(ARCHIVO_DE_DISPAROS, { force: true })
 }
 
-/** The background runs the app would have started (Trigger.dev is never called in tests). */
-export function disparosRegistrados(): z.infer<typeof Disparo>[] {
+function leerDisparos(): z.infer<typeof Disparo>[] {
   if (!existsSync(ARCHIVO_DE_DISPAROS)) return []
   return readFileSync(ARCHIVO_DE_DISPAROS, "utf-8")
     .split("\n")
     .filter((linea) => linea.trim() !== "")
     .map((linea) => Disparo.parse(JSON.parse(linea)))
+}
+
+/** The material runs the app would have started (Trigger.dev is never called in tests). */
+export function disparosRegistrados(): z.infer<typeof DisparoDeMaterial>[] {
+  return leerDisparos().filter((disparo) => disparo.tarea === "procesar-material")
+}
+
+/** The theory syntheses the app would have started. */
+export function disparosDeTeoria(): z.infer<typeof DisparoDeTeoria>[] {
+  return leerDisparos().filter((disparo) => disparo.tarea === "sintetizar-teoria")
 }
 
 const Objetos = z.record(z.string(), z.object({ bytes: z.number(), tipo: z.string(), firmada: z.boolean() }))
@@ -121,3 +139,40 @@ export const PNG_MINIMO = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
   "base64",
 )
+
+export async function idDeConi(): Promise<string> {
+  const { data, error } = await clienteDeServicio().auth.admin.listUsers()
+  const id = data?.users.find((usuario) => usuario.email === CORREO_DE_CONI)?.id
+  if (error || !id) throw new Error(`No encontré a ${CORREO_DE_CONI} en el Auth local.`)
+  return id
+}
+
+/** A ready material with its card, written with the service role: nothing is processed for real. */
+export async function sembrarMaterial(titulo: string, autor: string): Promise<string> {
+  const servicio = clienteDeServicio()
+  const id = randomUUID()
+  const categoria = await servicio.from("categorias").select("id").eq("slug", "general").single()
+  if (categoria.error) throw new Error(categoria.error.message)
+  const material = await servicio.from("materiales").insert({
+    id,
+    tipo: "documento",
+    titulo: `${PREFIJO_DE_PRUEBA}${titulo}`,
+    autor,
+    categoria_id: categoria.data.id,
+    texto_pegado: "x",
+    declaracion_sin_pacientes_en: new Date().toISOString(),
+    subido_por: await idDeConi(),
+    estado: "listo",
+    idioma_original: "es",
+  })
+  if (material.error) throw new Error(material.error.message)
+  const ficha = await servicio.from("fichas").insert({
+    material_id: id,
+    resumen: "Un resumen de prueba.",
+    ideas_clave: ["uno", "dos", "tres", "cuatro", "cinco"],
+    citas: [{ texto: "Una cita de prueba.", ubicacion: { pagina: 3 } }],
+    fuente: { autor, anio: 2020, enlace: null },
+  })
+  if (ficha.error) throw new Error(ficha.error.message)
+  return id
+}
