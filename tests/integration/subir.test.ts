@@ -89,7 +89,7 @@ describe("crearMaterial", () => {
     })
     expect(new Date(material?.declaracion_sin_pacientes_en ?? 0).toISOString()).toBe(AHORA.toISOString())
     expect(material?.subido_por).toBe((await coni.auth.getUser()).data.user?.id)
-    expect(material?.archivo_clave).toMatch(/^materiales\/[0-9a-f-]{36}\/original\.pdf$/)
+    expect(material?.archivo_clave).toBe(`materiales/${resultado.materialId}/original.pdf`)
     expect(resultado.subidas).toHaveLength(1)
     expect(resultado.subidas[0]).toMatchObject({ orden: 1, tipoContenido: "application/pdf" })
     expect(resultado.subidas[0]?.url).toContain(material?.archivo_clave ?? "no hay clave")
@@ -299,6 +299,26 @@ describe("confirmarMaterial", () => {
       ok: false,
       error: "No entendí esa solicitud. Vuelve a abrir la pantalla.",
     })
+  })
+})
+
+describe("a material belongs to whoever uploaded it", () => {
+  it("does not let WAV confirm Coni's material that is still uploading, and keeps Coni's row", async () => {
+    const creado = await crearOk(coni, { tipo: "documento", archivos: [{ nombre: "a.pdf", tamano: 4 }] })
+
+    const resultado = await confirmarMaterial(deps(wav), { materialId: creado.materialId })
+
+    expect(resultado).toEqual({ ok: false, error: "No encontré ese material." })
+    expect(disparos).toEqual([])
+    expect(await fila(creado.materialId)).not.toBeNull()
+  })
+
+  it("does not let WAV discard Coni's material, and keeps Coni's row", async () => {
+    const creado = await crearOk(coni, { tipo: "documento", archivos: [{ nombre: "a.pdf", tamano: 4 }] })
+
+    await descartarMaterial(deps(wav), { materialId: creado.materialId })
+
+    expect(await fila(creado.materialId)).not.toBeNull()
   })
 })
 

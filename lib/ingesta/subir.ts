@@ -40,6 +40,13 @@ async function exigirMiembro(db: Db, accion: string): Promise<{ ok: true } | { o
   }
 }
 
+/** The signed-in person's id; materials are only ever acted on by whoever uploaded them. */
+async function idDelUsuario(db: Db): Promise<string | null> {
+  const { data, error } = await db.auth.getUser()
+  if (error) console.error("No pude leer quién entró", error)
+  return data.user?.id ?? null
+}
+
 async function borrarMaterial(db: Db, materialId: string): Promise<void> {
   const { error } = await db.from("materiales").delete().eq("id", materialId)
   if (error) console.error(`No pude borrar el material ${materialId}`, error)
@@ -59,16 +66,15 @@ export async function crearMaterial(
   if (!leida.ok) return leida
   const { datos } = leida
 
-  // The database generates the id of the row and does not let the browser's role choose it, so the folder of the files
-  // gets its own UUID. `materiales.archivo_clave` is what the processing reads: nothing derives the key from the id.
-  const carpeta = deps.nuevoId()
+  const materialId = deps.nuevoId()
   const claves = datos.archivos.map((archivo, indice) =>
-    claveMaterial(carpeta, extensionDe(archivo.nombre), datos.tipo === "imagen" ? indice + 1 : undefined),
+    claveMaterial(materialId, extensionDe(archivo.nombre), datos.tipo === "imagen" ? indice + 1 : undefined),
   )
 
   const { data: material, error } = await deps.db
     .from("materiales")
     .insert({
+      id: materialId,
       tipo: datos.tipo,
       titulo: datos.titulo,
       autor: datos.autor,
@@ -135,11 +141,14 @@ export async function confirmarMaterial(deps: DepsSubir, entrada: unknown): Prom
   const id = esquemaDeId.safeParse(entrada)
   if (!id.success) return { ok: false, error: ERROR_SOLICITUD }
   const { materialId } = id.data
+  const userId = await idDelUsuario(deps.db)
+  if (!userId) return { ok: false, error: ERROR_GENERICO }
 
   const { data: material, error } = await deps.db
     .from("materiales")
     .select("id, estado, archivo_clave")
     .eq("id", materialId)
+    .eq("subido_por", userId)
     .maybeSingle()
   if (error) {
     console.error(`No pude leer el material ${materialId}`, error)
@@ -183,7 +192,14 @@ export async function descartarMaterial(deps: DepsSubir, entrada: unknown): Prom
   if (!miembro.ok) return miembro
   const id = esquemaDeId.safeParse(entrada)
   if (!id.success) return { ok: false, error: ERROR_SOLICITUD }
-  const { error } = await deps.db.from("materiales").delete().eq("id", id.data.materialId).eq("estado", "procesando")
+  const userId = await idDelUsuario(deps.db)
+  if (!userId) return { ok: false, error: ERROR_GENERICO }
+  const { error } = await deps.db
+    .from("materiales")
+    .delete()
+    .eq("id", id.data.materialId)
+    .eq("subido_por", userId)
+    .eq("estado", "procesando")
   if (error) {
     console.error(`No pude descartar el material ${id.data.materialId}`, error)
     return { ok: false, error: ERROR_GENERICO }

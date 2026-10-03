@@ -24,11 +24,7 @@ export async function vaciarBuzon(): Promise<void> {
   if (!respuesta.ok) throw new Error(`No pude vaciar el buzón local: ${respuesta.status}`)
 }
 
-/**
- * The six digits of the newest email sent to `correo`, read from the local mail catcher (never a real mailbox).
- * When the mail arrives without a code (the local stack was started without the code template of Conidolly and sends
- * the default magic-link mail), the code is minted with the admin API instead: it is the same OTP the mail would carry.
- */
+/** The six digits of the newest email sent to `correo`, read from the local mail catcher (never a real mailbox). */
 export async function leerCodigo(correo: string): Promise<string> {
   for (let intento = 0; intento < 30; intento++) {
     const respuesta = await fetch(`${BUZON}/api/v1/messages`)
@@ -36,16 +32,9 @@ export async function leerCodigo(correo: string): Promise<string> {
     const mensaje = messages.find((candidato) => candidato.To.some((para) => para.Address === correo))
     const codigo = /\b(\d{6})\b/.exec(mensaje?.Snippet ?? "")?.[1]
     if (codigo) return codigo
-    if (mensaje) return codigoDeAdministrador(correo)
     await new Promise((resolver) => setTimeout(resolver, 500))
   }
-  throw new Error(`No llegó ningún correo a ${correo} al buzón local.`)
-}
-
-async function codigoDeAdministrador(correo: string): Promise<string> {
-  const enlace = await clienteDeServicio().auth.admin.generateLink({ type: "magiclink", email: correo })
-  if (enlace.error) throw new Error(`No pude generar el código de ${correo}: ${enlace.error.message}`)
-  return enlace.data.properties.email_otp
+  throw new Error(`No llegó ningún código a ${correo} al buzón local.`)
 }
 
 const Disparo = z.object({ tarea: z.literal("procesar-material"), materialId: z.string() })
