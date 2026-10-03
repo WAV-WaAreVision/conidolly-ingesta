@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { expect, test } from "@playwright/test"
+import { expect, type Page, test } from "@playwright/test"
 import { capturar, clienteDeServicio } from "./ayudas"
 import { CARPETA_DE_DOCUMENTACION, CORREO_DE_CONI, PREFIJO_DE_PRUEBA } from "./entorno"
 
@@ -55,6 +55,12 @@ async function sembrarVinculo(x: string, y: string, extra: { estado: string; raz
   if (error) throw new Error(error.message)
 }
 
+test("the back link goes to the list of materials", async ({ page }) => {
+  await page.goto("/grafo")
+  await page.getByRole("link", { name: "Volver a materiales" }).click()
+  await expect(page).toHaveURL(/\/$/)
+})
+
 test("Coni sees the suggested links, accepts one and it reads as accepted; the graph draws", async ({ page }) => {
   const apego = await sembrarMaterial("Grafo apego", "Autora Grafo")
   const deseo = await sembrarMaterial("Grafo deseo", "Autora Grafo")
@@ -70,6 +76,7 @@ test("Coni sees the suggested links, accepts one and it reads as accepted; the g
 
   await expect(page.getByTestId("grafo").locator("canvas").first()).toBeVisible()
   await page.waitForTimeout(800)
+  await page.getByTestId("grafo").scrollIntoViewIfNeeded()
   await capturar(page, "ingesta-grafo", CARPETA_DE_DOCUMENTACION)
 
   await page.getByRole("button", { name: "Ver como lista" }).click()
@@ -97,3 +104,115 @@ test("Coni sees the suggested links, accepts one and it reads as accepted; the g
   await fila("Grafo límites").getByRole("button", { name: "Descartar" }).click()
   await expect(fila("Grafo límites")).toHaveCount(0)
 })
+
+interface Punto {
+  x: number
+  y: number
+}
+type Cy = {
+  getElementById: (id: string) => {
+    renderedPosition: () => Punto
+    renderedMidpoint: () => Punto
+    data: (campo: string) => unknown
+    nonempty: () => boolean
+  }
+  nodes: () => { length: number }
+}
+type Contenedor = HTMLElement & { grafo?: Cy }
+
+/** Where an element of the graph is on the page, read from the Cytoscape instance the e2e build exposes. */
+async function lugarDe(page: Page, tipo: "nodo" | "arista", id: string): Promise<Punto> {
+  const lienzo = page.getByTestId("grafo")
+  await lienzo.scrollIntoViewIfNeeded()
+  const handle = await lienzo.elementHandle()
+  if (!handle) throw new Error("No encontré el lienzo del grafo.")
+  await page.waitForFunction(
+    ([el, elemento]) => (el as Contenedor).grafo?.getElementById(String(elemento)).nonempty() === true,
+    [handle, id] as const,
+  )
+  return handle.evaluate(
+    (el, [tipoDeElemento, elemento]) => {
+      const cy = (el as Contenedor).grafo
+      if (!cy) throw new Error("El grafo no está expuesto.")
+      const caja = el.getBoundingClientRect()
+      const e = cy.getElementById(String(elemento))
+      const p = tipoDeElemento === "nodo" ? e.renderedPosition() : e.renderedMidpoint()
+      return { x: caja.left + p.x, y: caja.top + p.y }
+    },
+    [tipo, id] as const,
+  )
+}
+
+async function dato(page: Page, id: string, campo: string): Promise<unknown> {
+  const handle = await page.getByTestId("grafo").elementHandle()
+  if (!handle) throw new Error("No encontré el lienzo del grafo.")
+  return handle.evaluate(
+    (el, [elemento, c]) => (el as Contenedor).grafo?.getElementById(String(elemento)).data(String(c)),
+    [id, campo] as const,
+  )
+}
+
+for (const modo of ["mouse", "touch"] as const) {
+  test(`Coni uses the graph with real ${modo} input: card, edge decision and a link by hand`, async ({ page }) => {
+    const apego = await sembrarMaterial(`Toque ${modo} apego`, "Autora Toque")
+    const deseo = await sembrarMaterial(`Toque ${modo} deseo`, "Autora Toque")
+    const limites = await sembrarMaterial(`Toque ${modo} límites`, "Autora Toque")
+    await sembrarVinculo(apego, deseo, { estado: "sugerido", razon: "Los dos hablan de la distancia.", relevancia: 4 })
+    const idArista = [apego, deseo].sort().join("|")
+    const cdp = await page.context().newCDPSession(page)
+
+    async function tocar(punto: Punto) {
+      if (modo === "mouse") {
+        await page.mouse.move(punto.x, punto.y)
+        await page.mouse.click(punto.x, punto.y, { delay: 60 })
+      } else await page.touchscreen.tap(punto.x, punto.y)
+    }
+    async function mantener(punto: Punto) {
+      if (modo === "mouse") {
+        await page.mouse.move(punto.x, punto.y)
+        await page.mouse.down()
+        await page.waitForTimeout(800)
+        await page.mouse.up()
+        return
+      }
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [punto] })
+      await page.waitForTimeout(800)
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] })
+    }
+
+    await page.goto("/grafo")
+    await expect(page.getByTestId("grafo").locator("canvas").first()).toBeVisible()
+
+    await tocar(await lugarDe(page, "nodo", apego))
+    const ficha = page.getByRole("dialog", { name: `${PREFIJO_DE_PRUEBA}Toque ${modo} apego` })
+    await expect(ficha).toBeVisible()
+    await expect(ficha.getByRole("link", { name: "Ver ficha" })).toHaveAttribute("href", `/materiales/${apego}`)
+    await ficha.getByRole("button", { name: "Cerrar" }).click()
+    await expect(ficha).toHaveCount(0)
+
+    await tocar(await lugarDe(page, "arista", idArista))
+    const vinculo = page.getByRole("dialog", { name: "Vínculo" })
+    await expect(vinculo.getByText("Los dos hablan de la distancia.")).toBeVisible()
+    await expect(vinculo.getByText(/Cita del primero/)).toBeVisible()
+    await expect(vinculo.getByText(/Cita del segundo/)).toBeVisible()
+    await vinculo.getByRole("button", { name: "Aceptar" }).click()
+    await expect(vinculo).toHaveCount(0)
+    await expect.poll(() => dato(page, idArista, "dashed")).toBe(false)
+    await expect.poll(() => dato(page, idArista, "estado")).toBe("aceptado")
+
+    await mantener(await lugarDe(page, "nodo", apego))
+    await expect(page.getByText(/Toca otro material para unirlo con/)).toBeVisible()
+    await tocar(await lugarDe(page, "nodo", limites))
+    const nuevo = page.getByRole("dialog", { name: "Vincular a mano" })
+    await expect(nuevo).toBeVisible()
+    await nuevo.getByLabel("Tipo de vínculo").selectOption("contradice")
+    await nuevo.getByRole("button", { name: "Crear vínculo" }).click()
+    await expect(nuevo).toHaveCount(0)
+    const idNueva = [apego, limites].sort().join("|")
+    await expect.poll(() => dato(page, idNueva, "estado")).toBe("aceptado")
+    await expect.poll(() => dato(page, idNueva, "dashed")).toBe(false)
+    await expect.poll(() => dato(page, idNueva, "tipo")).toBe("contradice")
+
+    await clienteDeServicio().from("materiales").delete().in("id", [apego, deseo, limites])
+  })
+}

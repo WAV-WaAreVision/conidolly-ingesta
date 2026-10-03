@@ -6,6 +6,8 @@ import { TOKEN_DE_SELECCION, TOKEN_DE_TEXTO } from "@/lib/ingesta/grafo"
 
 const MS_DE_PRESION_LARGA = 500
 
+export type NodoConGrafo = HTMLDivElement & { grafo?: Core }
+
 interface Propiedades {
   elementos: ElementDefinition[]
   /** The node held down, waiting for a second tap to become a link. */
@@ -32,7 +34,7 @@ function conColores(elementos: ElementDefinition[]): ElementDefinition[] {
 export function GrafoCytoscape(propiedades: Propiedades) {
   const contenedor = useRef<HTMLDivElement>(null)
   const cy = useRef<Core | null>(null)
-  const ultimaPresion = useRef(0)
+  const ultimaPresion = useRef({ cuando: 0, id: "" })
   const alDia = useRef(propiedades)
   alDia.current = propiedades
 
@@ -42,6 +44,7 @@ export function GrafoCytoscape(propiedades: Propiedades) {
     if (!nodo) return
     import("cytoscape").then(({ default: cytoscape }) => {
       if (!vivo) return
+      const tipografia = getComputedStyle(document.body).fontFamily
       const instancia = cytoscape({
         container: nodo,
         elements: conColores(alDia.current.elementos),
@@ -58,9 +61,10 @@ export function GrafoCytoscape(propiedades: Propiedades) {
               height: "data(size)",
               label: "data(label)",
               color: color(TOKEN_DE_TEXTO),
-              "font-size": 12,
+              "font-family": tipografia,
+              "font-size": 11,
               "text-wrap": "ellipsis",
-              "text-max-width": "96px",
+              "text-max-width": "76px",
               "text-valign": "bottom",
               "text-margin-y": 5,
               "border-width": 0,
@@ -86,19 +90,24 @@ export function GrafoCytoscape(propiedades: Propiedades) {
         layout: { name: "cose", animate: false, padding: 24, nodeRepulsion: () => 9000 },
       })
       instancia.on("tap", "node", (evento: EventObject) => {
-        // A long press ends with a tap on the same node: it already did its job.
-        if (Date.now() - ultimaPresion.current < MS_DE_PRESION_LARGA) return
-        alDia.current.alTocarNodo(String(evento.target.id()))
+        // A long press can end with a tap on the same node: it already did its job.
+        const id = String(evento.target.id())
+        const { cuando, id: sostenido } = ultimaPresion.current
+        if (id === sostenido && Date.now() - cuando < MS_DE_PRESION_LARGA) return
+        alDia.current.alTocarNodo(id)
       })
       instancia.on("tap", "edge", (evento: EventObject) => alDia.current.alTocarArista(String(evento.target.id())))
       instancia.on("tap", (evento: EventObject) => {
         if (evento.target === instancia) alDia.current.alTocarFondo()
       })
       instancia.on("taphold", "node", (evento: EventObject) => {
-        ultimaPresion.current = Date.now()
-        alDia.current.alMantenerNodo(String(evento.target.id()))
+        const id = String(evento.target.id())
+        ultimaPresion.current = { cuando: Date.now(), id }
+        alDia.current.alMantenerNodo(id)
       })
       cy.current = instancia
+      // Only the e2e build sets this: the specs read positions from the instance to aim real pointer input.
+      if (process.env.NEXT_PUBLIC_EXPONER_GRAFO === "1") (nodo as NodoConGrafo).grafo = instancia
     })
     return () => {
       vivo = false

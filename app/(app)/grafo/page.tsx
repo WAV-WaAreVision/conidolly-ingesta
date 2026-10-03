@@ -20,7 +20,7 @@ export default async function Grafo() {
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
       <Link href="/" className={clasesDeBoton({ variante: "callado", tamano: "chico" })}>
-        Volver al material
+        Volver a materiales
       </Link>
       <h1 className="font-serif text-display text-balance">Vínculos entre materiales</h1>
       <VistaDelGrafo materiales={materiales} vinculos={vinculos} teorias={TEORIAS} />
