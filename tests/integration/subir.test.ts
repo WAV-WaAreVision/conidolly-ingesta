@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest"
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 import { almacenEnMemoria } from "@/lib/almacen/almacen"
 import { TAMANO_MAXIMO_BYTES } from "@/lib/ingesta/modelo"
 import {
@@ -380,5 +380,29 @@ describe("crearCategoria", () => {
       ok: false,
       error: SOLO_PARA_MIEMBROS,
     })
+  })
+})
+
+describe("confirmarMaterial when the run cannot be started", () => {
+  it("leaves the material with a reason so it can be retried, instead of procesando forever", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined)
+    const resultado = await crearOk(coni, { tipo: "link", url: "https://example.com/caido", archivos: [] })
+
+    const confirmado = await confirmarMaterial(
+      {
+        ...deps(coni),
+        disparar: async () => {
+          throw new Error("trigger caído")
+        },
+      },
+      { materialId: resultado.materialId },
+    )
+
+    expect(confirmado).toMatchObject({ ok: false })
+    expect(await fila(resultado.materialId)).toMatchObject({
+      estado: "procesando",
+      motivo_fallo: "No pude iniciar el procesamiento. Reintenta.",
+    })
+    vi.restoreAllMocks()
   })
 })

@@ -224,8 +224,15 @@ describe("reintentarMaterial", () => {
       { materialId: id },
     )
 
-    expect(resultado).toMatchObject({ ok: false, error: expect.stringContaining("no pude iniciar") })
+    expect(resultado).toMatchObject({ ok: false, error: expect.stringContaining("No pude iniciar el procesamiento") })
     expect(error).toHaveBeenCalledWith(expect.stringContaining(id), expect.any(Error))
+    // It does not stay procesando forever: it carries a reason, so it stops polling and can be retried again.
+    expect(await fila(id)).toMatchObject({
+      estado: "procesando",
+      motivo_fallo: "No pude iniciar el procesamiento. Reintenta.",
+    })
+    expect(await reintentarMaterial(deps(coni), { materialId: id })).toEqual({ ok: true })
+    expect(disparos).toHaveLength(1)
   })
 })
 

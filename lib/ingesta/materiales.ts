@@ -5,7 +5,7 @@ import type { Database } from "@/lib/supabase/database.types"
 import { type FichaLeida, leerEdicion, leerFicha } from "./ficha"
 import type { FiltrosDeMateriales } from "./filtros"
 import { ERROR_SOLICITUD, esquemaDeId } from "./modelo"
-import { type DepsSubir, exigirMiembro, idDelUsuario } from "./subir"
+import { type DepsSubir, exigirMiembro, idDelUsuario, marcarDisparoFallido } from "./subir"
 
 type Db = SupabaseClient<Database>
 
@@ -96,9 +96,10 @@ export async function reintentarMaterial(deps: DepsSubir, entrada: unknown): Pro
     await deps.disparar(materialId, deps.nuevoId())
   } catch (errorDeDisparo) {
     console.error(`No pude iniciar el procesamiento del material ${materialId} al reintentar`, errorDeDisparo)
+    await marcarDisparoFallido(deps.db, materialId)
     return {
       ok: false,
-      error: "Dejé el material en proceso, pero no pude iniciarlo. Avísale a WAV.",
+      error: "No pude iniciar el procesamiento. Toca Reintentar en un rato.",
     }
   }
   return { ok: true }

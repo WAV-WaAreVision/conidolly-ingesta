@@ -53,6 +53,17 @@ export async function idDelUsuario(db: Db): Promise<string | null> {
   return data.user?.id ?? null
 }
 
+/**
+ * The run could not be started: give the material a reason, so it stops polling and can be retried. If even that
+ * fails the material is stuck, so the log says which one.
+ */
+export async function marcarDisparoFallido(db: Db, materialId: string): Promise<void> {
+  const { error } = await db.rpc("marcar_disparo_fallido", { p_id: materialId })
+  if (error) {
+    console.error(`El material ${materialId} quedó procesando sin motivo: no pude marcar el disparo fallido`, error)
+  }
+}
+
 async function borrarMaterial(db: Db, materialId: string): Promise<void> {
   const { error } = await db.from("materiales").delete().eq("id", materialId)
   if (error) console.error(`No pude borrar el material ${materialId}`, error)
@@ -184,6 +195,7 @@ export async function confirmarMaterial(deps: DepsSubir, entrada: unknown): Prom
     await deps.disparar(materialId)
   } catch (errorDeDisparo) {
     console.error(`No pude iniciar el procesamiento del material ${materialId}`, errorDeDisparo)
+    await marcarDisparoFallido(deps.db, materialId)
     return {
       ok: false,
       error: "El material quedó guardado, pero no pude iniciar su procesamiento. Inténtalo de nuevo en un rato.",
