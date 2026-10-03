@@ -215,3 +215,18 @@ body {
 body:has([data-superficie="marca"]) {
   background: var(--acento);
 }
+
+/* The graph draws on a canvas, which cannot read Tailwind classes: it reads these properties at runtime. */
+:root {
+  --grafo-categoria-1: #b3285f;
+  --grafo-categoria-2: #3f6fb5;
+  --grafo-categoria-3: #2f8f6b;
+  --grafo-categoria-4: #c98a1b;
+  --grafo-categoria-5: #7b4fb3;
+  --grafo-categoria-6: #c75a3a;
+  --grafo-teoria: #2b1830;
+  --grafo-arista: #6f5d74;
+  --grafo-arista-sugerida: #b09cb7;
+  --grafo-texto: #2b1830;
+  --grafo-seleccion: #b3285f;
+}
