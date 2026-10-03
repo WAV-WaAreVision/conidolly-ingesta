@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useRef, useState } from "react"
 import { CasillasCodigo } from "@/components/casillas-codigo"
 import { Boton } from "@/components/ui/boton"
 import type { Rol } from "@/lib/acciones/ingreso"
@@ -13,12 +13,18 @@ export function FormularioIngreso() {
   const [aviso, setAviso] = useState<string | null>(null)
   const [vuelta, setVuelta] = useState(0)
   const [codigo, setCodigo] = useState("")
-  const [pendiente, empezar] = useTransition()
+  // Own flags instead of useTransition: React 19 entangles every pending async transition, so a code
+  // being re-sent (or any other pending action) kept "pending" true and silently dropped a pasted code.
+  const [enviando, setEnviando] = useState(false)
+  const [verificando, setVerificando] = useState(false)
+  const verificandoAhora = useRef(false)
+  const pendiente = enviando || verificando
 
-  function mandarCodigo(quien: Rol, esReenvio: boolean) {
+  async function mandarCodigo(quien: Rol, esReenvio: boolean) {
     setError(null)
     setAviso(null)
-    empezar(async () => {
+    setEnviando(true)
+    try {
       const resultado = await pedirCodigoAccion(quien)
       if (!resultado.ok) {
         setError(resultado.error)
@@ -29,13 +35,17 @@ export function FormularioIngreso() {
       setCodigo("")
       setVuelta((actual) => actual + 1)
       if (esReenvio) setAviso("Te mandé otro código.")
-    })
+    } finally {
+      setEnviando(false)
+    }
   }
 
-  function entrar(quien: Rol, valor: string) {
-    if (pendiente) return
+  async function entrar(quien: Rol, valor: string) {
+    if (verificandoAhora.current) return
+    verificandoAhora.current = true
+    setVerificando(true)
     setError(null)
-    empezar(async () => {
+    try {
       const resultado = await verificarCodigoAccion(quien, valor)
       // On success the action redirects, so reaching this line means the code did not work.
       if (!resultado.ok) {
@@ -43,7 +53,10 @@ export function FormularioIngreso() {
         setCodigo("")
         setVuelta((actual) => actual + 1)
       }
-    })
+    } finally {
+      verificandoAhora.current = false
+      setVerificando(false)
+    }
   }
 
   if (rol === null) {
@@ -88,7 +101,7 @@ export function FormularioIngreso() {
           entrar(rol, valor)
         }}
         invalido={error !== null}
-        deshabilitado={pendiente}
+        deshabilitado={verificando}
       />
       {error ? <MensajeDeError mensaje={error} /> : null}
       {aviso && !error ? (
