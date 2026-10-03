@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { idempotencyKeys, tasks } from "@trigger.dev/sdk"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { FallaDeConfiguracion } from "@/lib/dominio/falla"
-import { dispararProcesarMaterial } from "@/lib/ingesta/disparo"
+import { dispararMotor, dispararProcesarMaterial } from "@/lib/ingesta/disparo"
 
 vi.mock("@trigger.dev/sdk", () => ({
   tasks: { trigger: vi.fn(async () => ({ id: "run_1" })) },
@@ -66,5 +66,38 @@ describe("dispararProcesarMaterial", () => {
       materialId: ID,
       intento: "intento-2",
     })
+  })
+})
+
+describe("dispararMotor", () => {
+  it("writes the run it would start to a file, and calls nothing, when DISPARO_DE_PRUEBA is on", async () => {
+    const archivo = join(mkdtempSync(join(tmpdir(), "disparos-")), "registro.jsonl")
+
+    await dispararMotor("2026-10-04", { DISPARO_DE_PRUEBA: "1", DISPARO_DE_PRUEBA_ARCHIVO: archivo })
+
+    expect(JSON.parse(readFileSync(archivo, "utf-8").trim())).toEqual({ tarea: "motor-manual", semana: "2026-10-04" })
+    expect(tasks.trigger).not.toHaveBeenCalled()
+  })
+
+  it("never records instead of starting when it runs on Vercel", async () => {
+    await expect(dispararMotor("2026-10-04", { DISPARO_DE_PRUEBA: "1", VERCEL: "1" })).rejects.toThrow(
+      FallaDeConfiguracion,
+    )
+  })
+
+  it("asks for the Trigger.dev key before starting anything for real", async () => {
+    await expect(dispararMotor("2026-10-04", {})).rejects.toThrow(/TRIGGER_SECRET_KEY/)
+    expect(tasks.trigger).not.toHaveBeenCalled()
+  })
+
+  it("starts motor-manual with one idempotency key per week that holds for ten minutes", async () => {
+    await dispararMotor("2026-10-04", { TRIGGER_SECRET_KEY: "tr_dev_x" })
+
+    expect(idempotencyKeys.create).toHaveBeenCalledWith("motor:2026-10-04", { scope: "global" })
+    expect(tasks.trigger).toHaveBeenCalledWith(
+      "motor-manual",
+      { manual: true },
+      { idempotencyKey: "clave-creada:motor:2026-10-04", idempotencyKeyTTL: "10m" },
+    )
   })
 })

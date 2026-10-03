@@ -47,22 +47,31 @@ const DisparoDeMaterial = z.object({
   intento: z.string().optional(),
 })
 
+const DisparoDeMotor = z.object({ tarea: z.literal("motor-manual"), semana: z.string() })
+
+const Disparo = z.discriminatedUnion("tarea", [DisparoDeMaterial, DisparoDeMotor])
+
 export function limpiarDisparos(): void {
   mkdirSync(dirname(ARCHIVO_DE_DISPAROS), { recursive: true })
   rmSync(ARCHIVO_DE_DISPAROS, { force: true })
 }
 
-function leerDisparos(): z.infer<typeof DisparoDeMaterial>[] {
+function leerDisparos(): z.infer<typeof Disparo>[] {
   if (!existsSync(ARCHIVO_DE_DISPAROS)) return []
   return readFileSync(ARCHIVO_DE_DISPAROS, "utf-8")
     .split("\n")
     .filter((linea) => linea.trim() !== "")
-    .map((linea) => DisparoDeMaterial.parse(JSON.parse(linea)))
+    .map((linea) => Disparo.parse(JSON.parse(linea)))
 }
 
 /** The material runs the app would have started (Trigger.dev is never called in tests). */
 export function disparosRegistrados(): z.infer<typeof DisparoDeMaterial>[] {
-  return leerDisparos()
+  return leerDisparos().filter((disparo) => disparo.tarea === "procesar-material")
+}
+
+/** The manual runs of the weekly engine the app would have started. */
+export function disparosDelMotor(): z.infer<typeof DisparoDeMotor>[] {
+  return leerDisparos().filter((disparo) => disparo.tarea === "motor-manual")
 }
 
 const Objetos = z.record(z.string(), z.object({ bytes: z.number(), tipo: z.string(), firmada: z.boolean() }))
