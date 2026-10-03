@@ -6,7 +6,8 @@ import { leerMaterialConFicha } from "@/lib/ingesta/materiales"
 import { esquemaDeId } from "@/lib/ingesta/modelo"
 import { leerSesion } from "@/lib/sesion/miembro"
 import { cn } from "@/lib/utils"
-import { ESTADO, ETIQUETA_DE_TIPO, sePuedeReintentar } from "../../estado-de-material"
+import { ESTADO, ETIQUETA_DE_TIPO, esperaConfirmacion, sePuedeReintentar } from "../../estado-de-material"
+import { BotonConfirmarCosto } from "../boton-confirmar-costo"
 import { BotonReintentar } from "../boton-reintentar"
 import { BorrarMaterial } from "./borrar-material"
 import { FichaEditable } from "./ficha-editable"
@@ -36,6 +37,9 @@ export default async function FichaDeMaterial({ params }: { params: Promise<{ id
         </p>
         <p className={cn("w-fit rounded-sm px-2.5 py-1 text-meta font-semibold", estado.clases)}>{estado.texto}</p>
         {material.motivo_fallo ? <p className="text-meta text-apagado">{material.motivo_fallo}</p> : null}
+        {esperaConfirmacion(material) && material.costo_estimado_usd !== null ? (
+          <BotonConfirmarCosto materialId={material.id} costoUsd={material.costo_estimado_usd} />
+        ) : null}
         {sePuedeReintentar(material) ? <BotonReintentar materialId={material.id} /> : null}
       </header>
 

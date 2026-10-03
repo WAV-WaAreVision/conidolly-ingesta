@@ -12,6 +12,7 @@ type Db = SupabaseClient<Database>
 const MAXIMO_DE_MATERIALES = 100
 const SEGUNDOS_DE_DESCARGA = 5 * 60
 const YA_NO_SE_PUEDE_REINTENTAR = "Ese material ya no se puede reintentar."
+const YA_NO_ESPERA_CONFIRMACION = "Ese material ya no espera confirmación."
 const SIN_PERMISO_PARA_BORRAR = "Solo Coni o quien lo subió puede borrarlo."
 const CODIGO_NO_REINTENTABLE = "22023"
 
@@ -22,6 +23,8 @@ export interface MaterialDeLista {
   tipo: string
   estado: string
   motivo_fallo: string | null
+  costo_estimado_usd: number | null
+  costo_confirmado_en: string | null
   categoria: string
 }
 
@@ -29,7 +32,9 @@ export interface MaterialDeLista {
 export async function listarMateriales(db: Db, filtros: FiltrosDeMateriales): Promise<MaterialDeLista[]> {
   let consulta = db
     .from("materiales")
-    .select("id, titulo, autor, tipo, estado, motivo_fallo, categorias ( nombre )")
+    .select(
+      "id, titulo, autor, tipo, estado, motivo_fallo, costo_estimado_usd, costo_confirmado_en, categorias ( nombre )",
+    )
     .order("creado_en", { ascending: false })
     .limit(MAXIMO_DE_MATERIALES)
   if (filtros.categoria) consulta = consulta.eq("categoria_id", filtros.categoria)
@@ -62,7 +67,7 @@ export async function leerMaterialConFicha(
   const { data, error } = await db
     .from("materiales")
     .select(
-      "id, titulo, autor, tipo, estado, motivo_fallo, idioma_original, origen_url, categorias ( nombre ), fichas ( resumen, ideas_clave, citas, fuente )",
+      "id, titulo, autor, tipo, estado, motivo_fallo, costo_estimado_usd, costo_confirmado_en, idioma_original, origen_url, categorias ( nombre ), fichas ( resumen, ideas_clave, citas, fuente )",
     )
     .eq("id", id)
     .maybeSingle()
@@ -101,6 +106,34 @@ export async function reintentarMaterial(deps: DepsSubir, entrada: unknown): Pro
       ok: false,
       error: "No pude iniciar el procesamiento. Toca Reintentar en un rato.",
     }
+  }
+  return { ok: true }
+}
+
+/**
+ * Confirms the cost of a long material through `confirmar_costo_material`, then starts a new run under an attempt key
+ * of its own: the task already stored the extraction, so it only spends on what is left. The database goes first: it
+ * is what refuses a second tap. When the run cannot start the material is left retryable.
+ */
+export async function confirmarCosto(deps: DepsSubir, entrada: unknown): Promise<Resultado> {
+  const miembro = await exigirMiembro(deps.db, "confirmarCosto")
+  if (!miembro.ok) return miembro
+  const id = esquemaDeId.safeParse(entrada)
+  if (!id.success) return { ok: false, error: ERROR_SOLICITUD }
+  const { materialId } = id.data
+
+  const { error } = await deps.db.rpc("confirmar_costo_material", { p_id: materialId })
+  if (error) {
+    if (error.code === CODIGO_NO_REINTENTABLE) return { ok: false, error: YA_NO_ESPERA_CONFIRMACION }
+    console.error(`No pude confirmar el costo del material ${materialId}`, error)
+    return { ok: false, error: ERROR_GENERICO }
+  }
+  try {
+    await deps.disparar(materialId, deps.nuevoId())
+  } catch (errorDeDisparo) {
+    console.error(`No pude iniciar el procesamiento del material ${materialId} al confirmar el costo`, errorDeDisparo)
+    await marcarDisparoFallido(deps.db, materialId)
+    return { ok: false, error: "No pude iniciar el procesamiento. Toca Reintentar en un rato." }
   }
   return { ok: true }
 }
