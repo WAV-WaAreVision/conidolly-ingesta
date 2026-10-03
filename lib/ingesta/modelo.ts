@@ -3,10 +3,25 @@ import { z } from "zod"
 export const TIPOS_DE_MATERIAL = ["documento", "link", "audio", "video", "imagen", "post"] as const
 export type TipoDeMaterial = (typeof TIPOS_DE_MATERIAL)[number]
 
+export const ROLES = ["voz_propia", "referente", "evidencia", "estrategia"] as const
+export type Rol = (typeof ROLES)[number]
+
+export const ETIQUETA_DE_ROL: Record<Rol, string> = {
+  voz_propia: "Lo dijo Coni",
+  referente: "Referente",
+  evidencia: "Estudio o libro",
+  estrategia: "Estrategia interna",
+}
+
+export const AYUDA_DE_ROL: Record<Rol, string> = {
+  voz_propia: "Una charla, audio o texto de ella: sus ideas con sus palabras.",
+  referente: "Alguien a quien Coni sigue: sirve para ver cómo lo explica.",
+  evidencia: "Un estudio, libro o artículo que respalda con datos lo que se dice.",
+  estrategia: "Un plan, una guía o un documento del equipo, no una afirmación sobre el tema.",
+}
+
 export const TAMANO_MAXIMO_BYTES = 2 * 1024 ** 3
 export const MAXIMO_DE_IMAGENES = 20
-const MAXIMO_DE_ETIQUETAS = 20
-const MAXIMO_DE_LETRAS_DE_ETIQUETA = 40
 const MAXIMO_DE_TEXTO_PEGADO = 200_000
 
 const ERROR_SOLICITUD = "No entendí esa solicitud. Vuelve a abrir la pantalla."
@@ -52,19 +67,6 @@ export function extensionDe(nombre: string): string {
   return punto === -1 ? "" : nombre.slice(punto + 1).toLowerCase()
 }
 
-/** "pareja, deseo ,, Pareja" -> ["pareja", "deseo"]: split on commas, trimmed, without blanks or repeats. */
-export function etiquetasDeTexto(texto: string): string[] {
-  const vistas = new Set<string>()
-  const etiquetas: string[] = []
-  for (const trozo of texto.split(",")) {
-    const etiqueta = trozo.trim()
-    if (etiqueta === "" || vistas.has(etiqueta.toLowerCase())) continue
-    vistas.add(etiqueta.toLowerCase())
-    etiquetas.push(etiqueta)
-  }
-  return etiquetas
-}
-
 const direccionWeb = z.string().refine((texto) => {
   try {
     const { protocol } = new URL(texto)
@@ -89,11 +91,8 @@ const archivoDeclarado = z.object({
 const esquemaBase = z.object({
   tipo: z.enum(TIPOS_DE_MATERIAL, "Elige qué tipo de material es."),
   titulo: textoOpcional(200),
-  autor: textoOpcional(200),
-  categoriaId: z.string().uuid("Elige una categoría."),
-  etiquetas: z
-    .array(z.string().trim().min(1).max(MAXIMO_DE_LETRAS_DE_ETIQUETA, "Cada etiqueta puede tener hasta 40 letras."))
-    .max(MAXIMO_DE_ETIQUETAS, "Usa hasta 20 etiquetas."),
+  autorId: z.string().uuid("Elige el autor."),
+  rol: z.enum(ROLES, "Elige qué papel cumple este material."),
   declaracion: z.literal(true, "Marca que el material no contiene datos de pacientes."),
   url: z.string().optional(),
   textoPegado: z.string().max(MAXIMO_DE_TEXTO_PEGADO, "Ese texto es demasiado largo.").optional(),
@@ -165,9 +164,8 @@ const esquemaDeCreacion = esquemaBase.superRefine((entrada, contexto) => {
 export interface DatosDeCreacion {
   tipo: TipoDeMaterial
   titulo: string | null
-  autor: string | null
-  categoriaId: string
-  etiquetas: string[]
+  autorId: string
+  rol: Rol
   url: string | null
   textoPegado: string | null
   /** A reference only for videos and images: it is stored and never fetched. */
@@ -196,5 +194,4 @@ export function leerEntrada(entrada: unknown): EntradaLeida {
 }
 
 export const esquemaDeId = z.object({ materialId: z.string().uuid() })
-export const esquemaDeCategoria = z.object({ nombre: z.string().max(100, "El nombre de la categoría es muy largo.") })
 export { ERROR_SOLICITUD }

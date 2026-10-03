@@ -3,17 +3,16 @@ import { Campo, CLASES_DE_CAMPO } from "@/components/campo"
 import { Boton } from "@/components/ui/boton"
 import { clasesDeBoton } from "@/components/ui/clases-de-boton"
 import { ESTADOS_DE_MATERIAL, type FiltrosDeMateriales, hayFiltros } from "@/lib/ingesta/filtros"
-import { TIPOS_DE_MATERIAL } from "@/lib/ingesta/modelo"
+import { ETIQUETA_DE_ROL, ROLES, TIPOS_DE_MATERIAL } from "@/lib/ingesta/modelo"
 import { ESTADO, ETIQUETA_DE_TIPO } from "./estado-de-material"
 
 interface Propiedades {
   filtros: FiltrosDeMateriales
-  categorias: { id: string; nombre: string }[]
-  autores: string[]
+  autores: { id: string; nombre: string }[]
 }
 
 /** A plain GET form: the filters live in the URL, so they survive a refresh and work without scripts. */
-export function FiltrosDeLaLista({ filtros, categorias, autores }: Propiedades) {
+export function FiltrosDeLaLista({ filtros, autores }: Propiedades) {
   return (
     <form
       // The selects are uncontrolled: a new key remounts them so "Quitar filtros" really empties them.
@@ -23,27 +22,22 @@ export function FiltrosDeLaLista({ filtros, categorias, autores }: Propiedades) 
       aria-label="Filtros"
       className="grid gap-3 rounded-lg border border-linea bg-superficie p-4"
     >
-      <Campo id="filtro-categoria" etiqueta="Categoría">
-        <select
-          id="filtro-categoria"
-          name="categoria"
-          defaultValue={filtros.categoria ?? ""}
-          className={CLASES_DE_CAMPO}
-        >
-          <option value="">Todas</option>
-          {categorias.map((categoria) => (
-            <option key={categoria.id} value={categoria.id}>
-              {categoria.nombre}
-            </option>
-          ))}
-        </select>
-      </Campo>
       <Campo id="filtro-autor" etiqueta="Autor">
         <select id="filtro-autor" name="autor" defaultValue={filtros.autor ?? ""} className={CLASES_DE_CAMPO}>
           <option value="">Todos</option>
           {autores.map((autor) => (
-            <option key={autor} value={autor}>
-              {autor}
+            <option key={autor.id} value={autor.id}>
+              {autor.nombre}
+            </option>
+          ))}
+        </select>
+      </Campo>
+      <Campo id="filtro-rol" etiqueta="Papel">
+        <select id="filtro-rol" name="rol" defaultValue={filtros.rol ?? ""} className={CLASES_DE_CAMPO}>
+          <option value="">Todos</option>
+          {ROLES.map((rol) => (
+            <option key={rol} value={rol}>
+              {ETIQUETA_DE_ROL[rol]}
             </option>
           ))}
         </select>

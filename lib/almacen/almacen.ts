@@ -72,7 +72,7 @@ function exigirSubida(clave: string, segundos: number): void {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const TEXTO_DE_MATERIAL = new RegExp(
-  `^${PREFIJO_DE_MATERIALES}[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/texto(-original)?\\.txt$`,
+  `^${PREFIJO_DE_MATERIALES}[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/texto-original\\.txt$`,
 )
 
 /** A download link is for right now: five minutes is plenty and an hour is the most it may ask. */
@@ -84,7 +84,7 @@ const NOMBRE_DE_DESCARGA = /^[\w.-]{1,100}$/
 function exigirDescarga(clave: string, segundos: number, nombre: string | undefined): void {
   if (!TEXTO_DE_MATERIAL.test(clave)) {
     throw new FallaDeConfiguracion(
-      `Solo se firma la descarga de ${PREFIJO_DE_MATERIALES}<uuid>/texto.txt o texto-original.txt: ${clave}`,
+      `Solo se firma la descarga de ${PREFIJO_DE_MATERIALES}<uuid>/texto-original.txt: ${clave}`,
     )
   }
   if (!Number.isInteger(segundos) || segundos <= 0 || segundos > VIGENCIA_MAXIMA_DESCARGA_SEGUNDOS) {

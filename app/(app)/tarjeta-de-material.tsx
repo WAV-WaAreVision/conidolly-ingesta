@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { MaterialDeLista } from "@/lib/ingesta/materiales"
+import { ETIQUETA_DE_ROL, type Rol } from "@/lib/ingesta/modelo"
 import { cn } from "@/lib/utils"
 import { ETIQUETA_DE_TIPO, esperaConfirmacion, estadoVisible, sePuedeReintentar } from "./estado-de-material"
 import { BotonConfirmarCosto } from "./materiales/boton-confirmar-costo"
@@ -13,8 +14,7 @@ export function TarjetaDeMaterial({ material }: { material: MaterialDeLista }) {
         <span className="font-semibold text-balance">{material.titulo ?? "Sin título"}</span>
         <span className="text-meta text-apagado">
           {ETIQUETA_DE_TIPO[material.tipo] ?? material.tipo}
-          {material.autor ? ` · ${material.autor}` : ""}
-          {material.categoria ? ` · ${material.categoria}` : ""}
+          {` · ${material.autor} · ${ETIQUETA_DE_ROL[material.rol as Rol] ?? material.rol}`}
         </span>
       </Link>
       <p className={cn("w-fit rounded-sm px-2.5 py-1 text-meta font-semibold", estado.clases)}>{estado.texto}</p>

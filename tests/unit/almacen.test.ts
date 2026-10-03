@@ -100,16 +100,16 @@ describe("claveMaterial", () => {
   })
 })
 
-const TEXTO = `materiales/${MATERIAL}/texto.txt`
+const TEXTO_TRADUCIDO = `materiales/${MATERIAL}/texto.txt`
 const TEXTO_ORIGINAL = `materiales/${MATERIAL}/texto-original.txt`
 
 describe("almacenEnMemoria.urlFirmada", () => {
-  it("signs a download of the translated or the original text, with its file name and a short expiry", async () => {
+  it("signs a download of the original text, with its file name and a short expiry", async () => {
     const almacen = almacenEnMemoria()
-    almacen.poner(TEXTO, new Uint8Array([104]), "text/plain")
+    almacen.poner(TEXTO_ORIGINAL, new Uint8Array([104]), "text/plain")
 
-    expect(await almacen.urlFirmada(TEXTO, 300, { descargarComo: "texto.txt" })).toBe(
-      `https://almacen.test/${TEXTO}?expira=300&descarga=texto.txt`,
+    expect(await almacen.urlFirmada(TEXTO_ORIGINAL, 300, { descargarComo: "texto-original.txt" })).toBe(
+      `https://almacen.test/${TEXTO_ORIGINAL}?expira=300&descarga=texto-original.txt`,
     )
   })
 
@@ -120,21 +120,24 @@ describe("almacenEnMemoria.urlFirmada", () => {
   it.each([
     `materiales/${MATERIAL}/original.pdf`,
     `materiales/${MATERIAL}/ficha.json`,
-    `materiales/${MATERIAL}/texto.txt/../original.pdf`,
-    "materiales/no-uuid/texto.txt",
-    `otra/${MATERIAL}/texto.txt`,
+    TEXTO_TRADUCIDO,
+    `materiales/${MATERIAL}/texto-original.txt/../original.pdf`,
+    "materiales/no-uuid/texto-original.txt",
+    `otra/${MATERIAL}/texto-original.txt`,
   ])("refuses to sign %s", async (clave) => {
     await expect(almacenEnMemoria().urlFirmada(clave, 300)).rejects.toThrow(FallaDeConfiguracion)
   })
 
   it.each([0, 1.5, 3601])("refuses an expiry of %s", async (segundos) => {
-    await expect(almacenEnMemoria().urlFirmada(TEXTO, segundos)).rejects.toThrow(FallaDeConfiguracion)
+    await expect(almacenEnMemoria().urlFirmada(TEXTO_ORIGINAL, segundos)).rejects.toThrow(FallaDeConfiguracion)
   })
 
   it.each(["../x.txt", 'a"b.txt', "con espacio.txt", ""])("refuses the download name %j", async (nombre) => {
     const almacen = almacenEnMemoria()
-    almacen.poner(TEXTO, new Uint8Array([1]), "text/plain")
-    await expect(almacen.urlFirmada(TEXTO, 300, { descargarComo: nombre })).rejects.toThrow(FallaDeConfiguracion)
+    almacen.poner(TEXTO_ORIGINAL, new Uint8Array([1]), "text/plain")
+    await expect(almacen.urlFirmada(TEXTO_ORIGINAL, 300, { descargarComo: nombre })).rejects.toThrow(
+      FallaDeConfiguracion,
+    )
   })
 })
 
@@ -142,7 +145,7 @@ describe("almacenEnMemoria.borrarCarpeta", () => {
   it("deletes every object under the material's folder and nothing else", async () => {
     const almacen = almacenEnMemoria()
     const otro = "99999999-2222-4333-8444-555555555555"
-    almacen.poner(TEXTO, new Uint8Array([1]), "text/plain")
+    almacen.poner(TEXTO_ORIGINAL, new Uint8Array([1]), "text/plain")
     almacen.poner(`materiales/${MATERIAL}/original.pdf`, new Uint8Array([1]), "application/pdf")
     almacen.poner(`materiales/${otro}/texto.txt`, new Uint8Array([1]), "text/plain")
     almacen.poner(`materiales/${MATERIAL}x/texto.txt`, new Uint8Array([1]), "text/plain")

@@ -3,23 +3,23 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { Campo, CLASES_DE_CAMPO } from "@/components/campo"
+import { SelectorDeAutor } from "@/components/selector-de-autor"
 import { Boton } from "@/components/ui/boton"
+import type { AutorDeLista } from "@/lib/ingesta/buscar-autor"
 import {
-  etiquetasDeTexto,
+  AYUDA_DE_ROL,
+  ETIQUETA_DE_ROL,
   leerEntrada,
   MAXIMO_DE_IMAGENES,
+  ROLES,
+  type Rol,
   TAMANO_MAXIMO_BYTES,
   TIPOS_DE_MATERIAL,
   type TipoDeMaterial,
 } from "@/lib/ingesta/modelo"
 import { subirArchivos } from "@/lib/ingesta/subida-cliente"
 import { cn } from "@/lib/utils"
-import { confirmarMaterialAccion, crearCategoriaAccion, crearMaterialAccion, descartarMaterialAccion } from "./acciones"
-
-interface Categoria {
-  id: string
-  nombre: string
-}
+import { confirmarMaterialAccion, crearAutorAccion, crearMaterialAccion, descartarMaterialAccion } from "./acciones"
 
 const NOMBRE_DE_TIPO: Record<TipoDeMaterial, string> = {
   documento: "Documento",
@@ -38,26 +38,21 @@ const ACEPTA: Record<"documento" | "audio" | "video" | "imagen", string> = {
   imagen: ".jpg,.jpeg,.png,.webp,.heic",
 }
 
-const NUEVA = "__nueva__"
 const PESA_DEMASIADO = "Ese archivo pesa más de 2 GB."
 
-export function FormularioSubida({ categorias: iniciales }: { categorias: Categoria[] }) {
+export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
   const router = useRouter()
   const [tipo, setTipo] = useState<TipoDeMaterial>("documento")
   const [archivos, setArchivos] = useState<File[]>([])
   const [titulo, setTitulo] = useState("")
-  const [autor, setAutor] = useState("")
+  const [autorId, setAutorId] = useState("")
+  const [rol, setRol] = useState<Rol | "">("")
   const [referencia, setReferencia] = useState("")
   const [url, setUrl] = useState("")
   const [textoPegado, setTextoPegado] = useState("")
-  const [etiquetas, setEtiquetas] = useState("")
-  const [categorias, setCategorias] = useState(iniciales)
-  const [categoriaId, setCategoriaId] = useState("")
-  const [nombreNuevo, setNombreNuevo] = useState("")
   const [declaracion, setDeclaracion] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [progreso, setProgreso] = useState<string | null>(null)
-  const [agregando, setAgregando] = useState(false)
 
   const ocupado = progreso !== null
   const esImagen = tipo === "imagen"
@@ -108,36 +103,13 @@ export function FormularioSubida({ categorias: iniciales }: { categorias: Catego
     setArchivos(archivos.filter((_, posicion) => posicion !== indice))
   }
 
-  function elegirCategoria(valor: string) {
-    setCategoriaId(valor)
-    setError(null)
-  }
-
-  async function agregarCategoria() {
-    setError(null)
-    setAgregando(true)
-    const resultado = await crearCategoriaAccion({ nombre: nombreNuevo })
-    setAgregando(false)
-    if (!resultado.ok) {
-      setError(resultado.error)
-      return
-    }
-    const { categoria } = resultado
-    setCategorias((actuales) =>
-      actuales.some((actual) => actual.id === categoria.id) ? actuales : [...actuales, categoria],
-    )
-    setCategoriaId(categoria.id)
-    setNombreNuevo("")
-  }
-
   async function subir() {
     setError(null)
     const entrada = {
       tipo,
       titulo,
-      autor,
-      categoriaId: categoriaId === NUEVA ? "" : categoriaId,
-      etiquetas: etiquetasDeTexto(etiquetas),
+      autorId,
+      rol,
       declaracion,
       url: tipo === "link" ? url : "",
       textoPegado: tipo === "post" ? textoPegado : "",
@@ -333,24 +305,45 @@ export function FormularioSubida({ categorias: iniciales }: { categorias: Catego
           />
         </Campo>
 
-        <Campo
-          id="autor"
-          etiqueta={
-            <>
-              Autor <span className="font-normal text-apagado">(opcional)</span>
-            </>
-          }
-          ayuda={conReferencia ? "Ej: @cuenta" : undefined}
-        >
-          <input
-            id="autor"
-            type="text"
-            value={autor}
-            aria-describedby={conReferencia ? "autor-ayuda" : undefined}
-            onChange={(evento) => setAutor(evento.target.value)}
-            className={CLASES_DE_CAMPO}
-          />
-        </Campo>
+        <SelectorDeAutor
+          autores={autores}
+          valor={autorId}
+          alElegir={(id) => {
+            setAutorId(id)
+            setError(null)
+          }}
+          alCrear={crearAutorAccion}
+        />
+
+        <div role="radiogroup" aria-label="Papel del material" className="grid gap-2">
+          {ROLES.map((opcion) => (
+            <label
+              key={opcion}
+              className={cn(
+                "grid cursor-pointer gap-0.5 rounded-md border border-linea bg-superficie p-3.5",
+                "has-checked:border-acento has-checked:bg-acento-suave has-focus-visible:outline-3 has-focus-visible:outline-acento",
+              )}
+            >
+              <input
+                type="radio"
+                name="rol"
+                value={opcion}
+                checked={rol === opcion}
+                onChange={() => {
+                  setRol(opcion)
+                  // What Coni says is by Coni: the seeded author is the obvious pick while none is chosen.
+                  if (opcion === "voz_propia" && autorId === "") {
+                    setAutorId(autores.find((autor) => autor.tipo === "coni")?.id ?? "")
+                  }
+                  setError(null)
+                }}
+                className="sr-only"
+              />
+              <span className="text-label font-semibold">{ETIQUETA_DE_ROL[opcion]}</span>
+              <span className="text-meta text-apagado">{AYUDA_DE_ROL[opcion]}</span>
+            </label>
+          ))}
+        </div>
 
         {conReferencia ? (
           <Campo id="referencia" etiqueta="Link de referencia (no se abre)">
@@ -366,51 +359,6 @@ export function FormularioSubida({ categorias: iniciales }: { categorias: Catego
             />
           </Campo>
         ) : null}
-
-        <Campo id="categoria" etiqueta="Categoría">
-          <select
-            id="categoria"
-            value={categoriaId}
-            onChange={(evento) => elegirCategoria(evento.target.value)}
-            className={CLASES_DE_CAMPO}
-          >
-            <option value="">Elige una categoría</option>
-            {categorias.map((categoria) => (
-              <option key={categoria.id} value={categoria.id}>
-                {categoria.nombre}
-              </option>
-            ))}
-            <option value={NUEVA}>Agregar categoría nueva</option>
-          </select>
-        </Campo>
-
-        {categoriaId === NUEVA ? (
-          <div className="grid gap-3 rounded-md bg-hundido p-3.5">
-            <Campo id="categoria-nueva" etiqueta="Nombre de la categoría">
-              <input
-                id="categoria-nueva"
-                type="text"
-                value={nombreNuevo}
-                onChange={(evento) => setNombreNuevo(evento.target.value)}
-                className={CLASES_DE_CAMPO}
-              />
-            </Campo>
-            <Boton variante="linea" cargando={agregando} onClick={() => void agregarCategoria()}>
-              Agregar
-            </Boton>
-          </div>
-        ) : null}
-
-        <Campo id="etiquetas" etiqueta="Etiquetas" ayuda="Sepáralas con comas. Ej: apego, pareja">
-          <input
-            id="etiquetas"
-            type="text"
-            aria-describedby="etiquetas-ayuda"
-            value={etiquetas}
-            onChange={(evento) => setEtiquetas(evento.target.value)}
-            className={CLASES_DE_CAMPO}
-          />
-        </Campo>
 
         <label className="flex items-start gap-3 text-body">
           <input

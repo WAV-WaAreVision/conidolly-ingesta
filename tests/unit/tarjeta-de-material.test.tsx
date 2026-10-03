@@ -13,13 +13,14 @@ const ID = "11111111-2222-4333-8444-555555555555"
 const material = (extra: Record<string, unknown> = {}) => ({
   id: ID,
   titulo: "Apego adulto",
+  autor_id: "99999999-2222-4333-8444-555555555555",
   autor: "Esther Perel",
+  rol: "referente",
   tipo: "documento",
   estado: "listo",
   motivo_fallo: null,
   costo_estimado_usd: null,
   costo_confirmado_en: null,
-  categoria: "General",
   ...extra,
 })
 
@@ -28,6 +29,12 @@ beforeEach(() => {
 })
 
 describe("TarjetaDeMaterial", () => {
+  it("shows the type, the author and the role, and no category", () => {
+    render(<TarjetaDeMaterial material={material({ rol: "voz_propia" })} />)
+
+    expect(screen.getByText("Documento · Esther Perel · Lo dijo Coni")).toBeInTheDocument()
+  })
+
   it("links a ready material to its card and shows the Listo chip", () => {
     render(<TarjetaDeMaterial material={material()} />)
 
