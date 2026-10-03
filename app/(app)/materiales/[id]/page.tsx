@@ -50,11 +50,8 @@ export default async function FichaDeMaterial({ params }: { params: Promise<{ id
           </p>
           <FichaEditable materialId={material.id} ficha={ficha} />
           <nav aria-label="Texto completo" className="grid gap-2.5">
-            <a href={`${enlace}?cual=traducido`} className={clasesDeBoton({ variante: "linea" })}>
-              Descargar texto completo
-            </a>
-            <a href={`${enlace}?cual=original`} className={clasesDeBoton({ variante: "linea" })}>
-              Ver texto original
+            <a href={enlace} className={clasesDeBoton({ variante: "linea" })}>
+              Descargar texto original
             </a>
           </nav>
         </>

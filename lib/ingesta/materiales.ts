@@ -203,16 +203,15 @@ export async function borrarMaterial(deps: DepsSubir, entrada: unknown): Promise
   return { ok: true }
 }
 
-const esquemaDeTexto = z.object({ materialId: z.string().uuid(), cual: z.enum(["traducido", "original"]) })
-const ARCHIVO_DE_TEXTO = { traducido: "texto.txt", original: "texto-original.txt" } as const
+const ARCHIVO_DE_TEXTO = "texto-original.txt"
 
-/** A short-lived download link for the translated text of a material or for its original. */
+/** A short-lived download link for the original text of a material (the extraction, never a translation). */
 export async function urlDeTexto(deps: DepsSubir, entrada: unknown): Promise<Resultado<{ url: string }>> {
   const miembro = await exigirMiembro(deps.db, "urlDeTexto")
   if (!miembro.ok) return miembro
-  const leida = esquemaDeTexto.safeParse(entrada)
+  const leida = esquemaDeId.safeParse(entrada)
   if (!leida.success) return { ok: false, error: ERROR_SOLICITUD }
-  const archivo = ARCHIVO_DE_TEXTO[leida.data.cual]
+  const archivo = ARCHIVO_DE_TEXTO
   try {
     const url = await deps.almacen.urlFirmada(`materiales/${leida.data.materialId}/${archivo}`, SEGUNDOS_DE_DESCARGA, {
       descargarComo: archivo,

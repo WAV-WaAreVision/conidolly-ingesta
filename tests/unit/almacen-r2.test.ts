@@ -115,7 +115,7 @@ describe("almacenDeEntorno", () => {
 })
 
 const MATERIAL = "11111111-2222-4333-8444-555555555555"
-const TEXTO = `materiales/${MATERIAL}/texto.txt`
+const TEXTO = `materiales/${MATERIAL}/texto-original.txt`
 
 describe("urlFirmada", () => {
   it("signs a GET after checking the object is there, with the download name and the expiry asked for", async () => {
@@ -123,11 +123,11 @@ describe("urlFirmada", () => {
       http.head(`${ANFITRION}/${BALDE}/${TEXTO}`, () => new HttpResponse(null, { headers: { "Content-Length": "3" } })),
     )
 
-    const url = new URL((await r2().urlFirmada(TEXTO, 300, { descargarComo: "texto.txt" })) ?? "")
+    const url = new URL((await r2().urlFirmada(TEXTO, 300, { descargarComo: "texto-original.txt" })) ?? "")
 
     expect(url.pathname).toBe(`/${BALDE}/${TEXTO}`)
     expect(url.searchParams.get("X-Amz-Expires")).toBe("300")
-    expect(url.searchParams.get("response-content-disposition")).toBe('attachment; filename="texto.txt"')
+    expect(url.searchParams.get("response-content-disposition")).toBe('attachment; filename="texto-original.txt"')
     expect(url.href).not.toContain(SECRETO)
   })
 
@@ -139,7 +139,10 @@ describe("urlFirmada", () => {
 
   it("refuses a key that is not a text of a material, without calling R2", async () => {
     await expect(r2().urlFirmada(CLAVE, 300)).rejects.toThrow(FallaDeConfiguracion)
-    await expect(r2().urlFirmada(`materiales/${MATERIAL}/../x/texto.txt`, 300)).rejects.toThrow(FallaDeConfiguracion)
+    await expect(r2().urlFirmada(`materiales/${MATERIAL}/../x/texto-original.txt`, 300)).rejects.toThrow(
+      FallaDeConfiguracion,
+    )
+    await expect(r2().urlFirmada(`materiales/${MATERIAL}/texto.txt`, 300)).rejects.toThrow(FallaDeConfiguracion)
   })
 
   it("refuses a long expiry: a download link is for right now", async () => {

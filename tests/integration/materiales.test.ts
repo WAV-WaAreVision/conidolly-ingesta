@@ -452,36 +452,39 @@ describe("borrarMaterial", () => {
 })
 
 describe("urlDeTexto", () => {
-  it.each([
-    ["traducido", `materiales/ID/texto.txt`, "texto.txt"],
-    ["original", `materiales/ID/texto-original.txt`, "texto-original.txt"],
-  ] as const)("signs a short download of the %s text", async (cual, plantilla, nombre) => {
+  it("signs a short download of the original text", async () => {
     const id = await sembrar()
-    const clave = plantilla.replace("ID", id)
+    const clave = `materiales/${id}/texto-original.txt`
     almacen.poner(clave, new Uint8Array([1]), "text/plain")
 
-    const resultado = await urlDeTexto(deps(coni), { materialId: id, cual })
+    const resultado = await urlDeTexto(deps(coni), { materialId: id })
 
-    expect(resultado).toEqual({ ok: true, url: `https://almacen.test/${clave}?expira=300&descarga=${nombre}` })
+    expect(resultado).toEqual({ ok: true, url: `https://almacen.test/${clave}?expira=300&descarga=texto-original.txt` })
   })
 
   it("says the text is not ready when the file is not there", async () => {
     const id = await sembrar()
 
-    expect(await urlDeTexto(deps(coni), { materialId: id, cual: "original" })).toEqual({
+    expect(await urlDeTexto(deps(coni), { materialId: id })).toEqual({
       ok: false,
       error: "Ese texto todavía no está disponible.",
     })
   })
 
-  it("refuses anyone who is neither Coni nor WAV, and anything but the two texts", async () => {
+  it("never signs the translated text, which no run produces any more", async () => {
     const id = await sembrar()
     almacen.poner(`materiales/${id}/texto.txt`, new Uint8Array([1]), "text/plain")
 
-    expect(await urlDeTexto(deps(otra), { materialId: id, cual: "traducido" })).toEqual({
+    expect(await urlDeTexto(deps(coni), { materialId: id, cual: "traducido" })).toEqual({
       ok: false,
-      error: SOLO_PARA_MIEMBROS,
+      error: "Ese texto todavía no está disponible.",
     })
-    expect(await urlDeTexto(deps(coni), { materialId: id, cual: "ficha" })).toMatchObject({ ok: false })
+  })
+
+  it("refuses anyone who is neither Coni nor WAV", async () => {
+    const id = await sembrar()
+    almacen.poner(`materiales/${id}/texto-original.txt`, new Uint8Array([1]), "text/plain")
+
+    expect(await urlDeTexto(deps(otra), { materialId: id })).toEqual({ ok: false, error: SOLO_PARA_MIEMBROS })
   })
 })

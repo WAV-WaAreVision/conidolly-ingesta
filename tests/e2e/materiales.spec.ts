@@ -22,7 +22,6 @@ const IDEAS = [
   "Los límites cuidan el vínculo.",
   "Pedir lo que quieres es un acto de cariño.",
 ]
-const TEXTO = "Texto traducido de prueba."
 const TEXTO_ORIGINAL = "Original text for the test."
 
 async function idDeConi(): Promise<string> {
@@ -85,7 +84,6 @@ async function sembrar(semilla: Semilla): Promise<string> {
     if (ficha.error) throw new Error(ficha.error.message)
   }
   if (semilla.conTextos ?? estado === "listo") {
-    await ponerObjetoEnElAlmacen(`materiales/${id}/texto.txt`, TEXTO)
     await ponerObjetoEnElAlmacen(`materiales/${id}/texto-original.txt`, TEXTO_ORIGINAL)
   }
   return id
@@ -268,16 +266,12 @@ test("Coni opens a card, edits a key idea, saves and finds it persisted; the tex
   await capturar(page, "ingesta-ficha", CARPETA_DE_DOCUMENTACION)
 
   const descargaOriginal = page.waitForEvent("download")
-  await page.getByRole("link", { name: "Ver texto original" }).click()
+  await page.getByRole("link", { name: "Descargar texto original" }).click()
   const original = await descargaOriginal
   expect(original.suggestedFilename()).toBe("texto-original.txt")
   const rutaOriginal = await original.path()
   expect(readFileSync(rutaOriginal, "utf-8")).toBe(TEXTO_ORIGINAL)
-  const descargaTraducido = page.waitForEvent("download")
-  await page.getByRole("link", { name: "Descargar texto completo" }).click()
-  const traducido = await descargaTraducido
-  expect(traducido.suggestedFilename()).toBe("texto.txt")
-  expect(readFileSync(await traducido.path(), "utf-8")).toBe(TEXTO)
+  await expect(page.getByRole("link", { name: "Descargar texto completo" })).toHaveCount(0)
 
   await page.getByRole("button", { name: "Editar" }).click()
   await page.getByLabel("Idea clave 2", { exact: true }).fill("El deseo necesita curiosidad, no solo distancia.")
