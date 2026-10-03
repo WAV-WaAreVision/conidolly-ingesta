@@ -1,8 +1,8 @@
 import Link from "next/link"
 import { etiquetaDeEstadoDeTeoria, type TeoriaLeida } from "@/lib/ingesta/modelo-de-teoria"
 import { cn } from "@/lib/utils"
-import { BotonReintentarTeoria } from "./boton-reintentar-teoria"
 import { claseDeEstadoDeTeoria } from "./estado-de-teoria"
+import { ReintentoDeTeoria } from "./reintento-de-teoria"
 
 export function nombreDeTeoria(teoria: Pick<TeoriaLeida, "titulo" | "estado">): string {
   if (teoria.titulo) return teoria.titulo
@@ -21,7 +21,7 @@ export function TarjetaDeTeoria({ teoria }: { teoria: TeoriaLeida }) {
         {etiquetaDeEstadoDeTeoria(teoria.estado)}
       </p>
       {teoria.motivoFallo ? <p className="text-meta text-apagado">{teoria.motivoFallo}</p> : null}
-      {teoria.estado === "fallida" ? <BotonReintentarTeoria teoriaId={teoria.id} /> : null}
+      <ReintentoDeTeoria teoria={teoria} />
     </li>
   )
 }

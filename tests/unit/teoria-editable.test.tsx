@@ -31,6 +31,7 @@ const TEORIA: TeoriaLeida = {
   categoriaId: null,
   estado: "borrador",
   motivoFallo: null,
+  motivoCodigo: null,
   fuentes: [
     { id: A, titulo: "Libro del deseo" },
     { id: B, titulo: "Charla de pareja" },

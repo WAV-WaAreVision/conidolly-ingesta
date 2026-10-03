@@ -19,6 +19,14 @@ export const ETIQUETA_DE_ESTADO_DE_TEORIA: Record<string, string> = {
 export const etiquetaDeEstadoDeTeoria = (estado: string): string => ETIQUETA_DE_ESTADO_DE_TEORIA[estado] ?? estado
 export const estaSintetizando = (teoria: { estado: string }): boolean => teoria.estado === "sintetizando"
 
+export const AVISO_SIN_SUSTENTO = "Estos materiales no alcanzan para una teoría. Prueba con otros."
+
+export const CODIGO_SIN_SUSTENTO = "sin_sustento"
+
+/** A theory the cards cannot back would only fail again: the database refuses the retry, so the screen does not offer it. */
+export const puedeReintentarse = (teoria: { estado: string; motivoCodigo: string | null }): boolean =>
+  teoria.estado === "fallida" && teoria.motivoCodigo !== CODIGO_SIN_SUSTENTO
+
 export interface TeoriaLeida {
   id: string
   titulo: string | null
@@ -28,6 +36,8 @@ export interface TeoriaLeida {
   categoriaId: string | null
   estado: string
   motivoFallo: string | null
+  /** 'sin_sustento' | 'tope' | 'error' on a failed theory; the task writes it, the retry reads it. */
+  motivoCodigo: string | null
   fuentes: { id: string; titulo: string }[]
 }
 
@@ -40,6 +50,7 @@ interface FilaDeTeoria {
   categoria_id: string | null
   estado: string
   motivo_fallo: string | null
+  motivo_codigo: string | null
   teoria_fuentes: { material_id: string; materiales: { titulo: string | null } | null }[]
 }
 
@@ -57,6 +68,7 @@ export function aTeoriaLeida(fila: FilaDeTeoria): TeoriaLeida | null {
     categoriaId: fila.categoria_id,
     estado: fila.estado,
     motivoFallo: fila.motivo_fallo,
+    motivoCodigo: fila.motivo_codigo,
     fuentes: fila.teoria_fuentes.map((f) => ({
       id: f.material_id,
       titulo: f.materiales?.titulo?.trim() || "Sin título",

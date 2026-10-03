@@ -196,6 +196,24 @@ describe("reintentarTeoria", () => {
     expect(disparos).toEqual([{ id: teoriaId, intento: "intento-uno" }])
   })
 
+  it("lets a theory the cap stopped be retried", async () => {
+    const teoriaId = await fallida()
+    await servicio.from("teorias").update({ motivo_codigo: "tope" }).eq("id", teoriaId)
+
+    expect(await reintentarTeoria(deps(coni), { teoriaId })).toEqual({ ok: true })
+  })
+
+  it("refuses a theory the cards cannot back, says to try other materials and starts nothing", async () => {
+    const teoriaId = await fallida()
+    await servicio.from("teorias").update({ motivo_codigo: "sin_sustento" }).eq("id", teoriaId)
+
+    const resultado = await reintentarTeoria(deps(coni), { teoriaId })
+
+    expect(resultado).toEqual({ ok: false, error: "Estos materiales no alcanzan para una teoría. Prueba con otros." })
+    expect((await estadoDe(teoriaId))?.estado).toBe("fallida")
+    expect(disparos).toEqual([])
+  })
+
   it("refuses a theory that did not fail", async () => {
     const { teoriaId } = await pedida()
     disparos = []

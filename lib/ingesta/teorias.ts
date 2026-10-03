@@ -4,7 +4,7 @@ import { ERROR_GENERICO, type Resultado } from "@/lib/acciones/resultado"
 import type { Database } from "@/lib/supabase/database.types"
 import type { TeoriaDelGrafo } from "./grafo"
 import { ERROR_SOLICITUD } from "./modelo"
-import { aTeoriaDelGrafo, aTeoriaLeida, type TeoriaLeida } from "./modelo-de-teoria"
+import { AVISO_SIN_SUSTENTO, aTeoriaDelGrafo, aTeoriaLeida, type TeoriaLeida } from "./modelo-de-teoria"
 import { MAXIMO_PARA_SINTETIZAR, MINIMO_PARA_SINTETIZAR } from "./seleccion"
 import { type DepsSubir, exigirMiembro } from "./subir"
 
@@ -38,7 +38,7 @@ const esquemaDeGuardado = z.object({
 })
 
 const COLUMNAS =
-  "id, titulo, tesis, argumentos, contradicciones, categoria_id, estado, motivo_fallo, creada_en, teoria_fuentes ( material_id, materiales ( titulo ) )"
+  "id, titulo, tesis, argumentos, contradicciones, categoria_id, estado, motivo_fallo, motivo_codigo, creada_en, teoria_fuentes ( material_id, materiales ( titulo ) )"
 
 export async function leerTeoria(db: Db, teoriaId: string): Promise<TeoriaLeida | null> {
   const { data, error } = await db.from("teorias").select(COLUMNAS).eq("id", teoriaId).maybeSingle()
@@ -131,7 +131,9 @@ export async function reintentarTeoria(deps: DepsSubir, entrada: unknown): Promi
 
   const { error } = await deps.db.rpc("reintentar_teoria", { p_id: teoriaId })
   if (error) {
-    if (error.code === CODIGO_INVALIDO) return { ok: false, error: ERROR_NO_REINTENTABLE }
+    if (error.code === CODIGO_INVALIDO) {
+      return { ok: false, error: error.message === "teoria_sin_sustento" ? AVISO_SIN_SUSTENTO : ERROR_NO_REINTENTABLE }
+    }
     console.error(`No pude reintentar la teoría ${teoriaId}`, error)
     return { ok: false, error: ERROR_GENERICO }
   }
@@ -146,8 +148,8 @@ export async function reintentarTeoria(deps: DepsSubir, entrada: unknown): Promi
 }
 
 /**
- * Saves what Coni or WAV changed: the title, the thesis and the category. The arguments and contradictions are read
- * again from the database and passed back as they are, so a stale screen can never overwrite them.
+ * Saves what Coni or WAV changed: the title, the thesis and the category. The arguments and contradictions are not
+ * sent: `guardar_teoria` keeps the ones the task wrote, so no screen, stale or not, can overwrite them.
  */
 export async function guardarTeoria(deps: DepsSubir, entrada: unknown): Promise<Resultado> {
   const miembro = await exigirMiembro(deps.db, "guardarTeoria")
@@ -156,23 +158,10 @@ export async function guardarTeoria(deps: DepsSubir, entrada: unknown): Promise<
   if (!leido.success) return { ok: false, error: ERROR_INCOMPLETA }
   const { teoriaId, titulo, tesis, categoriaId } = leido.data
 
-  const { data, error: errorDeLectura } = await deps.db
-    .from("teorias")
-    .select("argumentos, contradicciones")
-    .eq("id", teoriaId)
-    .maybeSingle()
-  if (errorDeLectura) {
-    console.error(`No pude leer la teoría ${teoriaId}`, errorDeLectura)
-    return { ok: false, error: ERROR_GENERICO }
-  }
-  if (!data) return { ok: false, error: ERROR_NO_EXISTE }
-
   const { error } = await deps.db.rpc("guardar_teoria", {
     p_id: teoriaId,
     p_titulo: titulo,
     p_tesis: tesis,
-    p_argumentos: data.argumentos ?? [],
-    p_contradicciones: data.contradicciones ?? [],
     p_categoria: categoriaId ?? undefined,
   })
   if (error) {

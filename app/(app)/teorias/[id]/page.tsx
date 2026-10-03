@@ -6,7 +6,7 @@ import { clasesDeBoton } from "@/components/ui/clases-de-boton"
 import { estaSintetizando } from "@/lib/ingesta/modelo-de-teoria"
 import { leerTeoria } from "@/lib/ingesta/teorias"
 import { leerSesion } from "@/lib/sesion/miembro"
-import { BotonReintentarTeoria } from "../boton-reintentar-teoria"
+import { ReintentoDeTeoria } from "../reintento-de-teoria"
 import { nombreDeTeoria } from "../tarjeta-de-teoria"
 import { TeoriaEditable } from "./teoria-editable"
 
@@ -41,7 +41,7 @@ export default async function TeoriaPagina({ params }: { params: Promise<{ id: s
           <p role="alert" className="rounded-md bg-error-fondo p-3.5 text-[1rem] text-error-tinta">
             {teoria.motivoFallo ?? "La teoría no salió."}
           </p>
-          <BotonReintentarTeoria teoriaId={teoria.id} />
+          <ReintentoDeTeoria teoria={teoria} />
         </div>
       ) : (
         <TeoriaEditable teoria={teoria} categorias={categorias.data} />

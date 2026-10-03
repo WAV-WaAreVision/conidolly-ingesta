@@ -19,6 +19,7 @@ const base: TeoriaLeida = {
   categoriaId: null,
   estado: "guardada",
   motivoFallo: null,
+  motivoCodigo: null,
   fuentes: [
     { id: "a", titulo: "Uno" },
     { id: "b", titulo: "Dos" },
@@ -53,5 +54,24 @@ describe("TarjetaDeTeoria", () => {
 
     expect(screen.getByText("No pude iniciar la síntesis. Reintenta.")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Reintentar" })).toBeInTheDocument()
+  })
+
+  it("hides the retry and says to try other materials when the cards cannot back a theory", () => {
+    renderizar({
+      titulo: null,
+      estado: "fallida",
+      motivoFallo: "No encontré suficiente apoyo en las fichas para armar una teoría.",
+      motivoCodigo: "sin_sustento",
+    })
+
+    expect(screen.queryByRole("button", { name: "Reintentar" })).not.toBeInTheDocument()
+    expect(screen.getByText("Estos materiales no alcanzan para una teoría. Prueba con otros.")).toBeInTheDocument()
+  })
+
+  it("keeps the retry for a theory the cap or an error stopped", () => {
+    renderizar({ titulo: null, estado: "fallida", motivoFallo: "Tope.", motivoCodigo: "tope" })
+
+    expect(screen.getByRole("button", { name: "Reintentar" })).toBeInTheDocument()
+    expect(screen.queryByText(/no alcanzan para una teoría/)).not.toBeInTheDocument()
   })
 })
