@@ -86,6 +86,27 @@ describe("leerEntrada: link y post", () => {
     )
   })
 
+  it("needs the pasted transcript for a YouTube link and keeps it with the address", () => {
+    const youtube = "https://www.youtube.com/watch?v=abc123"
+    expect(error({ ...base, tipo: "link", url: youtube, archivos: [] })).toBe("Pega la transcripción del video.")
+    expect(error({ ...base, tipo: "link", url: youtube, textoPegado: "   ", archivos: [] })).toBe(
+      "Pega la transcripción del video.",
+    )
+    expect(leerEntrada({ ...base, tipo: "link", url: youtube, textoPegado: " Hola ", archivos: [] })).toMatchObject({
+      ok: true,
+      datos: { url: youtube, textoPegado: "Hola" },
+    })
+  })
+
+  it("does not ask for text on other links and drops any it receives", () => {
+    expect(
+      leerEntrada({ ...base, tipo: "link", url: "https://example.com/nota", textoPegado: "x", archivos: [] }),
+    ).toMatchObject({
+      ok: true,
+      datos: { textoPegado: null },
+    })
+  })
+
   it("needs pasted text for a post and takes an optional video", () => {
     expect(leerEntrada({ ...base, tipo: "post", textoPegado: "Hola", archivos: [] }).ok).toBe(true)
     expect(leerEntrada({ ...base, tipo: "post", textoPegado: "Hola", archivos: [archivo("v.mp4")] }).ok).toBe(true)

@@ -103,6 +103,17 @@ describe("FormularioSubida: tipos", () => {
     expect(screen.queryByLabelText("Archivo")).not.toBeInTheDocument()
   })
 
+  it("shows the steps and a required transcript field only for a YouTube link", () => {
+    render(<FormularioSubida autores={AUTORES} />)
+    elegirTipo("Link")
+    expect(screen.queryByLabelText("Transcripción del video")).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText("Dirección del link"), { target: { value: "https://youtu.be/abc123" } })
+
+    expect(screen.getByLabelText("Transcripción del video")).toBeRequired()
+    expect(screen.getByText(/Mostrar transcripción/)).toBeInTheDocument()
+  })
+
   it("asks for the pasted text and an optional video for a post", () => {
     render(<FormularioSubida autores={AUTORES} />)
     elegirTipo("Post")
@@ -371,6 +382,37 @@ describe("FormularioSubida: subir", () => {
     await waitFor(() => expect(irA).toHaveBeenCalledWith("/"))
     expect(crear.mock.calls[0]?.[0]).toMatchObject({ tipo: "link", url: "https://example.com/nota", archivos: [] })
     expect(enviar).not.toHaveBeenCalled()
+  })
+
+  it("cannot submit a bare YouTube link: it asks for the transcript and calls nothing", async () => {
+    render(<FormularioSubida autores={AUTORES} />)
+    elegirTipo("Link")
+    fireEvent.change(screen.getByLabelText("Dirección del link"), { target: { value: "https://youtu.be/abc123" } })
+    completarLoBasico()
+
+    fireEvent.click(screen.getByRole("button", { name: "Subir material" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Pega la transcripción del video.")
+    expect(crear).not.toHaveBeenCalled()
+  })
+
+  it("sends the YouTube address together with the pasted transcript", async () => {
+    crear.mockResolvedValue({ ok: true, materialId: MATERIAL, subidas: [] })
+    confirmar.mockResolvedValue({ ok: true })
+    render(<FormularioSubida autores={AUTORES} />)
+    elegirTipo("Link")
+    fireEvent.change(screen.getByLabelText("Dirección del link"), { target: { value: "https://youtu.be/abc123" } })
+    fireEvent.change(screen.getByLabelText("Transcripción del video"), { target: { value: "Hola a todos" } })
+    completarLoBasico()
+
+    fireEvent.click(screen.getByRole("button", { name: "Subir material" }))
+
+    await waitFor(() => expect(irA).toHaveBeenCalledWith("/"))
+    expect(crear.mock.calls[0]?.[0]).toMatchObject({
+      tipo: "link",
+      url: "https://youtu.be/abc123",
+      textoPegado: "Hola a todos",
+    })
   })
 
   it("shows the error of the server and uploads nothing", async () => {

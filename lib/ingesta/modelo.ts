@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { esYoutube } from "./youtube"
 
 export const TIPOS_DE_MATERIAL = ["documento", "link", "audio", "video", "imagen", "post"] as const
 export type TipoDeMaterial = (typeof TIPOS_DE_MATERIAL)[number]
@@ -139,6 +140,8 @@ const esquemaDeCreacion = esquemaBase.superRefine((entrada, contexto) => {
       if (!entrada.url?.trim()) contexto.addIssue({ code: "custom", path: ["url"], message: "Falta el link." })
       else if (!direccionWeb.safeParse(entrada.url.trim()).success) {
         contexto.addIssue({ code: "custom", path: ["url"], message: "Ese link no parece una dirección web válida." })
+      } else if (esYoutube(entrada.url) && !entrada.textoPegado?.trim()) {
+        contexto.addIssue({ code: "custom", path: ["textoPegado"], message: "Pega la transcripción del video." })
       }
       if (entrada.archivos.length > 0) {
         contexto.addIssue({ code: "custom", path: ["archivos"], message: "Un link no lleva archivos." })
@@ -175,6 +178,12 @@ export interface DatosDeCreacion {
 
 export type EntradaLeida = { ok: true; datos: DatosDeCreacion } | { ok: false; error: string }
 
+/** Pasted text is kept for a post and for the transcript of a YouTube link; any other link is opened by the worker. */
+function textoQueSeGuarda(datos: { tipo: TipoDeMaterial; url?: string; textoPegado?: string }): string | null {
+  const guardaTexto = datos.tipo === "post" || (datos.tipo === "link" && esYoutube(datos.url ?? ""))
+  return guardaTexto ? (datos.textoPegado?.trim() ?? null) : null
+}
+
 /** Validates what the browser sent; the error is the first problem, written for the person who sees it. */
 export function leerEntrada(entrada: unknown): EntradaLeida {
   // A problem nobody wrote a message for (a number where text goes) is a request this screen never sends.
@@ -187,7 +196,7 @@ export function leerEntrada(entrada: unknown): EntradaLeida {
     datos: {
       ...datos,
       url: datos.tipo === "link" ? (datos.url?.trim() ?? null) : null,
-      textoPegado: datos.tipo === "post" ? (datos.textoPegado?.trim() ?? null) : null,
+      textoPegado: textoQueSeGuarda(datos),
       referencia: conReferencia ? datos.referencia?.trim() || null : null,
     },
   }
