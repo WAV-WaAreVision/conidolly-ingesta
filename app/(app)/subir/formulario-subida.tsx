@@ -18,6 +18,7 @@ import {
   type TipoDeMaterial,
 } from "@/lib/ingesta/modelo"
 import { subirArchivos } from "@/lib/ingesta/subida-cliente"
+import { esYoutube, PASOS_DE_YOUTUBE } from "@/lib/ingesta/youtube"
 import { cn } from "@/lib/utils"
 import { confirmarMaterialAccion, crearAutorAccion, crearMaterialAccion, descartarMaterialAccion } from "./acciones"
 
@@ -59,6 +60,7 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
   const tomaArchivo =
     tipo === "documento" || tipo === "audio" || tipo === "video" || tipo === "imagen" || tipo === "post"
   const conReferencia = tipo === "video" || tipo === "imagen"
+  const conTranscripcion = tipo === "link" && esYoutube(url)
 
   const miniaturas = useMemo(
     () => (esImagen ? archivos.map((archivo) => URL.createObjectURL(archivo)) : []),
@@ -112,7 +114,7 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
       rol,
       declaracion,
       url: tipo === "link" ? url : "",
-      textoPegado: tipo === "post" ? textoPegado : "",
+      textoPegado: tipo === "post" || conTranscripcion ? textoPegado : "",
       referencia: conReferencia ? referencia : "",
       archivos: archivos.map((archivo) => ({ nombre: archivo.name, tamano: archivo.size })),
     }
@@ -197,6 +199,20 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
               value={url}
               onChange={(evento) => setUrl(evento.target.value)}
               className={CLASES_DE_CAMPO}
+            />
+          </Campo>
+        ) : null}
+
+        {conTranscripcion ? (
+          <Campo id="transcripcion" etiqueta="Transcripción del video" ayuda={PASOS_DE_YOUTUBE}>
+            <textarea
+              id="transcripcion"
+              rows={6}
+              required
+              aria-describedby="transcripcion-ayuda"
+              value={textoPegado}
+              onChange={(evento) => setTextoPegado(evento.target.value)}
+              className={cn(CLASES_DE_CAMPO, "min-h-40 resize-y")}
             />
           </Campo>
         ) : null}

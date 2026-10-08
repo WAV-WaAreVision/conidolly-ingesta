@@ -122,3 +122,32 @@ test("a link needs no file: it is saved and processed right away", async ({ page
   })
   expect(disparosRegistrados()).toEqual([{ tarea: "procesar-material", materialId: material.id }])
 })
+
+test("a YouTube link cannot go without its transcript, and keeps it when pasted", async ({ page }) => {
+  const titulo = `${PREFIJO_DE_PRUEBA}Video de YouTube`
+  const url = "https://www.youtube.com/watch?v=abc123"
+  await sembrarAutor("Autor del video")
+  await page.goto("/subir")
+  await page.getByRole("radio", { name: "Link" }).check({ force: true })
+  await page.getByLabel("Dirección del link").fill(url)
+  await expect(page.getByText(/Mostrar transcripción/)).toBeVisible()
+  await page.getByLabel(/^Título/).fill(titulo)
+  await elegirAutorYPapel(page, `${PREFIJO_DE_PRUEBA}Autor del video`, /Lo dijo Coni/)
+  await page.getByRole("checkbox", { name: "Este material no contiene datos de pacientes" }).check()
+
+  await page.getByRole("button", { name: "Subir material" }).click()
+  await expect(page.getByRole("alert").filter({ hasText: "Pega la transcripción del video." })).toBeVisible()
+
+  await page.getByLabel("Transcripción del video").fill("Hola a todos, hoy hablamos del deseo.")
+  await page.getByRole("button", { name: "Subir material" }).click()
+
+  await expect(page).toHaveURL(/\/$/)
+  const material = await filaPorTitulo(titulo)
+  expect(material).toMatchObject({
+    tipo: "link",
+    origen_url: url,
+    texto_pegado: "Hola a todos, hoy hablamos del deseo.",
+    archivo_clave: null,
+  })
+  expect(disparosRegistrados()).toEqual([{ tarea: "procesar-material", materialId: material.id }])
+})

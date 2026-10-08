@@ -142,6 +142,15 @@ describe("crearMaterial", () => {
     })
   })
 
+  it("stores a YouTube link with its address and the pasted transcript, and refuses it without text", async () => {
+    const youtube = "https://www.youtube.com/watch?v=abc123"
+    const creado = await crearOk(coni, { tipo: "link", url: youtube, textoPegado: "Hola a todos", archivos: [] })
+    const sinTexto = await crearMaterial(deps(coni), { ...base(), tipo: "link", url: youtube, archivos: [] })
+
+    expect(await fila(creado.materialId)).toMatchObject({ origen_url: youtube, texto_pegado: "Hola a todos" })
+    expect(sinTexto).toEqual({ ok: false, error: "Pega la transcripción del video." })
+  })
+
   it("stores a post as its pasted text, with an optional video", async () => {
     const solo = await crearOk(coni, { tipo: "post", textoPegado: "Un texto largo", archivos: [] })
     const conVideo = await crearOk(coni, {
