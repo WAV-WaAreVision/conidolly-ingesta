@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { NIVEL_DE_EVIDENCIA, PILAR } from "@/lib/ingesta/etiquetas"
+import { NIVEL_DE_EVIDENCIA } from "@/lib/ingesta/etiquetas"
 import type { SemanaLeida, TemaDeTeoria } from "@/lib/ingesta/semana"
 
 const ESTADO_DE_CORRIDA: Record<string, string> = { lista: "Lista", corriendo: "Corriendo", fallida: "Falló" }
@@ -115,7 +115,7 @@ export function VistaDeSemana({ semana }: { semana: SemanaLeida }) {
               <h3 className="text-label font-semibold">Pilares sin material</h3>
               <ul className="grid gap-1.5">
                 {queSubir.pilaresSinMaterial.map((pilar) => (
-                  <li key={pilar}>{PILAR[pilar] ?? pilar}</li>
+                  <li key={pilar}>{pilar}</li>
                 ))}
               </ul>
             </div>

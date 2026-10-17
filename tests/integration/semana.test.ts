@@ -141,13 +141,32 @@ describe("leerSemana", () => {
 
   it("reads what to upload next from the summary of the run", async () => {
     await sembrarCorrida(ESTA_SEMANA, {
-      resumen: { queSubir: { unSoloAutor: ["Apego", "Celos"], pilaresSinMaterial: ["limites"] } },
+      resumen: { queSubir: { unSoloAutor: ["Apego", "Celos"], pilaresSinMaterial: ["general"] } },
     })
 
     expect((await leerSemana(coni)).queSubir).toEqual({
       unSoloAutor: ["Apego", "Celos"],
-      pilaresSinMaterial: ["limites"],
+      pilaresSinMaterial: ["General"],
     })
+  })
+
+  it("drops a retired pillar a stored run still asks material for", async () => {
+    await sembrarCorrida(ESTA_SEMANA, {
+      resumen: { queSubir: { unSoloAutor: [], pilaresSinMaterial: ["limites", "ia-salud-mental"] } },
+    })
+
+    expect((await leerSemana(coni)).queSubir?.pilaresSinMaterial).toEqual(["IA y salud mental"])
+  })
+
+  it("names a pillar by its category, never by its raw slug", async () => {
+    await sembrarCorrida(ESTA_SEMANA, {
+      resumen: { queSubir: { unSoloAutor: [], pilaresSinMaterial: ["practica-clinica", "caso-coni"] } },
+    })
+
+    expect((await leerSemana(coni)).queSubir?.pilaresSinMaterial).toEqual([
+      "Práctica clínica aumentada",
+      "Caso Coni: humana + avatar",
+    ])
   })
 
   it("reads a summary that is not the shape the engine writes as empty instead of breaking", async () => {

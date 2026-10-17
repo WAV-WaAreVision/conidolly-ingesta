@@ -156,6 +156,13 @@ describe("listarTemas", () => {
     )
   })
 
+  it("lists only active categories, so a retired pillar cannot be picked", async () => {
+    const nombres = (await listarPilares(coni)).map((p) => p.nombre)
+    expect(nombres).toContain("IA y salud mental")
+    expect(nombres).toContain("General")
+    expect(nombres).not.toContain("Pareja y conversación")
+  })
+
   it("shows nothing to someone who is not a member", async () => {
     await sembrarTema()
 
