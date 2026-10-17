@@ -20,8 +20,10 @@ export default async function Temas({
     .string()
     .uuid()
     .safeParse(Array.isArray(crudo) ? crudo[0] : crudo)
-  const pilar = leido.success ? leido.data : undefined
-  const [temas, pilares] = await Promise.all([listarTemas(sesion.db, { pilar }), listarPilares(sesion.db)])
+  const pilares = await listarPilares(sesion.db)
+  // A retired or unknown pillar in the address is ignored, so the list never filters by one the picker cannot show.
+  const pilar = leido.success && pilares.some((opcion) => opcion.id === leido.data) ? leido.data : undefined
+  const temas = await listarTemas(sesion.db, { pilar })
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">

@@ -116,3 +116,21 @@ test("a merged topic leads to the topic that absorbed it", async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/temas/${vivo}$`))
   await expect(page.getByRole("heading", { name: `${PREFIJO_DE_PRUEBA}Tema Sobreviviente` })).toBeVisible()
 })
+
+test("a retired or unknown pillar in the address is ignored: no filter, the picker shows all", async ({ page }) => {
+  const retirado = await clienteDeServicio().from("categorias").select("id").eq("activa", false).limit(1).single()
+  if (retirado.error) throw new Error(retirado.error.message)
+  const autor = await sembrarAutor("Autor De Pilar Retirado")
+  const material = await sembrarMaterialListo(autor)
+  const suelto = await sembrarTema("Tema Sin Pilar Retirado")
+  await sembrarAfirmacionDe(material, autor, suelto)
+
+  for (const id of [retirado.data.id, "00000000-0000-4000-8000-000000000000"]) {
+    await page.goto(`/temas?pilar=${id}`)
+    await expect(page.getByLabel("Pilar")).toHaveValue("")
+    await expect(page.getByRole("link", { name: "Quitar filtros" })).toHaveCount(0)
+    await expect(
+      page.getByRole("listitem").filter({ hasText: `${PREFIJO_DE_PRUEBA}Tema Sin Pilar Retirado` }),
+    ).toBeVisible()
+  }
+})
