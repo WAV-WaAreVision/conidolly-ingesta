@@ -13,7 +13,13 @@ test("Coni sees the topics ordered by authors, with badges and the evidence mix,
   page,
 }) => {
   const servicio = clienteDeServicio()
-  const pilar = await servicio.from("categorias").select("id, nombre").order("nombre").limit(1).single()
+  const pilar = await servicio
+    .from("categorias")
+    .select("id, nombre")
+    .eq("activa", true)
+    .order("nombre")
+    .limit(1)
+    .single()
   if (pilar.error) throw new Error(pilar.error.message)
   const [uno, dos] = await Promise.all([sembrarAutor("Autor Uno Temas"), sembrarAutor("Autor Dos Temas")])
   const [m1, m2] = await Promise.all([sembrarMaterialListo(uno, "voz_propia"), sembrarMaterialListo(dos)])
