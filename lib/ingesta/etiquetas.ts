@@ -15,15 +15,6 @@ export const EVIDENCIA: Record<string, string> = {
   testimonio: "Testimonio",
 }
 
-export const PILAR: Record<string, string> = {
-  pareja: "Pareja",
-  deseo: "Deseo",
-  autoestima: "Autoestima",
-  limites: "Límites",
-  bienestar: "Bienestar",
-  general: "General",
-}
-
 export const NIVEL_DE_EVIDENCIA: Record<string, string> = {
   alto: "alta",
   medio: "media",

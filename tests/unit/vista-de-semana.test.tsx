@@ -40,7 +40,7 @@ const base: SemanaLeida = {
       temas: [{ id: ID_DOS, nombre: "Deseo" }],
     },
   ],
-  queSubir: { unSoloAutor: ["Celos"], pilaresSinMaterial: ["limites"] },
+  queSubir: { unSoloAutor: ["Celos"], pilaresSinMaterial: ["IA y salud mental"] },
 }
 
 describe("VistaDeSemana", () => {
@@ -107,7 +107,7 @@ describe("VistaDeSemana", () => {
 
     const subir = screen.getByRole("region", { name: "Qué subir después" })
     expect(within(subir).getByText("Celos")).toBeInTheDocument()
-    expect(within(subir).getByText("Límites")).toBeInTheDocument()
+    expect(within(subir).getByText("IA y salud mental")).toBeInTheDocument()
   })
 
   it("says there is nothing to add when every topic has several authors and every pillar has material", () => {
