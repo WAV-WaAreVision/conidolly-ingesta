@@ -43,7 +43,7 @@ test("Coni reads the latest run, its theories, the discarded crossings and what 
     semana: ESTA_SEMANA,
     estado: "lista",
     costo_usd: 1.2345,
-    resumen: { ideas: 9, manual: false, queSubir: { unSoloAutor: ["Celos"], pilaresSinMaterial: ["limites"] } },
+    resumen: { ideas: 9, manual: false, queSubir: { unSoloAutor: ["Celos"], pilaresSinMaterial: ["general"] } },
   })
   if (corrida.error) throw new Error(corrida.error.message)
   const teorias = await servicio.from("teorias").insert([
@@ -83,7 +83,7 @@ test("Coni reads the latest run, its theories, the discarded crossings and what 
   )
   const subir = page.getByRole("region", { name: "Qué subir después" })
   await expect(subir.getByText("Celos")).toBeVisible()
-  await expect(subir.getByText("Límites")).toBeVisible()
+  await expect(subir.getByText("General")).toBeVisible()
   await capturar(page, "ingesta-semana", CARPETA_DE_DOCUMENTACION)
 
   await page.getByRole("button", { name: "Proponer ahora" }).click()

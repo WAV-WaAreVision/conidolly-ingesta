@@ -78,6 +78,19 @@ const Resumen = z.object({
 /** `jsonb` that is not the shape the engine writes is read as empty rather than breaking the whole screen. */
 const leerResumen = (valor: unknown) => Resumen.catch({ ideas: 0, manual: false, queSubir: null }).parse(valor)
 
+/** A stored run may still name a pillar retired since: only the active ones are worth asking material for. */
+const soloPilaresActivos = async (db: Db, queSubir: QueSubir | null): Promise<QueSubir | null> => {
+  if (!queSubir || queSubir.pilaresSinMaterial.length === 0) return queSubir
+  const { data, error } = await db
+    .from("categorias")
+    .select("slug")
+    .eq("activa", true)
+    .in("slug", queSubir.pilaresSinMaterial)
+  if (error) throw new Error(`No pude leer los pilares activos: ${error.message}`, { cause: error })
+  const activos = new Set(data.map((categoria) => categoria.slug))
+  return { ...queSubir, pilaresSinMaterial: queSubir.pilaresSinMaterial.filter((slug) => activos.has(slug)) }
+}
+
 const nombresDe = async (db: Db, ids: string[]): Promise<Map<string, string>> => {
   const unicos = [...new Set(ids)]
   const nombres = new Map<string, string>()
@@ -158,7 +171,7 @@ export async function leerSemana(db: Db): Promise<SemanaLeida> {
         puntaje: teoria.puntaje,
         temas: temasDe(teoria.temas),
       })),
-    queSubir: resumen.queSubir,
+    queSubir: await soloPilaresActivos(db, resumen.queSubir),
   }
 }
 
