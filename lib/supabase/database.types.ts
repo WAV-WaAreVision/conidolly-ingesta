@@ -115,6 +115,7 @@ export type Database = {
           hora_publicacion: string
           id: boolean
           ideas_por_semana: number
+          inventario_desde: string
           linkedin_conectado_en: string | null
           linkedin_miembro: string | null
           linkedin_nombre: string | null
@@ -124,6 +125,7 @@ export type Database = {
           meta_cuenta_id: string | null
           meta_token_expira_en: string | null
           produccion: Json
+          revision_de_inventario_avisada: string | null
           tope_mensual_usd: number
           zona: string
         }
@@ -137,6 +139,7 @@ export type Database = {
           hora_publicacion?: string
           id?: boolean
           ideas_por_semana?: number
+          inventario_desde?: string
           linkedin_conectado_en?: string | null
           linkedin_miembro?: string | null
           linkedin_nombre?: string | null
@@ -146,6 +149,7 @@ export type Database = {
           meta_cuenta_id?: string | null
           meta_token_expira_en?: string | null
           produccion?: Json
+          revision_de_inventario_avisada?: string | null
           tope_mensual_usd?: number
           zona?: string
         }
@@ -159,6 +163,7 @@ export type Database = {
           hora_publicacion?: string
           id?: boolean
           ideas_por_semana?: number
+          inventario_desde?: string
           linkedin_conectado_en?: string | null
           linkedin_miembro?: string | null
           linkedin_nombre?: string | null
@@ -168,6 +173,7 @@ export type Database = {
           meta_cuenta_id?: string | null
           meta_token_expira_en?: string | null
           produccion?: Json
+          revision_de_inventario_avisada?: string | null
           tope_mensual_usd?: number
           zona?: string
         }
@@ -243,6 +249,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "avisos_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      carruseles: {
+        Row: {
+          armado_empezo_en: string | null
+          armado_pedido_en: string | null
+          creado_en: string
+          diseno: Json
+          estado: string
+          hash_texto: string
+          id: string
+          laminas: Json
+          origen: string
+          pdf_clave: string | null
+          pedido: string | null
+          pieza_id: string
+          png_claves: string[]
+          texto_post: string
+          version: number
+        }
+        Insert: {
+          armado_empezo_en?: string | null
+          armado_pedido_en?: string | null
+          creado_en?: string
+          diseno?: Json
+          estado?: string
+          hash_texto: string
+          id?: string
+          laminas: Json
+          origen: string
+          pdf_clave?: string | null
+          pedido?: string | null
+          pieza_id: string
+          png_claves?: string[]
+          texto_post: string
+          version: number
+        }
+        Update: {
+          armado_empezo_en?: string | null
+          armado_pedido_en?: string | null
+          creado_en?: string
+          diseno?: Json
+          estado?: string
+          hash_texto?: string
+          id?: string
+          laminas?: Json
+          origen?: string
+          pdf_clave?: string | null
+          pedido?: string | null
+          pieza_id?: string
+          png_claves?: string[]
+          texto_post?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carruseles_pieza_id_fkey"
             columns: ["pieza_id"]
             isOneToOne: false
             referencedRelation: "piezas"
@@ -387,6 +455,32 @@ export type Database = {
         }
         Relationships: []
       }
+      fechas_propuestas: {
+        Row: {
+          pieza_id: string
+          propuesta_en: string
+          publicar_en: string
+        }
+        Insert: {
+          pieza_id: string
+          propuesta_en?: string
+          publicar_en: string
+        }
+        Update: {
+          pieza_id?: string
+          propuesta_en?: string
+          publicar_en?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fechas_propuestas_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: true
+            referencedRelation: "piezas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fichas: {
         Row: {
           citas: Json
@@ -437,6 +531,8 @@ export type Database = {
           pieza_id: string | null
           proveedor: string
           real_usd: number | null
+          reservado_por: string | null
+          sin_cobro: boolean
         }
         Insert: {
           clave: string
@@ -449,6 +545,8 @@ export type Database = {
           pieza_id?: string | null
           proveedor: string
           real_usd?: number | null
+          reservado_por?: string | null
+          sin_cobro?: boolean
         }
         Update: {
           clave?: string
@@ -461,6 +559,8 @@ export type Database = {
           pieza_id?: string | null
           proveedor?: string
           real_usd?: number | null
+          reservado_por?: string | null
+          sin_cobro?: boolean
         }
         Relationships: [
           {
@@ -535,6 +635,8 @@ export type Database = {
         Row: {
           alertas: Json
           creada_en: string
+          descartada_en: string | null
+          descartada_por: string | null
           estado: string
           fijada_en: string | null
           formato: string
@@ -553,6 +655,8 @@ export type Database = {
         Insert: {
           alertas?: Json
           creada_en?: string
+          descartada_en?: string | null
+          descartada_por?: string | null
           estado?: string
           fijada_en?: string | null
           formato?: string
@@ -571,6 +675,8 @@ export type Database = {
         Update: {
           alertas?: Json
           creada_en?: string
+          descartada_en?: string | null
+          descartada_por?: string | null
           estado?: string
           fijada_en?: string | null
           formato?: string
@@ -641,8 +747,57 @@ export type Database = {
           },
         ]
       }
+      inventario_de_datos: {
+        Row: {
+          actualizado_en: string
+          actualizado_por: string | null
+          clave: string
+          dato: string
+          id: string
+          orden: number
+          pais: string
+          pais_confirmado: boolean
+          para_que: string
+          plazo: string
+          plazo_dias: number | null
+          proveedor: string
+          regla_de_borrado: string | null
+        }
+        Insert: {
+          actualizado_en?: string
+          actualizado_por?: string | null
+          clave: string
+          dato: string
+          id?: string
+          orden: number
+          pais: string
+          pais_confirmado?: boolean
+          para_que: string
+          plazo: string
+          plazo_dias?: number | null
+          proveedor: string
+          regla_de_borrado?: string | null
+        }
+        Update: {
+          actualizado_en?: string
+          actualizado_por?: string | null
+          clave?: string
+          dato?: string
+          id?: string
+          orden?: number
+          pais?: string
+          pais_confirmado?: boolean
+          para_que?: string
+          plazo?: string
+          plazo_dias?: number | null
+          proveedor?: string
+          regla_de_borrado?: string | null
+        }
+        Relationships: []
+      }
       materiales: {
         Row: {
+          anio: number | null
           archivo_clave: string | null
           autor: string | null
           autor_id: string
@@ -667,6 +822,7 @@ export type Database = {
           titulo: string | null
         }
         Insert: {
+          anio?: number | null
           archivo_clave?: string | null
           autor?: string | null
           autor_id: string
@@ -691,6 +847,7 @@ export type Database = {
           titulo?: string | null
         }
         Update: {
+          anio?: number | null
           archivo_clave?: string | null
           autor?: string | null
           autor_id?: string
@@ -772,6 +929,74 @@ export type Database = {
           dia?: string
           leido_en?: string
           toques_perfil?: number
+        }
+        Relationships: []
+      }
+      metricas_linkedin: {
+        Row: {
+          anotado_en: string
+          anotado_por: string | null
+          comentarios: number | null
+          compartidos: number | null
+          impresiones: number | null
+          medido_en: string
+          origen: string
+          pieza_id: string
+          reacciones: number | null
+        }
+        Insert: {
+          anotado_en?: string
+          anotado_por?: string | null
+          comentarios?: number | null
+          compartidos?: number | null
+          impresiones?: number | null
+          medido_en: string
+          origen: string
+          pieza_id: string
+          reacciones?: number | null
+        }
+        Update: {
+          anotado_en?: string
+          anotado_por?: string | null
+          comentarios?: number | null
+          compartidos?: number | null
+          impresiones?: number | null
+          medido_en?: string
+          origen?: string
+          pieza_id?: string
+          reacciones?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metricas_linkedin_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metricas_linkedin_cuenta: {
+        Row: {
+          anotado_en: string
+          anotado_por: string | null
+          origen: string
+          seguidores: number
+          semana: string
+        }
+        Insert: {
+          anotado_en?: string
+          anotado_por?: string | null
+          origen: string
+          seguidores: number
+          semana: string
+        }
+        Update: {
+          anotado_en?: string
+          anotado_por?: string | null
+          origen?: string
+          seguidores?: number
+          semana?: string
         }
         Relationships: []
       }
@@ -873,6 +1098,7 @@ export type Database = {
           archivos_borrados_en: string | null
           audio_id: string | null
           avatar_id: string | null
+          cambios_de_texto: number
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
@@ -887,6 +1113,7 @@ export type Database = {
           idea_id: string | null
           intento: number
           media_id: string | null
+          pedido_de_cambio: string | null
           permalink: string | null
           publicacion_enviada_en: string | null
           publicacion_reclamada_hasta: string | null
@@ -894,6 +1121,7 @@ export type Database = {
           puerta1_formula: number | null
           puerta1_hash: string | null
           puerta1_por: string | null
+          puerta2_carrusel_id: string | null
           puerta2_en: string | null
           puerta2_formula: number | null
           puerta2_hash_texto: string | null
@@ -905,6 +1133,7 @@ export type Database = {
           revision: Json
           texto: string | null
           texto_linkedin: string | null
+          tipo: string
           titulo: string
           version: number
           video_id: string | null
@@ -914,6 +1143,7 @@ export type Database = {
           archivos_borrados_en?: string | null
           audio_id?: string | null
           avatar_id?: string | null
+          cambios_de_texto?: number
           contenedor_clave?: string | null
           contenedor_id?: string | null
           creada_en?: string
@@ -928,6 +1158,7 @@ export type Database = {
           idea_id?: string | null
           intento?: number
           media_id?: string | null
+          pedido_de_cambio?: string | null
           permalink?: string | null
           publicacion_enviada_en?: string | null
           publicacion_reclamada_hasta?: string | null
@@ -935,6 +1166,7 @@ export type Database = {
           puerta1_formula?: number | null
           puerta1_hash?: string | null
           puerta1_por?: string | null
+          puerta2_carrusel_id?: string | null
           puerta2_en?: string | null
           puerta2_formula?: number | null
           puerta2_hash_texto?: string | null
@@ -946,6 +1178,7 @@ export type Database = {
           revision?: Json
           texto?: string | null
           texto_linkedin?: string | null
+          tipo?: string
           titulo: string
           version?: number
           video_id?: string | null
@@ -955,6 +1188,7 @@ export type Database = {
           archivos_borrados_en?: string | null
           audio_id?: string | null
           avatar_id?: string | null
+          cambios_de_texto?: number
           contenedor_clave?: string | null
           contenedor_id?: string | null
           creada_en?: string
@@ -969,6 +1203,7 @@ export type Database = {
           idea_id?: string | null
           intento?: number
           media_id?: string | null
+          pedido_de_cambio?: string | null
           permalink?: string | null
           publicacion_enviada_en?: string | null
           publicacion_reclamada_hasta?: string | null
@@ -976,6 +1211,7 @@ export type Database = {
           puerta1_formula?: number | null
           puerta1_hash?: string | null
           puerta1_por?: string | null
+          puerta2_carrusel_id?: string | null
           puerta2_en?: string | null
           puerta2_formula?: number | null
           puerta2_hash_texto?: string | null
@@ -987,6 +1223,7 @@ export type Database = {
           revision?: Json
           texto?: string | null
           texto_linkedin?: string | null
+          tipo?: string
           titulo?: string
           version?: number
           video_id?: string | null
@@ -999,11 +1236,19 @@ export type Database = {
             referencedRelation: "ideas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "puerta2_carrusel_de_la_pieza"
+            columns: ["puerta2_carrusel_id", "id"]
+            isOneToOne: false
+            referencedRelation: "carruseles"
+            referencedColumns: ["id", "pieza_id"]
+          },
         ]
       }
       publicaciones: {
         Row: {
           destino: string
+          documento_urn: string | null
           enlace: string | null
           enviado_en: string | null
           estado: string
@@ -1019,6 +1264,7 @@ export type Database = {
         }
         Insert: {
           destino: string
+          documento_urn?: string | null
           enlace?: string | null
           enviado_en?: string | null
           estado: string
@@ -1034,6 +1280,7 @@ export type Database = {
         }
         Update: {
           destino?: string
+          documento_urn?: string | null
           enlace?: string | null
           enviado_en?: string | null
           estado?: string
@@ -1056,6 +1303,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      recordatorios_linkedin: {
+        Row: {
+          avisado_en: string
+          semana: string
+        }
+        Insert: {
+          avisado_en?: string
+          semana: string
+        }
+        Update: {
+          avisado_en?: string
+          semana?: string
+        }
+        Relationships: []
+      }
+      registro_de_borrados: {
+        Row: {
+          borrado_en: string
+          cantidad: number
+          id: string
+          regla: string
+        }
+        Insert: {
+          borrado_en?: string
+          cantidad: number
+          id?: string
+          regla: string
+        }
+        Update: {
+          borrado_en?: string
+          cantidad?: number
+          id?: string
+          regla?: string
+        }
+        Relationships: []
+      }
+      revisiones_de_inventario: {
+        Row: {
+          id: string
+          revisado_en: string
+          revisado_por: string | null
+        }
+        Insert: {
+          id?: string
+          revisado_en?: string
+          revisado_por?: string | null
+        }
+        Update: {
+          id?: string
+          revisado_en?: string
+          revisado_por?: string | null
+        }
+        Relationships: []
       }
       suscripciones_push: {
         Row: {
@@ -1344,6 +1645,39 @@ export type Database = {
           },
         ]
       }
+      transparencia_versiones: {
+        Row: {
+          creada_en: string
+          creada_por: string | null
+          id: string
+          motivo: string
+          propuesta: boolean
+          texto: string
+          version: number
+          vigente: boolean
+        }
+        Insert: {
+          creada_en?: string
+          creada_por?: string | null
+          id?: string
+          motivo: string
+          propuesta?: boolean
+          texto: string
+          version: number
+          vigente?: boolean
+        }
+        Update: {
+          creada_en?: string
+          creada_por?: string | null
+          id?: string
+          motivo?: string
+          propuesta?: boolean
+          texto?: string
+          version?: number
+          vigente?: boolean
+        }
+        Relationships: []
+      }
       vinculos: {
         Row: {
           cita_a: string | null
@@ -1421,6 +1755,26 @@ export type Database = {
       }
     }
     Views: {
+      metricas_linkedin_ultima: {
+        Row: {
+          comentarios: number | null
+          compartidos: number | null
+          impresiones: number | null
+          medido_en: string | null
+          origen: string | null
+          pieza_id: string | null
+          reacciones: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metricas_linkedin_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metricas_reel_ultima: {
         Row: {
           alcance: number | null
@@ -1468,9 +1822,49 @@ export type Database = {
       }
     }
     Functions: {
+      anotar_numeros_linkedin: {
+        Args: {
+          p_medido_en: string
+          p_posts: Json
+          p_seguidores?: number
+          p_semana: string
+        }
+        Returns: undefined
+      }
       archivar_ideas_de_pilares_retirados: { Args: never; Returns: number }
       archivar_ideas_del_motor: { Args: { p_semanas: number }; Returns: number }
       borrar_autor: { Args: { p_id: string }; Returns: undefined }
+      cambiar_diseno_de_carrusel: {
+        Args: {
+          p_diseno: Json
+          p_laminas: Json
+          p_pieza: string
+          p_version: number
+        }
+        Returns: {
+          armado_empezo_en: string | null
+          armado_pedido_en: string | null
+          creado_en: string
+          diseno: Json
+          estado: string
+          hash_texto: string
+          id: string
+          laminas: Json
+          origen: string
+          pdf_clave: string | null
+          pedido: string | null
+          pieza_id: string
+          png_claves: string[]
+          texto_post: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "carruseles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       conectar_instagram: {
         Args: { p_cuenta: string; p_expira_en: string; p_token: string }
         Returns: undefined
@@ -1498,6 +1892,8 @@ export type Database = {
           pieza_id: string | null
           proveedor: string
           real_usd: number | null
+          reservado_por: string | null
+          sin_cobro: boolean
         }
         SetofOptions: {
           from: "*"
@@ -1515,6 +1911,10 @@ export type Database = {
         Args: { p_id: string; p_motivo: string }
         Returns: undefined
       }
+      descartar_ideas: {
+        Args: { p_ids: string[]; p_motivo: string }
+        Returns: undefined
+      }
       desconectar_linkedin: { Args: never; Returns: undefined }
       editar_guion_como_coni: {
         Args: {
@@ -1529,6 +1929,7 @@ export type Database = {
           archivos_borrados_en: string | null
           audio_id: string | null
           avatar_id: string | null
+          cambios_de_texto: number
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
@@ -1543,6 +1944,7 @@ export type Database = {
           idea_id: string | null
           intento: number
           media_id: string | null
+          pedido_de_cambio: string | null
           permalink: string | null
           publicacion_enviada_en: string | null
           publicacion_reclamada_hasta: string | null
@@ -1550,6 +1952,7 @@ export type Database = {
           puerta1_formula: number | null
           puerta1_hash: string | null
           puerta1_por: string | null
+          puerta2_carrusel_id: string | null
           puerta2_en: string | null
           puerta2_formula: number | null
           puerta2_hash_texto: string | null
@@ -1561,6 +1964,7 @@ export type Database = {
           revision: Json
           texto: string | null
           texto_linkedin: string | null
+          tipo: string
           titulo: string
           version: number
           video_id: string | null
@@ -1584,6 +1988,7 @@ export type Database = {
           archivos_borrados_en: string | null
           audio_id: string | null
           avatar_id: string | null
+          cambios_de_texto: number
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
@@ -1598,6 +2003,7 @@ export type Database = {
           idea_id: string | null
           intento: number
           media_id: string | null
+          pedido_de_cambio: string | null
           permalink: string | null
           publicacion_enviada_en: string | null
           publicacion_reclamada_hasta: string | null
@@ -1605,6 +2011,7 @@ export type Database = {
           puerta1_formula: number | null
           puerta1_hash: string | null
           puerta1_por: string | null
+          puerta2_carrusel_id: string | null
           puerta2_en: string | null
           puerta2_formula: number | null
           puerta2_hash_texto: string | null
@@ -1616,6 +2023,7 @@ export type Database = {
           revision: Json
           texto: string | null
           texto_linkedin: string | null
+          tipo: string
           titulo: string
           version: number
           video_id: string | null
@@ -1639,6 +2047,7 @@ export type Database = {
           archivos_borrados_en: string | null
           audio_id: string | null
           avatar_id: string | null
+          cambios_de_texto: number
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
@@ -1653,6 +2062,7 @@ export type Database = {
           idea_id: string | null
           intento: number
           media_id: string | null
+          pedido_de_cambio: string | null
           permalink: string | null
           publicacion_enviada_en: string | null
           publicacion_reclamada_hasta: string | null
@@ -1660,6 +2070,7 @@ export type Database = {
           puerta1_formula: number | null
           puerta1_hash: string | null
           puerta1_por: string | null
+          puerta2_carrusel_id: string | null
           puerta2_en: string | null
           puerta2_formula: number | null
           puerta2_hash_texto: string | null
@@ -1671,6 +2082,7 @@ export type Database = {
           revision: Json
           texto: string | null
           texto_linkedin: string | null
+          tipo: string
           titulo: string
           version: number
           video_id: string | null
@@ -1684,6 +2096,7 @@ export type Database = {
       }
       es_coni: { Args: never; Returns: boolean }
       es_mantenedor: { Args: never; Returns: boolean }
+      espacios_simples: { Args: { p_texto: string }; Returns: string }
       excluir_afirmacion: {
         Args: { p_excluida: boolean; p_id: string }
         Returns: undefined
@@ -1695,6 +2108,128 @@ export type Database = {
       fusionar_par_de_temas: {
         Args: { p_ganador: string; p_perdedor: string }
         Returns: undefined
+      }
+      guardar_acortado: {
+        Args: {
+          p_carrusel: string
+          p_clave: string
+          p_explicacion: string
+          p_hash_texto: string
+          p_laminas: Json
+          p_real: number
+          p_revision: Json
+          p_version: number
+        }
+        Returns: {
+          actualizada_en: string
+          archivos_borrados_en: string | null
+          audio_id: string | null
+          avatar_id: string | null
+          cambios_de_texto: number
+          contenedor_clave: string | null
+          contenedor_id: string | null
+          creada_en: string
+          destinos: string[]
+          estado: Database["public"]["Enums"]["estado_pieza"]
+          estado_antes_del_error:
+            | Database["public"]["Enums"]["estado_pieza"]
+            | null
+          explicacion: string | null
+          guion: string | null
+          id: string
+          idea_id: string | null
+          intento: number
+          media_id: string | null
+          pedido_de_cambio: string | null
+          permalink: string | null
+          publicacion_enviada_en: string | null
+          publicacion_reclamada_hasta: string | null
+          puerta1_en: string | null
+          puerta1_formula: number | null
+          puerta1_hash: string | null
+          puerta1_por: string | null
+          puerta2_carrusel_id: string | null
+          puerta2_en: string | null
+          puerta2_formula: number | null
+          puerta2_hash_texto: string | null
+          puerta2_por: string | null
+          puerta2_publicar_en: string | null
+          puerta2_video_id: string | null
+          render_id: string | null
+          respaldo: Json | null
+          revision: Json
+          texto: string | null
+          texto_linkedin: string | null
+          tipo: string
+          titulo: string
+          version: number
+          video_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "piezas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      guardar_armado: {
+        Args: {
+          p_carrusel: string
+          p_pdf: string
+          p_pngs: string[]
+          p_version: number
+        }
+        Returns: {
+          actualizada_en: string
+          archivos_borrados_en: string | null
+          audio_id: string | null
+          avatar_id: string | null
+          cambios_de_texto: number
+          contenedor_clave: string | null
+          contenedor_id: string | null
+          creada_en: string
+          destinos: string[]
+          estado: Database["public"]["Enums"]["estado_pieza"]
+          estado_antes_del_error:
+            | Database["public"]["Enums"]["estado_pieza"]
+            | null
+          explicacion: string | null
+          guion: string | null
+          id: string
+          idea_id: string | null
+          intento: number
+          media_id: string | null
+          pedido_de_cambio: string | null
+          permalink: string | null
+          publicacion_enviada_en: string | null
+          publicacion_reclamada_hasta: string | null
+          puerta1_en: string | null
+          puerta1_formula: number | null
+          puerta1_hash: string | null
+          puerta1_por: string | null
+          puerta2_carrusel_id: string | null
+          puerta2_en: string | null
+          puerta2_formula: number | null
+          puerta2_hash_texto: string | null
+          puerta2_por: string | null
+          puerta2_publicar_en: string | null
+          puerta2_video_id: string | null
+          render_id: string | null
+          respaldo: Json | null
+          revision: Json
+          texto: string | null
+          texto_linkedin: string | null
+          tipo: string
+          titulo: string
+          version: number
+          video_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "piezas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       guardar_borrador: {
         Args: {
@@ -1713,6 +2248,7 @@ export type Database = {
           archivos_borrados_en: string | null
           audio_id: string | null
           avatar_id: string | null
+          cambios_de_texto: number
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
@@ -1727,6 +2263,7 @@ export type Database = {
           idea_id: string | null
           intento: number
           media_id: string | null
+          pedido_de_cambio: string | null
           permalink: string | null
           publicacion_enviada_en: string | null
           publicacion_reclamada_hasta: string | null
@@ -1734,6 +2271,7 @@ export type Database = {
           puerta1_formula: number | null
           puerta1_hash: string | null
           puerta1_por: string | null
+          puerta2_carrusel_id: string | null
           puerta2_en: string | null
           puerta2_formula: number | null
           puerta2_hash_texto: string | null
@@ -1745,6 +2283,71 @@ export type Database = {
           revision: Json
           texto: string | null
           texto_linkedin: string | null
+          tipo: string
+          titulo: string
+          version: number
+          video_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "piezas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      guardar_carrusel: {
+        Args: {
+          p_clave: string
+          p_hash_texto: string
+          p_laminas: Json
+          p_pieza: string
+          p_real: number
+          p_respaldo?: Json
+          p_revision: Json
+          p_texto_post: string
+          p_version: number
+        }
+        Returns: {
+          actualizada_en: string
+          archivos_borrados_en: string | null
+          audio_id: string | null
+          avatar_id: string | null
+          cambios_de_texto: number
+          contenedor_clave: string | null
+          contenedor_id: string | null
+          creada_en: string
+          destinos: string[]
+          estado: Database["public"]["Enums"]["estado_pieza"]
+          estado_antes_del_error:
+            | Database["public"]["Enums"]["estado_pieza"]
+            | null
+          explicacion: string | null
+          guion: string | null
+          id: string
+          idea_id: string | null
+          intento: number
+          media_id: string | null
+          pedido_de_cambio: string | null
+          permalink: string | null
+          publicacion_enviada_en: string | null
+          publicacion_reclamada_hasta: string | null
+          puerta1_en: string | null
+          puerta1_formula: number | null
+          puerta1_hash: string | null
+          puerta1_por: string | null
+          puerta2_carrusel_id: string | null
+          puerta2_en: string | null
+          puerta2_formula: number | null
+          puerta2_hash_texto: string | null
+          puerta2_por: string | null
+          puerta2_publicar_en: string | null
+          puerta2_video_id: string | null
+          render_id: string | null
+          respaldo: Json | null
+          revision: Json
+          texto: string | null
+          texto_linkedin: string | null
+          tipo: string
           titulo: string
           version: number
           video_id: string | null
@@ -1766,7 +2369,7 @@ export type Database = {
       }
       leer_secreto: { Args: { p_nombre: string }; Returns: string }
       liberar_gasto: {
-        Args: { p_clave: string }
+        Args: { p_clave: string; p_sin_cobro?: boolean }
         Returns: {
           clave: string
           creado_en: string
@@ -1778,6 +2381,8 @@ export type Database = {
           pieza_id: string | null
           proveedor: string
           real_usd: number | null
+          reservado_por: string | null
+          sin_cobro: boolean
         }
         SetofOptions: {
           from: "*"
@@ -1788,6 +2393,7 @@ export type Database = {
       }
       linkedin_conectado: { Args: never; Returns: boolean }
       marcar_disparo_fallido: { Args: { p_id: string }; Returns: undefined }
+      marcar_inventario_revisado: { Args: never; Returns: string }
       marcar_subido_como_coni: {
         Args: {
           p_destino: string
@@ -1800,6 +2406,7 @@ export type Database = {
           archivos_borrados_en: string | null
           audio_id: string | null
           avatar_id: string | null
+          cambios_de_texto: number
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
@@ -1814,6 +2421,7 @@ export type Database = {
           idea_id: string | null
           intento: number
           media_id: string | null
+          pedido_de_cambio: string | null
           permalink: string | null
           publicacion_enviada_en: string | null
           publicacion_reclamada_hasta: string | null
@@ -1821,6 +2429,7 @@ export type Database = {
           puerta1_formula: number | null
           puerta1_hash: string | null
           puerta1_por: string | null
+          puerta2_carrusel_id: string | null
           puerta2_en: string | null
           puerta2_formula: number | null
           puerta2_hash_texto: string | null
@@ -1832,6 +2441,7 @@ export type Database = {
           revision: Json
           texto: string | null
           texto_linkedin: string | null
+          tipo: string
           titulo: string
           version: number
           video_id: string | null
@@ -1879,7 +2489,125 @@ export type Database = {
         }[]
       }
       olvidar_visitas_clic: { Args: { p_antes_de: string }; Returns: number }
+      palabras_de: { Args: { p_texto: string }; Returns: string[] }
+      palabras_de_laminas: { Args: { p_laminas: Json }; Returns: string }
+      pedir_cambio_de_carrusel: {
+        Args: { p_pedido: string; p_pieza: string; p_version: number }
+        Returns: {
+          actualizada_en: string
+          archivos_borrados_en: string | null
+          audio_id: string | null
+          avatar_id: string | null
+          cambios_de_texto: number
+          contenedor_clave: string | null
+          contenedor_id: string | null
+          creada_en: string
+          destinos: string[]
+          estado: Database["public"]["Enums"]["estado_pieza"]
+          estado_antes_del_error:
+            | Database["public"]["Enums"]["estado_pieza"]
+            | null
+          explicacion: string | null
+          guion: string | null
+          id: string
+          idea_id: string | null
+          intento: number
+          media_id: string | null
+          pedido_de_cambio: string | null
+          permalink: string | null
+          publicacion_enviada_en: string | null
+          publicacion_reclamada_hasta: string | null
+          puerta1_en: string | null
+          puerta1_formula: number | null
+          puerta1_hash: string | null
+          puerta1_por: string | null
+          puerta2_carrusel_id: string | null
+          puerta2_en: string | null
+          puerta2_formula: number | null
+          puerta2_hash_texto: string | null
+          puerta2_por: string | null
+          puerta2_publicar_en: string | null
+          puerta2_video_id: string | null
+          render_id: string | null
+          respaldo: Json | null
+          revision: Json
+          texto: string | null
+          texto_linkedin: string | null
+          tipo: string
+          titulo: string
+          version: number
+          video_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "piezas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      proponer_fechas: {
+        Args: { p_fechas: string[]; p_piezas: string[] }
+        Returns: undefined
+      }
+      publicar_transparencia: {
+        Args: { p_motivo: string; p_texto: string }
+        Returns: number
+      }
       recalcular_tema: { Args: { p_tema: string }; Returns: undefined }
+      rechazar_diseno_que_no_cabe: {
+        Args: { p_carrusel: string; p_explicacion: string; p_version: number }
+        Returns: {
+          actualizada_en: string
+          archivos_borrados_en: string | null
+          audio_id: string | null
+          avatar_id: string | null
+          cambios_de_texto: number
+          contenedor_clave: string | null
+          contenedor_id: string | null
+          creada_en: string
+          destinos: string[]
+          estado: Database["public"]["Enums"]["estado_pieza"]
+          estado_antes_del_error:
+            | Database["public"]["Enums"]["estado_pieza"]
+            | null
+          explicacion: string | null
+          guion: string | null
+          id: string
+          idea_id: string | null
+          intento: number
+          media_id: string | null
+          pedido_de_cambio: string | null
+          permalink: string | null
+          publicacion_enviada_en: string | null
+          publicacion_reclamada_hasta: string | null
+          puerta1_en: string | null
+          puerta1_formula: number | null
+          puerta1_hash: string | null
+          puerta1_por: string | null
+          puerta2_carrusel_id: string | null
+          puerta2_en: string | null
+          puerta2_formula: number | null
+          puerta2_hash_texto: string | null
+          puerta2_por: string | null
+          puerta2_publicar_en: string | null
+          puerta2_video_id: string | null
+          render_id: string | null
+          respaldo: Json | null
+          revision: Json
+          texto: string | null
+          texto_linkedin: string | null
+          tipo: string
+          titulo: string
+          version: number
+          video_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "piezas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       registrar_clic: {
         Args: { p_dia: string; p_enlace: string; p_visitante: string }
         Returns: boolean
@@ -1902,6 +2630,8 @@ export type Database = {
           p_paso: string
           p_pieza: string
           p_proveedor: string
+          p_reabrir?: boolean
+          p_reservado_por?: string
         }
         Returns: {
           clave: string
@@ -1914,6 +2644,8 @@ export type Database = {
           pieza_id: string | null
           proveedor: string
           real_usd: number | null
+          reservado_por: string | null
+          sin_cobro: boolean
         }
         SetofOptions: {
           from: "*"
@@ -1941,6 +2673,8 @@ export type Database = {
           pieza_id: string | null
           proveedor: string
           real_usd: number | null
+          reservado_por: string | null
+          sin_cobro: boolean
         }
         SetofOptions: {
           from: "*"
@@ -1953,6 +2687,7 @@ export type Database = {
         Args: { p_idea: string; p_limite: number }
         Returns: Json
       }
+      restaurar_ideas: { Args: { p_ids: string[] }; Returns: string[] }
       siguiente_version_de_guion: { Args: { p_pieza: string }; Returns: number }
       tema_mas_cercano: {
         Args: { p_umbral: number; p_vector: string }
@@ -1976,6 +2711,7 @@ export type Database = {
           archivos_borrados_en: string | null
           audio_id: string | null
           avatar_id: string | null
+          cambios_de_texto: number
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
@@ -1990,6 +2726,7 @@ export type Database = {
           idea_id: string | null
           intento: number
           media_id: string | null
+          pedido_de_cambio: string | null
           permalink: string | null
           publicacion_enviada_en: string | null
           publicacion_reclamada_hasta: string | null
@@ -1997,6 +2734,7 @@ export type Database = {
           puerta1_formula: number | null
           puerta1_hash: string | null
           puerta1_por: string | null
+          puerta2_carrusel_id: string | null
           puerta2_en: string | null
           puerta2_formula: number | null
           puerta2_hash_texto: string | null
@@ -2008,6 +2746,7 @@ export type Database = {
           revision: Json
           texto: string | null
           texto_linkedin: string | null
+          tipo: string
           titulo: string
           version: number
           video_id: string | null
@@ -2019,7 +2758,15 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      transparencia_vigente: {
+        Args: never
+        Returns: {
+          creada_en: string
+          texto: string
+        }[]
+      }
       unaccent_inmutable: { Args: { texto: string }; Returns: string }
+      volver_a_transparencia: { Args: { p_version: number }; Returns: number }
     }
     Enums: {
       estado_pieza:
@@ -2031,6 +2778,8 @@ export type Database = {
         | "en_render"
         | "subtitulando"
         | "video_por_aprobar"
+        | "armando_carrusel"
+        | "carrusel_por_aprobar"
         | "programado"
         | "publicado"
         | "error_produccion"
@@ -2174,6 +2923,8 @@ export const Constants = {
         "en_render",
         "subtitulando",
         "video_por_aprobar",
+        "armando_carrusel",
+        "carrusel_por_aprobar",
         "programado",
         "publicado",
         "error_produccion",
