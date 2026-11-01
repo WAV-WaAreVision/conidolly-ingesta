@@ -1,19 +1,23 @@
 import Link from "next/link"
+import type { Rol } from "@/lib/acciones/ingreso"
 import { cn } from "@/lib/utils"
 
 const SECCIONES = [
-  { clave: "materiales", texto: "Materiales", ruta: "/" },
-  { clave: "autores", texto: "Autores", ruta: "/autores" },
-  { clave: "temas", texto: "Temas", ruta: "/temas" },
-  { clave: "semana", texto: "Semana", ruta: "/semana" },
+  { clave: "materiales", texto: "Materiales", ruta: "/", soloWav: false },
+  { clave: "autores", texto: "Autores", ruta: "/autores", soloWav: false },
+  { clave: "temas", texto: "Temas", ruta: "/temas", soloWav: false },
+  { clave: "semana", texto: "Semana", ruta: "/semana", soloWav: false },
+  // The personal data register is WAV's to correct (Conidolly spec 2026-11-01, D2); Coni reviews it in Conidolly.
+  { clave: "datos", texto: "Datos", ruta: "/datos-personales", soloWav: true },
 ] as const
 
 export type Seccion = (typeof SECCIONES)[number]["clave"]
 
-export function NavegacionPrincipal({ actual }: { actual: Seccion }) {
+export function NavegacionPrincipal({ actual, rol }: { actual: Seccion; rol: Rol }) {
+  const visibles = SECCIONES.filter((seccion) => !seccion.soloWav || rol === "wav")
   return (
     <nav aria-label="Secciones" className="flex gap-1.5">
-      {SECCIONES.map((seccion) => (
+      {visibles.map((seccion) => (
         <Link
           key={seccion.clave}
           href={seccion.ruta}

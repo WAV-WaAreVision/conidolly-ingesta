@@ -24,7 +24,7 @@ export default async function Material({
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
       <ActualizarMientras activo={materiales.some(estaProcesando)} />
       <h1 className="font-serif text-display text-balance">Material de Coni</h1>
-      <NavegacionPrincipal actual="materiales" />
+      <NavegacionPrincipal actual="materiales" rol={sesion.rol} />
       <Link href="/subir" className={clasesDeBoton()}>
         Subir material
       </Link>
