@@ -71,9 +71,9 @@ const ubicacionLeida = (valor: unknown): Ubicacion | null => {
   return leida.success ? leida.data : null
 }
 
-/** The pillars a topic can sit under, in alphabetical order. */
+/** The categories a topic can be filtered by: active ones only (retired pillars keep their rows, not their place). */
 export async function listarPilares(db: Db): Promise<Pilar[]> {
-  const { data, error } = await db.from("categorias").select("id, nombre")
+  const { data, error } = await db.from("categorias").select("id, nombre").eq("activa", true)
   if (error) throw new Error(`No pude leer los pilares: ${error.message}`, { cause: error })
   return data.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
 }

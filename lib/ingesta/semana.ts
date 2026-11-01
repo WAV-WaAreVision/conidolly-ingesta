@@ -50,6 +50,7 @@ export interface CruceDescartado {
 
 export interface QueSubir {
   unSoloAutor: string[]
+  /** The names of the active pillars with no material, as `categorias.nombre`. */
   pilaresSinMaterial: string[]
 }
 
@@ -77,6 +78,28 @@ const Resumen = z.object({
 
 /** `jsonb` that is not the shape the engine writes is read as empty rather than breaking the whole screen. */
 const leerResumen = (valor: unknown) => Resumen.catch({ ideas: 0, manual: false, queSubir: null }).parse(valor)
+
+/**
+ * The engine stores pillar slugs; the screen shows each active one by its category name. A stored run may still name a
+ * pillar retired since: it is not worth asking material for, so it drops out.
+ */
+const nombresDePilaresActivos = async (db: Db, queSubir: QueSubir | null): Promise<QueSubir | null> => {
+  if (!queSubir || queSubir.pilaresSinMaterial.length === 0) return queSubir
+  const { data, error } = await db
+    .from("categorias")
+    .select("slug, nombre")
+    .eq("activa", true)
+    .in("slug", queSubir.pilaresSinMaterial)
+  if (error) throw new Error(`No pude leer los pilares activos: ${error.message}`, { cause: error })
+  const nombres = new Map(data.map((categoria) => [categoria.slug, categoria.nombre]))
+  return {
+    ...queSubir,
+    pilaresSinMaterial: queSubir.pilaresSinMaterial.flatMap((slug) => {
+      const nombre = nombres.get(slug)
+      return nombre === undefined ? [] : [nombre]
+    }),
+  }
+}
 
 const nombresDe = async (db: Db, ids: string[]): Promise<Map<string, string>> => {
   const unicos = [...new Set(ids)]
@@ -158,7 +181,7 @@ export async function leerSemana(db: Db): Promise<SemanaLeida> {
         puntaje: teoria.puntaje,
         temas: temasDe(teoria.temas),
       })),
-    queSubir: resumen.queSubir,
+    queSubir: await nombresDePilaresActivos(db, resumen.queSubir),
   }
 }
 

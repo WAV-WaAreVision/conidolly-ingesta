@@ -109,11 +109,17 @@ export type Database = {
           avatar_visto_en: string | null
           avisos_resumen: boolean
           avisos_urgentes: boolean
+          destinos_por_defecto: string[]
           dias_publicacion: number[]
           enlaces: Json
           hora_publicacion: string
           id: boolean
           ideas_por_semana: number
+          linkedin_conectado_en: string | null
+          linkedin_miembro: string | null
+          linkedin_nombre: string | null
+          linkedin_token_expira_en: string | null
+          linkedin_version_avisada: string | null
           meta: string
           meta_cuenta_id: string | null
           meta_token_expira_en: string | null
@@ -125,11 +131,17 @@ export type Database = {
           avatar_visto_en?: string | null
           avisos_resumen?: boolean
           avisos_urgentes?: boolean
+          destinos_por_defecto?: string[]
           dias_publicacion?: number[]
           enlaces?: Json
           hora_publicacion?: string
           id?: boolean
           ideas_por_semana?: number
+          linkedin_conectado_en?: string | null
+          linkedin_miembro?: string | null
+          linkedin_nombre?: string | null
+          linkedin_token_expira_en?: string | null
+          linkedin_version_avisada?: string | null
           meta?: string
           meta_cuenta_id?: string | null
           meta_token_expira_en?: string | null
@@ -141,11 +153,17 @@ export type Database = {
           avatar_visto_en?: string | null
           avisos_resumen?: boolean
           avisos_urgentes?: boolean
+          destinos_por_defecto?: string[]
           dias_publicacion?: number[]
           enlaces?: Json
           hora_publicacion?: string
           id?: boolean
           ideas_por_semana?: number
+          linkedin_conectado_en?: string | null
+          linkedin_miembro?: string | null
+          linkedin_nombre?: string | null
+          linkedin_token_expira_en?: string | null
+          linkedin_version_avisada?: string | null
           meta?: string
           meta_cuenta_id?: string | null
           meta_token_expira_en?: string | null
@@ -234,27 +252,42 @@ export type Database = {
       }
       categorias: {
         Row: {
+          activa: boolean
           creada_en: string
           creada_por: string | null
+          descripcion: string | null
+          es_pilar: boolean
           id: string
           nombre: string
+          nombre_corto: string | null
           nombre_normalizado: string | null
+          orden: number | null
           slug: string
         }
         Insert: {
+          activa?: boolean
           creada_en?: string
           creada_por?: string | null
+          descripcion?: string | null
+          es_pilar?: boolean
           id?: string
           nombre: string
+          nombre_corto?: string | null
           nombre_normalizado?: string | null
+          orden?: number | null
           slug: string
         }
         Update: {
+          activa?: boolean
           creada_en?: string
           creada_por?: string | null
+          descripcion?: string | null
+          es_pilar?: boolean
           id?: string
           nombre?: string
+          nombre_corto?: string | null
           nombre_normalizado?: string | null
+          orden?: number | null
           slug?: string
         }
         Relationships: []
@@ -512,7 +545,7 @@ export type Database = {
           motivo_descarte: string | null
           numero: number | null
           origen: string
-          pilar: Database["public"]["Enums"]["pilar"]
+          pilar: string
           semana: string | null
           tema: string
           teoria_id: string | null
@@ -530,7 +563,7 @@ export type Database = {
           motivo_descarte?: string | null
           numero?: number | null
           origen?: string
-          pilar: Database["public"]["Enums"]["pilar"]
+          pilar: string
           semana?: string | null
           tema?: string
           teoria_id?: string | null
@@ -548,12 +581,19 @@ export type Database = {
           motivo_descarte?: string | null
           numero?: number | null
           origen?: string
-          pilar?: Database["public"]["Enums"]["pilar"]
+          pilar?: string
           semana?: string | null
           tema?: string
           teoria_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "ideas_pilar_fkey"
+            columns: ["pilar"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["slug"]
+          },
           {
             foreignKeyName: "ideas_teoria_id_fkey"
             columns: ["teoria_id"]
@@ -836,6 +876,7 @@ export type Database = {
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
+          destinos: string[]
           estado: Database["public"]["Enums"]["estado_pieza"]
           estado_antes_del_error:
             | Database["public"]["Enums"]["estado_pieza"]
@@ -854,13 +895,16 @@ export type Database = {
           puerta1_hash: string | null
           puerta1_por: string | null
           puerta2_en: string | null
+          puerta2_formula: number | null
           puerta2_hash_texto: string | null
           puerta2_por: string | null
           puerta2_publicar_en: string | null
           puerta2_video_id: string | null
           render_id: string | null
+          respaldo: Json | null
           revision: Json
           texto: string | null
+          texto_linkedin: string | null
           titulo: string
           version: number
           video_id: string | null
@@ -873,6 +917,7 @@ export type Database = {
           contenedor_clave?: string | null
           contenedor_id?: string | null
           creada_en?: string
+          destinos?: string[]
           estado?: Database["public"]["Enums"]["estado_pieza"]
           estado_antes_del_error?:
             | Database["public"]["Enums"]["estado_pieza"]
@@ -891,13 +936,16 @@ export type Database = {
           puerta1_hash?: string | null
           puerta1_por?: string | null
           puerta2_en?: string | null
+          puerta2_formula?: number | null
           puerta2_hash_texto?: string | null
           puerta2_por?: string | null
           puerta2_publicar_en?: string | null
           puerta2_video_id?: string | null
           render_id?: string | null
+          respaldo?: Json | null
           revision?: Json
           texto?: string | null
+          texto_linkedin?: string | null
           titulo: string
           version?: number
           video_id?: string | null
@@ -910,6 +958,7 @@ export type Database = {
           contenedor_clave?: string | null
           contenedor_id?: string | null
           creada_en?: string
+          destinos?: string[]
           estado?: Database["public"]["Enums"]["estado_pieza"]
           estado_antes_del_error?:
             | Database["public"]["Enums"]["estado_pieza"]
@@ -928,13 +977,16 @@ export type Database = {
           puerta1_hash?: string | null
           puerta1_por?: string | null
           puerta2_en?: string | null
+          puerta2_formula?: number | null
           puerta2_hash_texto?: string | null
           puerta2_por?: string | null
           puerta2_publicar_en?: string | null
           puerta2_video_id?: string | null
           render_id?: string | null
+          respaldo?: Json | null
           revision?: Json
           texto?: string | null
+          texto_linkedin?: string | null
           titulo?: string
           version?: number
           video_id?: string | null
@@ -945,6 +997,62 @@ export type Database = {
             columns: ["idea_id"]
             isOneToOne: false
             referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publicaciones: {
+        Row: {
+          destino: string
+          enlace: string | null
+          enviado_en: string | null
+          estado: string
+          explicacion: string | null
+          hash_enviado: string | null
+          intentos: number
+          marcado_en: string | null
+          marcado_por: string | null
+          pieza_id: string
+          post_urn: string | null
+          ultimo_error: string | null
+          video_urn: string | null
+        }
+        Insert: {
+          destino: string
+          enlace?: string | null
+          enviado_en?: string | null
+          estado: string
+          explicacion?: string | null
+          hash_enviado?: string | null
+          intentos?: number
+          marcado_en?: string | null
+          marcado_por?: string | null
+          pieza_id: string
+          post_urn?: string | null
+          ultimo_error?: string | null
+          video_urn?: string | null
+        }
+        Update: {
+          destino?: string
+          enlace?: string | null
+          enviado_en?: string | null
+          estado?: string
+          explicacion?: string | null
+          hash_enviado?: string | null
+          intentos?: number
+          marcado_en?: string | null
+          marcado_por?: string | null
+          pieza_id?: string
+          post_urn?: string | null
+          ultimo_error?: string | null
+          video_urn?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publicaciones_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas"
             referencedColumns: ["id"]
           },
         ]
@@ -1360,10 +1468,20 @@ export type Database = {
       }
     }
     Functions: {
+      archivar_ideas_de_pilares_retirados: { Args: never; Returns: number }
       archivar_ideas_del_motor: { Args: { p_semanas: number }; Returns: number }
       borrar_autor: { Args: { p_id: string }; Returns: undefined }
       conectar_instagram: {
         Args: { p_cuenta: string; p_expira_en: string; p_token: string }
+        Returns: undefined
+      }
+      conectar_linkedin: {
+        Args: {
+          p_expira_en: string
+          p_miembro: string
+          p_nombre: string
+          p_token: string
+        }
         Returns: undefined
       }
       confirmar_costo_material: { Args: { p_id: string }; Returns: undefined }
@@ -1397,6 +1515,7 @@ export type Database = {
         Args: { p_id: string; p_motivo: string }
         Returns: undefined
       }
+      desconectar_linkedin: { Args: never; Returns: undefined }
       editar_guion_como_coni: {
         Args: {
           p_guion: string
@@ -1413,6 +1532,7 @@ export type Database = {
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
+          destinos: string[]
           estado: Database["public"]["Enums"]["estado_pieza"]
           estado_antes_del_error:
             | Database["public"]["Enums"]["estado_pieza"]
@@ -1431,13 +1551,16 @@ export type Database = {
           puerta1_hash: string | null
           puerta1_por: string | null
           puerta2_en: string | null
+          puerta2_formula: number | null
           puerta2_hash_texto: string | null
           puerta2_por: string | null
           puerta2_publicar_en: string | null
           puerta2_video_id: string | null
           render_id: string | null
+          respaldo: Json | null
           revision: Json
           texto: string | null
+          texto_linkedin: string | null
           titulo: string
           version: number
           video_id: string | null
@@ -1464,6 +1587,7 @@ export type Database = {
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
+          destinos: string[]
           estado: Database["public"]["Enums"]["estado_pieza"]
           estado_antes_del_error:
             | Database["public"]["Enums"]["estado_pieza"]
@@ -1482,13 +1606,71 @@ export type Database = {
           puerta1_hash: string | null
           puerta1_por: string | null
           puerta2_en: string | null
+          puerta2_formula: number | null
           puerta2_hash_texto: string | null
           puerta2_por: string | null
           puerta2_publicar_en: string | null
           puerta2_video_id: string | null
           render_id: string | null
+          respaldo: Json | null
           revision: Json
           texto: string | null
+          texto_linkedin: string | null
+          titulo: string
+          version: number
+          video_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "piezas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      editar_texto_linkedin_como_coni: {
+        Args: {
+          p_pieza: string
+          p_revision: Json
+          p_texto: string
+          p_version: number
+        }
+        Returns: {
+          actualizada_en: string
+          archivos_borrados_en: string | null
+          audio_id: string | null
+          avatar_id: string | null
+          contenedor_clave: string | null
+          contenedor_id: string | null
+          creada_en: string
+          destinos: string[]
+          estado: Database["public"]["Enums"]["estado_pieza"]
+          estado_antes_del_error:
+            | Database["public"]["Enums"]["estado_pieza"]
+            | null
+          explicacion: string | null
+          guion: string | null
+          id: string
+          idea_id: string | null
+          intento: number
+          media_id: string | null
+          permalink: string | null
+          publicacion_enviada_en: string | null
+          publicacion_reclamada_hasta: string | null
+          puerta1_en: string | null
+          puerta1_formula: number | null
+          puerta1_hash: string | null
+          puerta1_por: string | null
+          puerta2_en: string | null
+          puerta2_formula: number | null
+          puerta2_hash_texto: string | null
+          puerta2_por: string | null
+          puerta2_publicar_en: string | null
+          puerta2_video_id: string | null
+          render_id: string | null
+          respaldo: Json | null
+          revision: Json
+          texto: string | null
+          texto_linkedin: string | null
           titulo: string
           version: number
           video_id: string | null
@@ -1520,8 +1702,10 @@ export type Database = {
           p_guion: string
           p_pieza: string
           p_real: number
+          p_respaldo?: Json
           p_revision: Json
           p_texto: string
+          p_texto_linkedin?: string
           p_version: number
         }
         Returns: {
@@ -1532,6 +1716,7 @@ export type Database = {
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
+          destinos: string[]
           estado: Database["public"]["Enums"]["estado_pieza"]
           estado_antes_del_error:
             | Database["public"]["Enums"]["estado_pieza"]
@@ -1550,13 +1735,16 @@ export type Database = {
           puerta1_hash: string | null
           puerta1_por: string | null
           puerta2_en: string | null
+          puerta2_formula: number | null
           puerta2_hash_texto: string | null
           puerta2_por: string | null
           puerta2_publicar_en: string | null
           puerta2_video_id: string | null
           render_id: string | null
+          respaldo: Json | null
           revision: Json
           texto: string | null
+          texto_linkedin: string | null
           titulo: string
           version: number
           video_id: string | null
@@ -1598,7 +1786,63 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      linkedin_conectado: { Args: never; Returns: boolean }
       marcar_disparo_fallido: { Args: { p_id: string }; Returns: undefined }
+      marcar_subido_como_coni: {
+        Args: {
+          p_destino: string
+          p_enlace: string
+          p_pieza: string
+          p_version: number
+        }
+        Returns: {
+          actualizada_en: string
+          archivos_borrados_en: string | null
+          audio_id: string | null
+          avatar_id: string | null
+          contenedor_clave: string | null
+          contenedor_id: string | null
+          creada_en: string
+          destinos: string[]
+          estado: Database["public"]["Enums"]["estado_pieza"]
+          estado_antes_del_error:
+            | Database["public"]["Enums"]["estado_pieza"]
+            | null
+          explicacion: string | null
+          guion: string | null
+          id: string
+          idea_id: string | null
+          intento: number
+          media_id: string | null
+          permalink: string | null
+          publicacion_enviada_en: string | null
+          publicacion_reclamada_hasta: string | null
+          puerta1_en: string | null
+          puerta1_formula: number | null
+          puerta1_hash: string | null
+          puerta1_por: string | null
+          puerta2_en: string | null
+          puerta2_formula: number | null
+          puerta2_hash_texto: string | null
+          puerta2_por: string | null
+          puerta2_publicar_en: string | null
+          puerta2_video_id: string | null
+          render_id: string | null
+          respaldo: Json | null
+          revision: Json
+          texto: string | null
+          texto_linkedin: string | null
+          titulo: string
+          version: number
+          video_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "piezas"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       motor_afirmaciones_de_tema: {
         Args: { p_limite: number; p_tema: string }
         Returns: {
@@ -1646,6 +1890,10 @@ export type Database = {
         Returns: undefined
       }
       reprocesar_material: { Args: { p_id: string }; Returns: undefined }
+      reservar_envio_linkedin: {
+        Args: { p_pieza: string; p_version: number }
+        Returns: number
+      }
       reservar_gasto: {
         Args: {
           p_ahora?: string
@@ -1701,6 +1949,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      respaldo_de_idea: {
+        Args: { p_idea: string; p_limite: number }
+        Returns: Json
+      }
       siguiente_version_de_guion: { Args: { p_pieza: string }; Returns: number }
       tema_mas_cercano: {
         Args: { p_umbral: number; p_vector: string }
@@ -1727,6 +1979,7 @@ export type Database = {
           contenedor_clave: string | null
           contenedor_id: string | null
           creada_en: string
+          destinos: string[]
           estado: Database["public"]["Enums"]["estado_pieza"]
           estado_antes_del_error:
             | Database["public"]["Enums"]["estado_pieza"]
@@ -1745,13 +1998,16 @@ export type Database = {
           puerta1_hash: string | null
           puerta1_por: string | null
           puerta2_en: string | null
+          puerta2_formula: number | null
           puerta2_hash_texto: string | null
           puerta2_por: string | null
           puerta2_publicar_en: string | null
           puerta2_video_id: string | null
           render_id: string | null
+          respaldo: Json | null
           revision: Json
           texto: string | null
+          texto_linkedin: string | null
           titulo: string
           version: number
           video_id: string | null
@@ -1770,6 +2026,8 @@ export type Database = {
         | "idea"
         | "guion_en_proceso"
         | "guion_por_aprobar"
+        | "guion_aprobado"
+        | "grabando_voz"
         | "en_render"
         | "subtitulando"
         | "video_por_aprobar"
@@ -1780,7 +2038,6 @@ export type Database = {
         | "descartado"
         | "para_subir_a_mano"
         | "publicado_a_mano"
-      pilar: "pareja" | "deseo" | "autoestima" | "limites" | "bienestar"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1912,6 +2169,8 @@ export const Constants = {
         "idea",
         "guion_en_proceso",
         "guion_por_aprobar",
+        "guion_aprobado",
+        "grabando_voz",
         "en_render",
         "subtitulando",
         "video_por_aprobar",
@@ -1923,7 +2182,6 @@ export const Constants = {
         "para_subir_a_mano",
         "publicado_a_mano",
       ],
-      pilar: ["pareja", "deseo", "autoestima", "limites", "bienestar"],
     },
   },
 } as const
