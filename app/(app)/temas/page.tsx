@@ -28,7 +28,7 @@ export default async function Temas({
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
       <h1 className="font-serif text-display text-balance">Temas</h1>
-      <NavegacionPrincipal actual="temas" />
+      <NavegacionPrincipal actual="temas" rol={sesion.rol} />
       <form
         key={pilar ?? ""}
         method="get"

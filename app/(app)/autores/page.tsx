@@ -21,7 +21,7 @@ export default async function Autores() {
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
       <h1 className="font-serif text-display text-balance">Autores</h1>
-      <NavegacionPrincipal actual="autores" />
+      <NavegacionPrincipal actual="autores" rol={sesion.rol} />
       {autores.length === 0 ? (
         <p className="text-apagado">Todavía no hay autores. Aparecen al subir material.</p>
       ) : (
