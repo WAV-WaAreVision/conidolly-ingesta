@@ -1,0 +1,35 @@
+name: Pregunta
+description: Quieres entender cómo funciona algo o por qué hace lo que hace.
+title: "[Pregunta] "
+labels: ["pregunta"]
+projects: ["WAV-WaAreVision/1"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No hay preguntas tontas. Si tienes varias sobre temas distintos, abre una por tema: así cada respuesta queda fácil de encontrar.
+        **Nunca escribas aquí** datos de pacientes, contraseñas ni llaves.
+  - type: dropdown
+    id: area
+    attributes:
+      label: ¿Sobre qué parte de la app?
+      options:
+        - Subir material
+        - Procesamiento y costos
+        - Afirmaciones
+        - Temas
+        - Pilares
+        - No sé / otra
+    validations:
+      required: true
+  - type: textarea
+    id: pregunta
+    attributes:
+      label: Tu pregunta
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: ¿Por qué lo preguntas?
+      description: Opcional. Saber para qué lo necesitas nos ayuda a responder mejor.
