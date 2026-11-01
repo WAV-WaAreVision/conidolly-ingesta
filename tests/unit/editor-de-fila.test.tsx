@@ -122,4 +122,60 @@ describe("EditorDeFila", () => {
     expect(screen.getByLabelText("Plazo en días (si la app lo borra sola)")).toHaveValue(null)
     expect(refrescar).not.toHaveBeenCalled()
   })
+
+  it("keeps Confirmar país off until the typed country is saved, and says why", () => {
+    render(<EditorDeFila fila={{ ...FILA, pais: "Chile" }} />)
+
+    fireEvent.change(screen.getByLabelText("País"), { target: { value: "Perú" } })
+    const boton = screen.getByRole("button", { name: "Confirmar país" })
+    expect(boton).toHaveAttribute("aria-disabled", "true")
+    expect(boton).toHaveAccessibleDescription(expect.stringContaining("Guarda el país antes de confirmarlo."))
+    fireEvent.click(boton)
+    expect(confirmar).not.toHaveBeenCalled()
+
+    fireEvent.change(screen.getByLabelText("País"), { target: { value: " Chile " } })
+    expect(boton).not.toHaveAttribute("aria-disabled")
+    expect(screen.queryByText("Guarda el país antes de confirmarlo.")).toBeNull()
+  })
+
+  it("tells each row's buttons apart by the row's key", () => {
+    render(<EditorDeFila fila={FILA} />)
+    const clave = "respaldos · la app lo borra sola (regla respaldos)"
+    expect(screen.getByRole("button", { name: "Guardar" })).toHaveAccessibleDescription(clave)
+    expect(screen.getByRole("button", { name: "Confirmar país" })).toHaveAccessibleDescription(clave)
+  })
+
+  it("keeps the status region in place and announces every save", async () => {
+    guardar.mockResolvedValue({ ok: true })
+    render(<EditorDeFila fila={FILA} />)
+    const estado = screen.getByRole("status")
+    expect(estado).toHaveTextContent("")
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }))
+    await waitFor(() => expect(estado).toHaveTextContent("Guardado."))
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }))
+    expect(estado).toHaveTextContent("")
+    await waitFor(() => expect(estado).toHaveTextContent("Guardado."))
+    expect(screen.getByRole("status")).toBe(estado)
+  })
+
+  it("shows the country is being confirmed and clears an old save notice", async () => {
+    guardar.mockResolvedValue({ ok: true })
+    let terminar: (valor: { ok: true }) => void = () => {}
+    confirmar.mockReturnValue(
+      new Promise((resolver) => {
+        terminar = resolver
+      }),
+    )
+    render(<EditorDeFila fila={{ ...FILA, pais: "Chile" }} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }))
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Guardado."))
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar país" }))
+
+    expect(screen.getByRole("button", { name: "Confirmar país" })).toHaveAttribute("aria-busy", "true")
+    expect(screen.getByRole("status")).toHaveTextContent("")
+    terminar({ ok: true })
+    await waitFor(() => expect(refrescar).toHaveBeenCalledTimes(2))
+  })
 })

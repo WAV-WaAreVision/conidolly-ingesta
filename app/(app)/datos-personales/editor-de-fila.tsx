@@ -32,8 +32,13 @@ export function EditorDeFila({ fila }: { fila?: FilaDelRegistro }) {
   const prefijo = useId()
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confirmando, setConfirmando] = useState(false)
   const [guardado, setGuardado] = useState(false)
+  const [paisEscrito, setPaisEscrito] = useState(fila?.pais ?? "")
   const id = (campo: string) => `${prefijo}-${campo}`
+  // Confirming applies to the stored country: one typed over it and not saved yet would be confirmed unseen.
+  const paisSinGuardar = fila !== undefined && paisEscrito.trim() !== fila.pais
+  const descripcionDeConfirmar = paisSinGuardar ? `${id("clave-fila")} ${id("pais-sin-guardar")}` : id("clave-fila")
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
@@ -56,8 +61,11 @@ export function EditorDeFila({ fila }: { fila?: FilaDelRegistro }) {
   }
 
   async function confirmar(filaId: string) {
+    setConfirmando(true)
     setError(null)
+    setGuardado(false)
     const resultado = await confirmarPaisAccion({ id: filaId })
+    setConfirmando(false)
     if (!resultado.ok) {
       setError(resultado.error)
       return
@@ -72,7 +80,7 @@ export function EditorDeFila({ fila }: { fila?: FilaDelRegistro }) {
       className="grid gap-3 rounded-lg border border-linea bg-superficie p-4"
     >
       {fila ? (
-        <p className="text-meta text-apagado">
+        <p id={id("clave-fila")} className="text-meta text-apagado">
           {fila.regla_de_borrado ? `${fila.clave} · la app lo borra sola (regla ${fila.regla_de_borrado})` : fila.clave}
         </p>
       ) : (
@@ -106,7 +114,13 @@ export function EditorDeFila({ fila }: { fila?: FilaDelRegistro }) {
         <input id={id("proveedor")} name="proveedor" defaultValue={fila?.proveedor} className={CLASES_DE_CAMPO} />
       </Campo>
       <Campo id={id("pais")} etiqueta="País">
-        <input id={id("pais")} name="pais" defaultValue={fila?.pais} className={CLASES_DE_CAMPO} />
+        <input
+          id={id("pais")}
+          name="pais"
+          defaultValue={fila?.pais}
+          onChange={(evento) => setPaisEscrito(evento.target.value)}
+          className={CLASES_DE_CAMPO}
+        />
       </Campo>
       <p className="text-meta text-apagado">{fila?.pais_confirmado ? "País confirmado." : "País por confirmar."}</p>
       <Campo id={id("plazo")} etiqueta="Plazo en palabras">
@@ -140,14 +154,29 @@ export function EditorDeFila({ fila }: { fila?: FilaDelRegistro }) {
           {error}
         </p>
       ) : null}
-      {guardado ? <output className="text-meta text-apagado">{fila ? "Guardado." : "Fila agregada."}</output> : null}
-      <Boton type="submit" variante="linea" cargando={cargando}>
+      {/* Always in the page, so a screen reader hears every change of its text, the second save included. */}
+      <output className="text-meta text-apagado">{guardado ? (fila ? "Guardado." : "Fila agregada.") : ""}</output>
+      <Boton type="submit" variante="linea" cargando={cargando} aria-describedby={fila ? id("clave-fila") : undefined}>
         {fila ? "Guardar" : "Agregar fila"}
       </Boton>
       {fila && !fila.pais_confirmado ? (
-        <Boton variante="callado" tamano="chico" onClick={() => void confirmar(fila.id)}>
-          Confirmar país
-        </Boton>
+        <>
+          <Boton
+            variante="callado"
+            tamano="chico"
+            cargando={confirmando}
+            deshabilitado={paisSinGuardar}
+            aria-describedby={descripcionDeConfirmar}
+            onClick={() => void confirmar(fila.id)}
+          >
+            Confirmar país
+          </Boton>
+          {paisSinGuardar ? (
+            <p id={id("pais-sin-guardar")} className="text-meta text-apagado">
+              Guarda el país antes de confirmarlo.
+            </p>
+          ) : null}
+        </>
       ) : null}
     </form>
   )

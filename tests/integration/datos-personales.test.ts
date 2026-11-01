@@ -155,11 +155,33 @@ describe("agregarFila", () => {
 
 describe("confirmarPais", () => {
   it("marks the country as confirmed", async () => {
-    const id = await sembrar()
+    const id = await sembrar({ pais: "Chile" })
 
     expect(await confirmarPais(deps(wav), { id })).toEqual({ ok: true })
 
     expect((await leer(id)).pais_confirmado).toBe(true)
+  })
+
+  it("refuses a country that was never written down, in any case", async () => {
+    for (const [clave, pais] of [
+      ["prueba_tal_cual", "Por confirmar"],
+      ["prueba_mayusculas", " por CONFIRMAR "],
+    ]) {
+      const id = await sembrar({ clave, pais })
+
+      expect(await confirmarPais(deps(wav), { id })).toEqual({
+        ok: false,
+        error: "Escribe el país y guárdalo antes de confirmarlo.",
+      })
+      expect((await leer(id)).pais_confirmado).toBe(false)
+    }
+  })
+
+  it("says so when the row no longer exists", async () => {
+    expect(await confirmarPais(deps(wav), { id: "00000000-0000-4000-8000-000000000000" })).toEqual({
+      ok: false,
+      error: "Esa fila ya no existe. Recarga la página.",
+    })
   })
 
   it("refuses Coni", async () => {

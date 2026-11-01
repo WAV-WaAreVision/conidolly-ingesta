@@ -26,6 +26,7 @@ const COLUMNAS =
   "id, clave, dato, para_que, proveedor, pais, pais_confirmado, plazo, regla_de_borrado, plazo_dias, orden"
 export const SOLO_WAV = "Solo WAV corrige el registro de datos personales. Coni lo revisa en Conidolly."
 const FILA_INEXISTENTE = "Esa fila ya no existe. Recarga la página."
+const PAIS_SIN_ESCRIBIR = "Escribe el país y guárdalo antes de confirmarlo."
 const CODIGO_DUPLICADO = "23505"
 const CODIGO_DE_CHEQUEO = "23514"
 const CODIGO_SIN_PERMISO = "42501"
@@ -131,17 +132,22 @@ export async function agregarFila(deps: Pick<DepsSubir, "db">, entrada: unknown)
   return { ok: true, id: data.id }
 }
 
-/** After the legal review: the country of a row is the real one. */
+/** After the legal review: the country of a row is the real one. A placeholder country cannot be confirmed. */
 export async function confirmarPais(deps: Pick<DepsSubir, "db">, entrada: unknown): Promise<Resultado> {
   const wav = await exigirWav(deps.db, "confirmarPais")
   if (!wav.ok) return wav
   const leida = leerEntrada(soloElId, entrada)
   if (!leida.ok) return leida
+  const actual = await deps.db.from("inventario_de_datos").select("pais").eq("id", leida.datos.id).maybeSingle()
+  if (actual.error) return falloDeEscritura("confirmarPais", actual.error)
+  if (!actual.data) return { ok: false, error: FILA_INEXISTENTE }
+  if (actual.data.pais.trim().toLowerCase() === "por confirmar") return { ok: false, error: PAIS_SIN_ESCRIBIR }
   const { data, error } = await deps.db
     .from("inventario_de_datos")
     .update({ pais_confirmado: true })
     .eq("id", leida.datos.id)
     .select("id")
   if (error) return falloDeEscritura("confirmarPais", error)
-  return data.length === 0 ? { ok: false, error: FILA_INEXISTENTE } : { ok: true }
+  // As in guardarFila: the row was readable, so touching nothing means row level security refused it.
+  return data.length === 0 ? { ok: false, error: SOLO_WAV } : { ok: true }
 }
