@@ -95,6 +95,25 @@ describe("guardarFila", () => {
     })
   })
 
+  it("asks WAV to confirm the country again when it changes", async () => {
+    const id = await sembrar({ pais: "Chile", pais_confirmado: true })
+
+    expect(await guardarFila(deps(wav), { id, ...CAMPOS, pais: "Chile", dato: "Otro dato" })).toEqual({ ok: true })
+    expect((await leer(id)).pais_confirmado).toBe(true)
+
+    expect(await guardarFila(deps(wav), { id, ...CAMPOS, pais: "Brasil" })).toEqual({ ok: true })
+    expect(await leer(id)).toMatchObject({ pais: "Brasil", pais_confirmado: false })
+  })
+
+  it("refuses more days than a hundred years", async () => {
+    const id = await sembrar()
+
+    expect(await guardarFila(deps(wav), { id, ...CAMPOS, plazo_dias: 36501 })).toEqual({
+      ok: false,
+      error: "Los días no pueden pasar de 36500 (cien años).",
+    })
+  })
+
   it("says so when the row no longer exists", async () => {
     expect(await guardarFila(deps(wav), { id: "00000000-0000-4000-8000-000000000000", ...CAMPOS })).toEqual({
       ok: false,
@@ -113,6 +132,17 @@ describe("agregarFila", () => {
       ok: false,
       error: "Ya hay una fila con esa clave.",
     })
+  })
+
+  it("refuses Coni, and nothing is added", async () => {
+    expect(await agregarFila(deps(coni), { clave: "prueba_de_coni", ...CAMPOS })).toEqual({
+      ok: false,
+      error: SOLO_WAV,
+    })
+
+    const { data, error } = await servicio.from("inventario_de_datos").select("id").eq("clave", "prueba_de_coni")
+    if (error) throw new Error(error.message)
+    expect(data).toEqual([])
   })
 
   it("refuses a key that is not lowercase with underscores", async () => {

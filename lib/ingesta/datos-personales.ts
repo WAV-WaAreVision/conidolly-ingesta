@@ -28,6 +28,7 @@ export const SOLO_WAV = "Solo WAV corrige el registro de datos personales. Coni 
 const FILA_INEXISTENTE = "Esa fila ya no existe. Recarga la página."
 const CODIGO_DUPLICADO = "23505"
 const CODIGO_DE_CHEQUEO = "23514"
+const CODIGO_SIN_PERMISO = "42501"
 
 const texto = (minimo: number, maximo: number, corto: string, largo: string) =>
   z.string().trim().min(minimo, corto).max(maximo, largo)
@@ -43,6 +44,7 @@ const campos = z.object({
     .number("Escribe los días como un número.")
     .int("Escribe los días como un número entero.")
     .min(0, "Los días no pueden ser negativos.")
+    .max(36500, "Los días no pueden pasar de 36500 (cien años).")
     .nullable(),
   orden: z
     .number("Escribe el orden como un número.")
@@ -78,7 +80,11 @@ function leerEntrada<T extends z.ZodType>(
   return { ok: true, datos: leida.data }
 }
 
-function falloDeEscritura(accion: string, error: { code: string; message: string }): { ok: false; error: string } {
+export function falloDeEscritura(
+  accion: string,
+  error: { code: string; message: string },
+): { ok: false; error: string } {
+  if (error.code === CODIGO_SIN_PERMISO) return { ok: false, error: SOLO_WAV }
   if (error.code === CODIGO_DUPLICADO) return { ok: false, error: "Ya hay una fila con esa clave." }
   if (error.code === CODIGO_DE_CHEQUEO && error.message.includes("regla_con_plazo")) {
     return { ok: false, error: "Esta fila la borra la app sola: necesita su plazo en días." }
@@ -94,16 +100,24 @@ export async function listarRegistro(db: Db): Promise<FilaDelRegistro[]> {
   return data
 }
 
-/** Corrects a row. The deletion rule is not among the fields: only a migration sets it (D4). */
+/**
+ * Corrects a row. The deletion rule is not among the fields: only a migration sets it (D4). A new country is
+ * unconfirmed again until WAV confirms it.
+ */
 export async function guardarFila(deps: Pick<DepsSubir, "db">, entrada: unknown): Promise<Resultado> {
   const wav = await exigirWav(deps.db, "guardarFila")
   if (!wav.ok) return wav
   const leida = leerEntrada(filaEditada, entrada)
   if (!leida.ok) return leida
   const { id, ...cambios } = leida.datos
-  const { data, error } = await deps.db.from("inventario_de_datos").update(cambios).eq("id", id).select("id")
+  const actual = await deps.db.from("inventario_de_datos").select("pais").eq("id", id).maybeSingle()
+  if (actual.error) return falloDeEscritura("guardarFila", actual.error)
+  if (!actual.data) return { ok: false, error: FILA_INEXISTENTE }
+  const fila = actual.data.pais === cambios.pais ? cambios : { ...cambios, pais_confirmado: false }
+  const { data, error } = await deps.db.from("inventario_de_datos").update(fila).eq("id", id).select("id")
   if (error) return falloDeEscritura("guardarFila", error)
-  return data.length === 0 ? { ok: false, error: FILA_INEXISTENTE } : { ok: true }
+  // The row was readable a moment ago, so an update that touches nothing was refused by row level security.
+  return data.length === 0 ? { ok: false, error: SOLO_WAV } : { ok: true }
 }
 
 /** Adds a kind of data the app started to handle (changes 8, 13 and 27 bring theirs). */
