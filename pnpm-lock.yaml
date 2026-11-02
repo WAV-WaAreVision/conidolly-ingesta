@@ -188,8 +188,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       geist:
-        specifier: ^1.7.2
-        version: 1.9.0(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+        specifier: 1.7.2
+        version: 1.7.2(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       next:
         specifier: 16.2.6
         version: 16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1623,8 +1623,8 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  geist@1.9.0:
-    resolution: {integrity: sha512-uxiyxH5PaKDaK2//ln06NxJEz5gc6771BTwSs1YFgNnASGtp1SYD3VZShSIijvlNwDjMgHnzqye4MmIUTspEzw==}
+  geist@1.7.2:
+    resolution: {integrity: sha512-Gu5lDFa3pLRyoBlBPf0QIFHVdWAnpco7fS1bJm41jyLPFoguBgiubseUN2oLXMgqZ7uxAxDoXcHMhCY/fOTTgg==}
     peerDependencies:
       next: '>=13.2.0'
 
@@ -3550,7 +3550,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  geist@1.9.0(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
+  geist@1.7.2(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)):
     dependencies:
       next: 16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
