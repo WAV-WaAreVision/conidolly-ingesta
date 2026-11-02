@@ -1,10 +1,17 @@
 import { createServerClient } from "@supabase/ssr"
-import { describe, expect, it } from "vitest"
+import { NextRequest } from "next/server"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { POST } from "@/app/ingreso/puente/route"
 import { claveDeSesion, cruzarPuente, DESTINO_DEL_PUENTE_VENCIDO } from "@/lib/sesion/puente"
 import type { Database } from "@/lib/supabase/database.types"
 import { clienteDeServicio } from "./sesion"
 
 const CORREO_DE_CONI = "coni@estudio.test"
+const ORIGEN_DE_CONIDOLLY = "https://conidolly.example"
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 function variable(nombre: string): string {
   const valor = process.env[nombre]
@@ -64,5 +71,33 @@ describe("the bridge against the local Supabase", () => {
     expect(await cruzarPuente(segundo.cliente.auth, token)).toBe(DESTINO_DEL_PUENTE_VENCIDO)
     const { data } = await segundo.cliente.auth.getUser()
     expect(data.user).toBeNull()
+  })
+})
+
+describe("POST /ingreso/puente against the local Supabase", () => {
+  it("answers a 303 whose Set-Cookie carries a session Supabase accepts", async () => {
+    vi.stubEnv("CONIDOLLY_URL", `${ORIGEN_DE_CONIDOLLY}/inicio`)
+    const pedido = new NextRequest("http://localhost:3100/ingreso/puente", {
+      method: "POST",
+      headers: { origin: ORIGEN_DE_CONIDOLLY, "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token_hash: await tokenDeConi() }),
+    })
+
+    const respuesta = await POST(pedido)
+
+    expect(respuesta.status).toBe(303)
+    expect(respuesta.headers.get("location")).toBe("/")
+    // What the browser keeps: the expired cookies of the previous session drop out, Coni's stay.
+    const guardadas = respuesta.cookies
+      .getAll()
+      .filter(({ value }) => value !== "")
+      .map(({ name, value }) => ({ name, value }))
+    expect(guardadas.length).toBeGreaterThan(0)
+    const cliente = createServerClient<Database>(variable("SUPABASE_URL"), variable("NEXT_PUBLIC_SUPABASE_ANON_KEY"), {
+      cookies: { getAll: () => guardadas, setAll: () => undefined },
+    })
+    const { data, error } = await cliente.auth.getUser()
+    expect(error).toBeNull()
+    expect(data.user?.email).toBe(CORREO_DE_CONI)
   })
 })
