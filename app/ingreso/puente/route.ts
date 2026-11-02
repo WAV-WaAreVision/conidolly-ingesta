@@ -36,7 +36,12 @@ type GalletaNueva = { name: string; value: string; options: CookieOptions }
 export async function POST(request: NextRequest) {
   // A form on any other site could post here too: it must not touch the session of whoever is signed in (spec 2).
   const origen = origenDeConidolly(process.env.CONIDOLLY_URL, process.env.NODE_ENV)
-  if (origen === null || request.headers.get("origin") !== origen) return irA(RUTA_DE_INGRESO)
+  if (origen === null) {
+    // A deploy mistake, not a visitor's: a fixed line, nothing of the request (its body may hold a token).
+    console.error("CONIDOLLY_URL falta o no es válida (https en producción): el puente no acepta ningún POST.")
+    return irA(RUTA_DE_INGRESO)
+  }
+  if (request.headers.get("origin") !== origen) return irA(RUTA_DE_INGRESO)
 
   const urlDeSupabase = exigirEnv("NEXT_PUBLIC_SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL)
   const nuevas: GalletaNueva[] = []

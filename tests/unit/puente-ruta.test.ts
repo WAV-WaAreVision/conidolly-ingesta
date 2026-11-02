@@ -186,7 +186,38 @@ describe("the Origin check of POST /ingreso/puente", () => {
     ["not a URL", "conidolly.example"],
   ])("ignores every POST while CONIDOLLY_URL is %s", async (_caso, valor) => {
     vi.stubEnv("CONIDOLLY_URL", valor)
+    vi.spyOn(console, "error").mockImplementation(() => undefined)
     await esperarRechazo(pedidoConFormulario({ token_hash: TOKEN }))
+  })
+
+  it.each([
+    ["unset", ""],
+    ["not a URL", "conidolly.example"],
+  ])(
+    "logs once that CONIDOLLY_URL is missing or invalid while it is %s, and nothing of the request",
+    async (_caso, valor) => {
+      vi.stubEnv("CONIDOLLY_URL", valor)
+      const error = vi.spyOn(console, "error").mockImplementation(() => undefined)
+      const { POST } = await import("@/app/ingreso/puente/route")
+
+      await POST(pedidoConFormulario({ token_hash: TOKEN }))
+
+      expect(error).toHaveBeenCalledTimes(1)
+      expect(error.mock.calls[0]).toEqual([
+        "CONIDOLLY_URL falta o no es válida (https en producción): el puente no acepta ningún POST.",
+      ])
+      const registrado = JSON.stringify(error.mock.calls)
+      expect(registrado).not.toContain(TOKEN)
+      expect(registrado).not.toContain(ORIGEN_DE_CONIDOLLY)
+    },
+  )
+
+  it("logs nothing when CONIDOLLY_URL is fine and only the Origin is wrong", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => undefined)
+
+    await esperarRechazo(pedidoConFormulario({ token_hash: TOKEN }, "https://otro.example"))
+
+    expect(error).not.toHaveBeenCalled()
   })
 })
 
