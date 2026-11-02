@@ -24,6 +24,16 @@ const TokenDelPuente = z.string().trim().min(1).max(512)
 export async function cruzarPuente(auth: AuthDelPuente, token: unknown): Promise<string> {
   const leido = TokenDelPuente.safeParse(token)
   if (!leido.success) return DESTINO_DEL_PUENTE_VENCIDO
+  try {
+    return await cambiarDeSesion(auth, leido.data)
+  } catch (error) {
+    // Auth threw instead of answering (network, a bug): only the kind of error, its message may echo the request.
+    console.error("El puente falló al hablar con Supabase Auth", error instanceof Error ? error.name : "otro")
+    return DESTINO_DEL_PUENTE_VENCIDO
+  }
+}
+
+async function cambiarDeSesion(auth: AuthDelPuente, token: string): Promise<string> {
   const salida = await auth.signOut({ scope: "local" })
   if (salida.error) {
     console.error("No pude cerrar la sesión anterior antes del puente", {
@@ -31,7 +41,7 @@ export async function cruzarPuente(auth: AuthDelPuente, token: unknown): Promise
       code: salida.error.code,
     })
   }
-  const { error } = await auth.verifyOtp({ token_hash: leido.data, type: "email" })
+  const { error } = await auth.verifyOtp({ token_hash: token, type: "email" })
   if (!error) return "/"
   // 403 is a used, expired or unknown token: a normal case with its own message, nothing for WAV to read.
   if (error.status !== 403) {

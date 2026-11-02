@@ -70,6 +70,20 @@ describe("cruzarPuente", () => {
     expect(JSON.stringify(registro.mock.calls)).not.toContain(TOKEN)
   })
 
+  it.each([
+    ["signOut", "signOut" as const],
+    ["verifyOtp", "verifyOtp" as const],
+  ])("ends on the expired-link message when %s throws, logging only the error's name", async (_caso, metodo) => {
+    const registro = vi.spyOn(console, "error").mockImplementation(() => undefined)
+    const auth = authFalso()
+    auth[metodo].mockRejectedValue(new TypeError(`fetch failed for ${TOKEN}`))
+
+    expect(await cruzarPuente(auth, TOKEN)).toBe(DESTINO_DEL_PUENTE_VENCIDO)
+    expect(registro).toHaveBeenCalledTimes(1)
+    expect(JSON.stringify(registro.mock.calls)).toContain("TypeError")
+    expect(JSON.stringify(registro.mock.calls)).not.toContain(TOKEN)
+  })
+
   it("says what to do in plain Spanish", () => {
     expect(TEXTO_PUENTE_VENCIDO).toBe("El enlace ya se usó o venció. Vuelve a Conidolly y toca Biblioteca otra vez.")
   })

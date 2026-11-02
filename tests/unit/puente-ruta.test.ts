@@ -75,6 +75,17 @@ describe("POST /ingreso/puente", () => {
     expect(respuesta.cookies.get("sb-127-auth-token")).toMatchObject({ value: "", maxAge: 0 })
   })
 
+  it("answers the expired-link page instead of a 500 when Auth throws", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined)
+    auth.verifyOtp.mockRejectedValue(new Error("network down"))
+    const { POST } = await import("@/app/ingreso/puente/route")
+
+    const respuesta = await POST(pedidoConFormulario({ token_hash: TOKEN }))
+
+    expect(respuesta.status).toBe(303)
+    expect(respuesta.headers.get("location")).toBe("/ingreso?puente=vencido")
+  })
+
   it("refuses a body that is not a form without asking Supabase, and never logs the body", async () => {
     const registro = vi.spyOn(console, "error").mockImplementation(() => undefined)
     const { POST } = await import("@/app/ingreso/puente/route")
