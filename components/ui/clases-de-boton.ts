@@ -1,27 +1,42 @@
 // Not a client module: Server Components use these classes too, for links that look like buttons.
-import { cva } from "class-variance-authority"
+import { cva, type VariantProps } from "class-variance-authority"
+import { cn } from "@/lib/utils"
 
-/** Also used for links that look like buttons, so the two never drift apart. */
-export const clasesDeBoton = cva(
+const PLANO_SI_ESTA_DESHABILITADO =
+  "aria-disabled:bg-piedra-honda aria-disabled:text-apagado aria-disabled:shadow-none aria-disabled:active:shadow-none"
+
+/**
+ * Conidolly's button (estudio-coni components/ui/clases-de-boton.ts): everything touchable is a raised pill and pressing
+ * sinks it. Ingesta keeps its variant names (`linea` is Conidolly's `secundario`) so no caller changes.
+ */
+const variantesDeBoton = cva(
   [
-    "inline-flex items-center justify-center gap-2 rounded-bloque text-center text-cuerpo font-semibold",
-    "transition-[transform,background-color,opacity] duration-150 ease-salida",
-    "active:scale-[0.97] aria-disabled:active:scale-100 motion-reduce:transition-[background-color,opacity] motion-reduce:active:scale-100",
+    "inline-flex items-center justify-between gap-3 rounded-control text-left font-semibold",
+    "transition-[box-shadow,opacity] duration-[var(--dur-corta)] ease-salida",
+    "aria-disabled:cursor-not-allowed",
   ],
   {
     variants: {
       variante: {
-        primario:
-          "bg-tinta text-luz hover:bg-tinta aria-disabled:cursor-not-allowed aria-disabled:bg-piedra-honda aria-disabled:text-apagado",
-        linea:
-          "border border-hilo bg-piedra-alta text-tinta aria-disabled:cursor-not-allowed aria-disabled:text-apagado",
-        callado: "bg-transparent text-tinta aria-disabled:cursor-not-allowed aria-disabled:text-apagado",
+        primario: `bg-tinta text-luz shadow-relieve active:shadow-hundido ${PLANO_SI_ESTA_DESHABILITADO}`,
+        linea: `bg-piedra text-tinta shadow-relieve active:shadow-hundido ${PLANO_SI_ESTA_DESHABILITADO}`,
+        callado:
+          "justify-start text-tinta underline decoration-1 underline-offset-4 active:opacity-70 aria-disabled:text-apagado aria-disabled:no-underline",
       },
       tamano: {
-        grande: "min-h-13 w-full px-4.5 py-3.5 text-[1.0625rem]",
-        chico: "min-h-11 px-3.5 py-2.5",
+        grande: "min-h-boton w-full px-[22px] text-boton",
+        chico: "min-h-objetivo px-[18px] text-cuerpo",
       },
     },
+    // The quiet action has no surface at any size: its target is the 2.75rem row of its text.
+    compoundVariants: [{ variante: "callado", class: "min-h-objetivo w-auto px-0 text-cuerpo" }],
     defaultVariants: { variante: "primario", tamano: "grande" },
   },
 )
+
+export type OpcionesDeBoton = VariantProps<typeof variantesDeBoton>
+
+/** Also used for links that look like buttons, so the two never drift apart. Merged with `cn`, so the compound wins. */
+export function clasesDeBoton({ className, ...opciones }: OpcionesDeBoton & { className?: string } = {}): string {
+  return cn(variantesDeBoton(opciones), className)
+}
