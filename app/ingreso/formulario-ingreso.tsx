@@ -6,7 +6,7 @@ import { Boton } from "@/components/ui/boton"
 import type { Rol } from "@/lib/acciones/ingreso"
 import { pedirCodigoAccion, verificarCodigoAccion } from "./acciones"
 
-export function FormularioIngreso() {
+export function FormularioIngreso({ avisoDelPuente = null }: { avisoDelPuente?: string | null }) {
   const [rol, setRol] = useState<Rol | null>(null)
   const [correoEnmascarado, setCorreoEnmascarado] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -66,6 +66,9 @@ export function FormularioIngreso() {
           <h1 className="font-serif text-display text-balance">¿Quién entra?</h1>
           <p className="text-apagado">Te mando un código al correo de quien eres para que entres.</p>
         </div>
+        {avisoDelPuente && !error ? (
+          <output className="rounded-md bg-aviso-fondo p-3.5 text-aviso-tinta">{avisoDelPuente}</output>
+        ) : null}
         {error ? <MensajeDeError mensaje={error} /> : null}
         <div className="grid gap-3">
           <Boton cargando={pendiente} onClick={() => mandarCodigo("coni", false)}>
