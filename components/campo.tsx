@@ -1,8 +1,7 @@
 import type { ReactNode } from "react"
 
-/** Classes of the text fields: 52 px tall for a thumb, tokens only. */
-export const CLASES_DE_CAMPO =
-  "min-h-13 w-full rounded-md border border-linea bg-superficie px-3.5 py-3 text-body text-tinta placeholder:text-apagado focus:border-acento"
+/** Classes of the text fields: Conidolly's sunken `.campo` (app/globals.css), 3.25rem tall for a thumb. */
+export const CLASES_DE_CAMPO = "campo w-full text-cuerpo"
 
 interface PropiedadesDeCampo {
   id: string
@@ -16,7 +15,7 @@ interface PropiedadesDeCampo {
 export function Campo({ id, etiqueta, ayuda, children }: PropiedadesDeCampo) {
   return (
     <div className="grid gap-1.5">
-      <label htmlFor={id} className="text-label font-semibold">
+      <label htmlFor={id} className="text-cuerpo font-semibold">
         {etiqueta}
       </label>
       {children}

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { SelectorDeAutor } from "@/components/selector-de-autor"
 import { Boton } from "@/components/ui/boton"
+import { CLASES_DE_OPCION } from "@/components/ui/clases-de-opcion"
 import type { AutorDeLista } from "@/lib/ingesta/buscar-autor"
 import { AYUDA_DE_ROL, ETIQUETA_DE_ROL, ROLES, type Rol } from "@/lib/ingesta/modelo"
 import { cn } from "@/lib/utils"
@@ -58,7 +59,7 @@ export function EditarAutorYRol({
   if (!abierto) {
     return (
       <div className="grid gap-2">
-        {aviso ? <p className="rounded-md bg-aviso-fondo p-3.5 text-aviso-tinta">{aviso}</p> : null}
+        {aviso ? <p className="rounded-bloque bg-piedra-honda p-3.5 text-aviso">{aviso}</p> : null}
         <Boton variante="linea" tamano="chico" className="w-fit" onClick={() => setAbierto(true)}>
           Cambiar autor o papel
         </Boton>
@@ -67,17 +68,11 @@ export function EditarAutorYRol({
   }
 
   return (
-    <section aria-label="Autor y papel" className="grid gap-4 rounded-lg border border-linea bg-superficie p-4">
+    <section aria-label="Autor y papel" className="grid gap-4 rounded-panel border border-hilo bg-piedra-alta p-4">
       <SelectorDeAutor autores={autores} valor={autorId} alElegir={setAutorId} alCrear={crearAutorAccion} />
       <div role="radiogroup" aria-label="Papel del material" className="grid gap-2">
         {ROLES.map((opcion) => (
-          <label
-            key={opcion}
-            className={cn(
-              "grid cursor-pointer gap-0.5 rounded-md border border-linea bg-superficie p-3.5",
-              "has-checked:border-acento has-checked:bg-acento-suave has-focus-visible:outline-3 has-focus-visible:outline-acento",
-            )}
-          >
+          <label key={opcion} className={cn(CLASES_DE_OPCION, "grid gap-0.5 p-3.5")}>
             <input
               type="radio"
               name="rol"
@@ -86,13 +81,13 @@ export function EditarAutorYRol({
               onChange={() => setRol(opcion)}
               className="sr-only"
             />
-            <span className="text-label font-semibold">{ETIQUETA_DE_ROL[opcion]}</span>
+            <span className="text-cuerpo font-semibold">{ETIQUETA_DE_ROL[opcion]}</span>
             <span className="text-meta text-apagado">{AYUDA_DE_ROL[opcion]}</span>
           </label>
         ))}
       </div>
       {error ? (
-        <p role="alert" className="rounded-md bg-error-fondo p-3.5 text-[1rem] text-error-tinta">
+        <p role="alert" className="rounded-bloque bg-piedra-honda p-3.5 text-[1rem] text-error">
           {error}
         </p>
       ) : null}

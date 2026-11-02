@@ -17,7 +17,7 @@ function EnlacesDeTemas({ temas }: { temas: TemaDeTeoria[] }) {
         <li key={tema.id}>
           <Link
             href={`/temas/${tema.id}`}
-            className="inline-flex min-h-11 items-center rounded-sm bg-acento-suave px-3 text-meta font-semibold text-acento-profundo focus-visible:outline-3 focus-visible:outline-acento"
+            className="inline-flex min-h-objetivo items-center rounded-control bg-piedra px-4 text-meta font-semibold text-tinta shadow-relieve transition-shadow duration-[var(--dur-corta)] ease-salida active:shadow-hundido focus-visible:outline-3 focus-visible:outline-tinta"
           >
             {tema.nombre}
           </Link>
@@ -28,7 +28,9 @@ function EnlacesDeTemas({ temas }: { temas: TemaDeTeoria[] }) {
 }
 
 function Dato({ texto }: { texto: string }) {
-  return <span className="rounded-sm bg-hundido px-2.5 py-1 text-meta font-semibold text-apagado">{texto}</span>
+  return (
+    <span className="rounded-casilla bg-piedra-honda px-2.5 py-1 text-meta font-semibold text-apagado">{texto}</span>
+  )
 }
 
 export function VistaDeSemana({ semana }: { semana: SemanaLeida }) {
@@ -40,19 +42,19 @@ export function VistaDeSemana({ semana }: { semana: SemanaLeida }) {
 
   return (
     <>
-      <section aria-label="Última corrida" className="grid gap-2 rounded-lg border border-linea bg-superficie p-4">
-        <h2 className="font-serif text-title">{`Semana del ${fechaDeSemana(corrida.semana)}`}</h2>
+      <section aria-label="Última corrida" className="grid gap-2 rounded-panel border border-hilo bg-piedra-alta p-4">
+        <h2 className="text-pieza">{`Semana del ${fechaDeSemana(corrida.semana)}`}</h2>
         <div className="flex flex-wrap gap-2">
           <Dato texto={ESTADO_DE_CORRIDA[corrida.estado] ?? corrida.estado} />
           <Dato texto={`${corrida.ideas} ${corrida.ideas === 1 ? "idea" : "ideas"}`} />
           <Dato texto={`US$ ${dosDecimales.format(corrida.costoUsd)}`} />
           {corrida.manual ? <Dato texto="A pedido" /> : null}
         </div>
-        {corrida.motivoFallo ? <p className="text-error-tinta">{corrida.motivoFallo}</p> : null}
+        {corrida.motivoFallo ? <p className="text-error">{corrida.motivoFallo}</p> : null}
       </section>
 
       <section aria-label="Teorías de la semana" className="grid gap-3">
-        <h2 className="font-serif text-title">Teorías</h2>
+        <h2 className="text-pieza">Teorías</h2>
         {teorias.length === 0 ? (
           <p className="text-apagado">Esta corrida no escribió teorías.</p>
         ) : (
@@ -61,7 +63,7 @@ export function VistaDeSemana({ semana }: { semana: SemanaLeida }) {
               <li
                 key={teoria.id}
                 aria-label={teoria.titulo}
-                className="grid gap-2.5 rounded-lg border border-linea bg-superficie p-4"
+                className="grid gap-2.5 rounded-panel border border-hilo bg-piedra-alta p-4"
               >
                 <h3 className="font-semibold text-balance">{teoria.titulo}</h3>
                 <p>{teoria.tesis}</p>
@@ -80,10 +82,10 @@ export function VistaDeSemana({ semana }: { semana: SemanaLeida }) {
 
       {descartadas.length > 0 ? (
         <section aria-label="Cruces descartados" className="grid gap-3">
-          <h2 className="font-serif text-title">Cruces descartados</h2>
+          <h2 className="text-pieza">Cruces descartados</h2>
           <ul className="grid gap-3">
             {descartadas.map((cruce) => (
-              <li key={cruce.id} className="grid gap-2 rounded-lg border border-linea bg-hundido p-4">
+              <li key={cruce.id} className="grid gap-2 rounded-panel border border-hilo bg-piedra-honda p-4">
                 <EnlacesDeTemas temas={cruce.temas} />
                 <p className="text-apagado">{cruce.razon}</p>
               </li>
@@ -94,7 +96,7 @@ export function VistaDeSemana({ semana }: { semana: SemanaLeida }) {
 
       {queSubir ? (
         <section aria-label="Qué subir después" className="grid gap-3">
-          <h2 className="font-serif text-title">Qué subir después</h2>
+          <h2 className="text-pieza">Qué subir después</h2>
           {sinNada ? (
             <p className="text-apagado">
               Por ahora no falta nada: cada tema tiene varios autores y cada pilar tiene material.
@@ -102,7 +104,7 @@ export function VistaDeSemana({ semana }: { semana: SemanaLeida }) {
           ) : null}
           {queSubir.unSoloAutor.length > 0 ? (
             <div className="grid gap-2">
-              <h3 className="text-label font-semibold">Temas con un solo autor</h3>
+              <h3 className="text-cuerpo font-semibold">Temas con un solo autor</h3>
               <ul className="grid gap-1.5">
                 {queSubir.unSoloAutor.map((nombre) => (
                   <li key={nombre}>{nombre}</li>
@@ -112,7 +114,7 @@ export function VistaDeSemana({ semana }: { semana: SemanaLeida }) {
           ) : null}
           {queSubir.pilaresSinMaterial.length > 0 ? (
             <div className="grid gap-2">
-              <h3 className="text-label font-semibold">Pilares sin material</h3>
+              <h3 className="text-cuerpo font-semibold">Pilares sin material</h3>
               <ul className="grid gap-1.5">
                 {queSubir.pilaresSinMaterial.map((pilar) => (
                   <li key={pilar}>{pilar}</li>

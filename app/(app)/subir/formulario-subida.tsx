@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Campo, CLASES_DE_CAMPO } from "@/components/campo"
 import { SelectorDeAutor } from "@/components/selector-de-autor"
 import { Boton } from "@/components/ui/boton"
+import { CLASES_DE_OPCION } from "@/components/ui/clases-de-opcion"
 import type { AutorDeLista } from "@/lib/ingesta/buscar-autor"
 import {
   AYUDA_DE_ROL,
@@ -157,7 +158,7 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-10">
-      <h1 className="font-serif text-display text-balance">Subir material</h1>
+      <h1 className="text-pantalla text-balance">Subir material</h1>
       <form
         noValidate
         className="grid gap-5.5"
@@ -171,8 +172,8 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
             <label
               key={opcion}
               className={cn(
-                "flex min-h-13 cursor-pointer items-center justify-center rounded-md border border-linea bg-superficie px-2 text-center text-label font-semibold",
-                "has-checked:border-acento has-checked:bg-acento-suave has-checked:text-acento-profundo has-focus-visible:outline-3 has-focus-visible:outline-acento",
+                CLASES_DE_OPCION,
+                "flex min-h-13 items-center justify-center px-2 text-center text-cuerpo font-semibold",
               )}
             >
               <input
@@ -246,7 +247,7 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
                 elegirArchivos(Array.from(evento.target.files ?? []))
                 evento.target.value = ""
               }}
-              className="min-h-13 w-full rounded-md border border-dashed border-linea bg-superficie p-3 text-label"
+              className="min-h-13 w-full rounded-bloque border border-dashed border-hilo bg-piedra-alta p-3 text-cuerpo"
             />
           </Campo>
         ) : null}
@@ -258,13 +259,13 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
                 // The key is the position: the list is reordered by hand and the same file may repeat.
                 key={`${indice}-${archivo.name}`}
                 data-nombre={archivo.name}
-                className="grid gap-1.5 rounded-md border border-linea bg-superficie p-2"
+                className="grid gap-1.5 rounded-bloque border border-hilo bg-piedra-alta p-2"
               >
                 {/* biome-ignore lint/performance/noImgElement: a blob preview of a picked file, nothing to optimize */}
                 <img
                   src={miniaturas[indice]}
                   alt={`Imagen ${indice + 1}`}
-                  className="aspect-square w-full rounded-sm object-cover"
+                  className="aspect-square w-full rounded-casilla object-cover"
                 />
                 <div className="flex gap-1">
                   <Boton
@@ -301,7 +302,7 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
             ))}
           </ol>
         ) : archivos[0] ? (
-          <p className="rounded-md bg-hundido p-3 text-label">{archivos[0].name}</p>
+          <p className="rounded-bloque bg-piedra-honda p-3 text-cuerpo">{archivos[0].name}</p>
         ) : null}
 
         <Campo
@@ -333,13 +334,7 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
 
         <div role="radiogroup" aria-label="Papel del material" className="grid gap-2">
           {ROLES.map((opcion) => (
-            <label
-              key={opcion}
-              className={cn(
-                "grid cursor-pointer gap-0.5 rounded-md border border-linea bg-superficie p-3.5",
-                "has-checked:border-acento has-checked:bg-acento-suave has-focus-visible:outline-3 has-focus-visible:outline-acento",
-              )}
-            >
+            <label key={opcion} className={cn(CLASES_DE_OPCION, "grid gap-0.5 p-3.5")}>
               <input
                 type="radio"
                 name="rol"
@@ -355,7 +350,7 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
                 }}
                 className="sr-only"
               />
-              <span className="text-label font-semibold">{ETIQUETA_DE_ROL[opcion]}</span>
+              <span className="text-cuerpo font-semibold">{ETIQUETA_DE_ROL[opcion]}</span>
               <span className="text-meta text-apagado">{AYUDA_DE_ROL[opcion]}</span>
             </label>
           ))}
@@ -376,22 +371,24 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
           </Campo>
         ) : null}
 
-        <label className="flex items-start gap-3 text-body">
+        <label className="flex items-start gap-3 text-cuerpo">
           <input
             type="checkbox"
             checked={declaracion}
             onChange={(evento) => setDeclaracion(evento.target.checked)}
-            className="mt-1 size-5 shrink-0 accent-acento"
+            className="mt-1 size-5 shrink-0 accent-tinta"
           />
           <span>Este material no contiene datos de pacientes</span>
         </label>
 
         {error ? (
-          <p role="alert" className="rounded-md bg-error-fondo p-3.5 text-[1rem] text-error-tinta">
+          <p role="alert" className="rounded-bloque bg-piedra-honda p-3.5 text-[1rem] text-error">
             {error}
           </p>
         ) : null}
-        {progreso ? <output className="rounded-md bg-hundido p-3.5 text-[1rem] text-tinta">{progreso}</output> : null}
+        {progreso ? (
+          <output className="rounded-bloque bg-piedra-honda p-3.5 text-[1rem] text-tinta">{progreso}</output>
+        ) : null}
 
         <Boton type="submit" cargando={ocupado}>
           Subir material

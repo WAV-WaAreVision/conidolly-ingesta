@@ -20,14 +20,14 @@ export default async function Autores() {
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
-      <h1 className="font-serif text-display text-balance">Autores</h1>
+      <h1 className="text-pantalla text-balance">Autores</h1>
       <NavegacionPrincipal actual="autores" rol={sesion.rol} />
       {autores.length === 0 ? (
         <p className="text-apagado">Todavía no hay autores. Aparecen al subir material.</p>
       ) : (
         <ul className="grid gap-3">
           {autores.map((autor) => (
-            <li key={autor.id} className="grid gap-1.5 rounded-lg border border-linea bg-superficie p-4">
+            <li key={autor.id} className="grid gap-1.5 rounded-panel border border-hilo bg-piedra-alta p-4">
               <Link href={`/autores/${autor.id}`} className="grid gap-1.5">
                 <span className="font-semibold text-balance">{autor.nombre}</span>
                 <span className="text-meta text-apagado">
@@ -40,7 +40,7 @@ export default async function Autores() {
               {autor.temas.length > 0 ? (
                 <ul aria-label={`Temas de ${autor.nombre}`} className="flex flex-wrap gap-2">
                   {autor.temas.map((tema) => (
-                    <li key={tema.id} className="rounded-sm bg-hundido px-2.5 py-1 text-meta">
+                    <li key={tema.id} className="rounded-casilla bg-piedra-honda px-2.5 py-1 text-meta">
                       {tema.nombre}
                     </li>
                   ))}

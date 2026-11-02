@@ -51,10 +51,10 @@ export function BorrarAutor({ autor }: Propiedades) {
   }
 
   return (
-    <section aria-label={`Borrar a ${autor.nombre}`} className="grid gap-3 rounded-lg bg-aviso-fondo p-4">
-      <p className="text-aviso-tinta">{`${autor.nombre} deja de existir como autor. No se puede deshacer.`}</p>
+    <section aria-label={`Borrar a ${autor.nombre}`} className="grid gap-3 rounded-panel bg-piedra-honda p-4">
+      <p className="text-aviso">{`${autor.nombre} deja de existir como autor. No se puede deshacer.`}</p>
       {error ? (
-        <p role="alert" className="text-error-tinta">
+        <p role="alert" className="text-error">
           {error}
         </p>
       ) : null}

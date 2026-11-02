@@ -35,7 +35,7 @@ export function ListaDeAfirmaciones({
       {afirmaciones.map((afirmacion) => {
         const lugar = afirmacion.ubicacion ? textoDeUbicacion(afirmacion.ubicacion) : null
         return (
-          <li key={afirmacion.id} className="grid gap-2 rounded-md bg-hundido p-3.5">
+          <li key={afirmacion.id} className="grid gap-2 rounded-bloque bg-piedra-honda p-3.5">
             <p>{afirmacion.texto}</p>
             <p className="text-meta text-apagado">
               {`${TIPO_DE_AFIRMACION[afirmacion.tipo] ?? afirmacion.tipo} · ${EVIDENCIA[afirmacion.evidencia] ?? afirmacion.evidencia}`}

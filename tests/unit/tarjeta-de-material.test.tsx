@@ -139,4 +139,12 @@ describe("TarjetaDeMaterial", () => {
       expect(screen.queryByRole("button", { name: /Procesar por/ })).toBeNull()
     })
   })
+
+  it("sits on a raised stone card, Conidolly's surface, without a border", () => {
+    const { container } = render(<TarjetaDeMaterial material={material()} />)
+
+    const tarjeta = container.querySelector("li")
+    expect(tarjeta).toHaveClass("rounded-panel", "bg-piedra", "shadow-relieve")
+    expect(tarjeta).not.toHaveClass("border")
+  })
 })

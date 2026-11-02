@@ -28,7 +28,7 @@ describe("estado de un material que espera confirmación", () => {
 
 describe("chip de estado de un material", () => {
   it("says Espera tu OK with a neutral token while the cost waits for confirmation", () => {
-    expect(estadoVisible(esperando)).toEqual({ texto: "Espera tu OK", clases: "bg-hundido text-apagado" })
+    expect(estadoVisible(esperando)).toEqual({ texto: "Espera tu OK", clases: "bg-piedra-honda text-apagado" })
   })
 
   it("keeps Procesando for a material that is really processing, even with a confirmed cost", () => {

@@ -4,12 +4,12 @@ import type { MapaDelMaterial as Mapa } from "@/lib/ingesta/materiales"
 function Recuento({ titulo, filas }: { titulo: string; filas: { clave: string; texto: string; cantidad: number }[] }) {
   return (
     <section className="grid gap-2">
-      <h3 className="text-label font-semibold">{titulo}</h3>
+      <h3 className="text-cuerpo font-semibold">{titulo}</h3>
       <ul aria-label={titulo} className="grid gap-1.5">
         {filas.map((fila) => (
           <li
             key={fila.clave}
-            className="flex items-baseline justify-between gap-3 rounded-md bg-hundido px-3.5 py-2.5"
+            className="flex items-baseline justify-between gap-3 rounded-bloque bg-piedra-honda px-3.5 py-2.5"
           >
             <span>{fila.texto}</span>
             <span className="text-meta font-semibold text-apagado">{fila.cantidad}</span>
@@ -29,7 +29,7 @@ const masFrecuentesPrimero = (cuentas: Record<string, number>, etiquetas: Record
 export function MapaDelMaterial({ mapa, estado }: { mapa: Mapa; estado: string }) {
   return (
     <section aria-labelledby="mapa-titulo" className="grid gap-4.5">
-      <h2 id="mapa-titulo" className="font-serif text-title">
+      <h2 id="mapa-titulo" className="text-pieza">
         Mapa del material
       </h2>
       {mapa.total === 0 ? (
@@ -40,7 +40,9 @@ export function MapaDelMaterial({ mapa, estado }: { mapa: Mapa; estado: string }
         </p>
       ) : (
         <>
-          <p className="text-label font-semibold">{mapa.total === 1 ? "1 afirmación" : `${mapa.total} afirmaciones`}</p>
+          <p className="text-cuerpo font-semibold">
+            {mapa.total === 1 ? "1 afirmación" : `${mapa.total} afirmaciones`}
+          </p>
           <Recuento
             titulo="Temas"
             filas={[

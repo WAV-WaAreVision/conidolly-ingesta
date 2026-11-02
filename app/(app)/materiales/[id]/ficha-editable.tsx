@@ -7,7 +7,7 @@ import { Boton } from "@/components/ui/boton"
 import { type FichaLeida, leerEdicion, MAXIMO_DE_IDEAS, textoDeUbicacion } from "@/lib/ingesta/ficha"
 import { editarFichaAccion } from "../acciones"
 
-const SUBTITULO = "font-serif text-title text-balance"
+const SUBTITULO = "text-pieza text-balance"
 
 function Lectura({ ficha }: { ficha: FichaLeida }) {
   const { fuente } = ficha
@@ -35,7 +35,7 @@ function Lectura({ ficha }: { ficha: FichaLeida }) {
             const lugar = textoDeUbicacion(cita.ubicacion)
             return (
               // biome-ignore lint/suspicious/noArrayIndexKey: quotes have no id; they are replaced whole
-              <figure key={indice} className="grid gap-1 border-l-2 border-acento-claro pl-3.5">
+              <figure key={indice} className="grid gap-1 border-l-2 border-campo pl-3.5">
                 <blockquote>{cita.texto}</blockquote>
                 {lugar ? <figcaption className="text-meta text-apagado">{lugar}</figcaption> : null}
               </figure>
@@ -48,7 +48,7 @@ function Lectura({ ficha }: { ficha: FichaLeida }) {
           <h2 className={SUBTITULO}>Fuente</h2>
           {autorYAnio ? <p>{autorYAnio}</p> : null}
           {fuente.enlace ? (
-            <a href={fuente.enlace} className="break-all text-acento underline" rel="noreferrer noopener">
+            <a href={fuente.enlace} className="break-all text-tinta underline" rel="noreferrer noopener">
               {fuente.enlace}
             </a>
           ) : null}
@@ -200,7 +200,7 @@ export function FichaEditable({ materialId, ficha: inicial }: { materialId: stri
             return (
               // biome-ignore lint/suspicious/noArrayIndexKey: quotes have no id; they are edited in place by position
               <fieldset key={indice} className="grid gap-2">
-                <legend className="text-label font-semibold">Cita {indice + 1}</legend>
+                <legend className="text-cuerpo font-semibold">Cita {indice + 1}</legend>
                 <textarea
                   aria-label={`Texto de la cita ${indice + 1}`}
                   rows={3}
@@ -262,7 +262,7 @@ export function FichaEditable({ materialId, ficha: inicial }: { materialId: stri
       </section>
 
       {error ? (
-        <p role="alert" className="rounded-md bg-error-fondo p-3.5 text-[1rem] text-error-tinta">
+        <p role="alert" className="rounded-bloque bg-piedra-honda p-3.5 text-[1rem] text-error">
           {error}
         </p>
       ) : null}

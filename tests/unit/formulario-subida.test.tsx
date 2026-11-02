@@ -467,3 +467,28 @@ describe("FormularioSubida: subir", () => {
     expect(irA).not.toHaveBeenCalled()
   })
 })
+
+const SOFT_UI_DE_OPCION = [
+  "bg-piedra",
+  "shadow-relieve",
+  "has-checked:bg-piedra-honda",
+  "has-checked:shadow-hundido",
+  "has-[:focus-visible]:outline-tinta",
+]
+
+describe("FormularioSubida: casillas de opción", () => {
+  it("raises an unchecked type or role tile and sinks the checked one, as Conidolly marks a choice", () => {
+    render(<FormularioSubida autores={AUTORES} />)
+
+    const casillas = [
+      screen.getByRole("radio", { name: "Documento" }),
+      screen.getByRole("radio", { name: "Link" }),
+      ...within(screen.getByRole("radiogroup", { name: /papel/i })).getAllByRole("radio"),
+    ]
+    for (const radio of casillas) {
+      const casilla = radio.closest("label")
+      for (const clase of SOFT_UI_DE_OPCION) expect(casilla).toHaveClass(clase)
+      expect(casilla).not.toHaveClass("border")
+    }
+  })
+})

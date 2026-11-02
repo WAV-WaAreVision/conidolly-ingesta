@@ -28,7 +28,7 @@ export function BotonReintentar({ materialId }: { materialId: string }) {
         Reintentar
       </Boton>
       {error ? (
-        <p role="alert" className="rounded-md bg-error-fondo p-3.5 text-[1rem] text-error-tinta">
+        <p role="alert" className="rounded-bloque bg-piedra-honda p-3.5 text-[1rem] text-error">
           {error}
         </p>
       ) : null}

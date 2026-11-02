@@ -77,7 +77,7 @@ export function EditorDeFila({ fila }: { fila?: FilaDelRegistro }) {
     <form
       onSubmit={(evento) => void enviar(evento)}
       aria-label={fila ? fila.dato : "Fila nueva"}
-      className="grid gap-3 rounded-lg border border-linea bg-superficie p-4"
+      className="grid gap-3 rounded-panel border border-hilo bg-piedra-alta p-4"
     >
       {fila ? (
         <p id={id("clave-fila")} className="text-meta text-apagado">
@@ -150,7 +150,7 @@ export function EditorDeFila({ fila }: { fila?: FilaDelRegistro }) {
         />
       </Campo>
       {error ? (
-        <p role="alert" className="text-meta text-error-tinta">
+        <p role="alert" className="text-meta text-error">
           {error}
         </p>
       ) : null}

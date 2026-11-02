@@ -20,7 +20,7 @@ export function FiltrosDeLaLista({ filtros, autores }: Propiedades) {
       method="get"
       action="/"
       aria-label="Filtros"
-      className="grid gap-3 rounded-lg border border-linea bg-superficie p-4"
+      className="grid gap-3 rounded-panel border border-hilo bg-piedra-alta p-4"
     >
       <Campo id="filtro-autor" etiqueta="Autor">
         <select id="filtro-autor" name="autor" defaultValue={filtros.autor ?? ""} className={CLASES_DE_CAMPO}>

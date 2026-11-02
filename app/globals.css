@@ -1,31 +1,81 @@
+/* biome-ignore-all lint/a11y/useGenericFontNames: `font: -apple-system-body` is a system keyword; body sets the family again. */
+/* biome-ignore-all lint/suspicious/noShorthandPropertyOverrides: that shorthand deliberately replaces the 17 px root on touch screens. */
 @import "tailwindcss";
+/* Closes the default palette, radii, shadows and type sizes (before the tokens below define the real ones). */
+@import "./tema-cerrado.css";
 
 /*
- * Tokens of docs/DESIGN.md. This is the only place with literal colours: components use the names below
- * (bg-fondo, text-tinta, bg-acento, ...). The theme is light on purpose (PRODUCT.md: the scene is daytime).
+ * Conidolly's tokens. Source: estudio-coni app/globals.css (Soft UI v6, gris neutro). Keep the shared values in sync
+ * with that file until stage 2 moves these screens into Conidolly (estudio-coni,
+ * docs/superpowers/specs/2026-11-02-biblioteca-misma-sesion-design.md). This is the only place with literal colours:
+ * components use the names below (bg-piedra, text-tinta, shadow-relieve, ...). Light only.
+ * --ok and --aviso are Ingesta's own (Conidolly has no such states), AA on piedra and piedra-honda
+ * (tests/unit/tokens.test.ts).
  */
 :root {
   color-scheme: light;
-  --fondo: #fbf6f8;
-  --superficie: #fffcfd;
-  --hundido: #f5ecf0;
-  --tinta: #2b1830;
-  --apagado: #6f5d74;
-  --linea: #eadde4;
-  --acento: #b3285f;
-  --acento-profundo: #8e1d4a;
-  --acento-suave: #f6e3ec;
-  --acento-claro: #f0b4cd;
-  --sobre-acento: #fff7fa;
-  --ok-tinta: #1d6743;
-  --ok-fondo: #e5f3ea;
-  --aviso-tinta: #7a4b00;
-  --aviso-fondo: #fdf1dc;
-  --error-tinta: #a12a2a;
-  --error-fondo: #fbe8e6;
+
+  /* ---------- Colour ---------- */
+  --piedra: #ebebea; /* page and every raised surface */
+  --piedra-alta: #f4f4f3; /* reading panels, flat groups */
+  --piedra-honda: #dcdcdb; /* sunken tracks and fields, status pills, warning and error blocks, disabled */
+  --luz: #fbfbfa; /* light side of the relief; text on tinta */
+  --tinta: #262626; /* all text, primary fill, focus ring */
+  --apagado: #5a5a59; /* meta, help, disabled labels */
+  --campo: #727271; /* outlines at high contrast, the quote rule of a card */
+  --hilo: var(--piedra-honda); /* 1 px dividers, decorative */
+  --error: #a8200d; /* error text, always with words */
+  --firma: #a8285a; /* raspberry: Conidolly's signature, kept for stage 2 */
+  --sobre-firma: var(--luz);
+  --ok: #2e5e45; /* Ingesta only: a material is ready, a code was sent */
+  --aviso: #7a4a00; /* Ingesta only: processing, a confirmation before something that cannot be undone */
+
+  /* ---------- Relief: sunken, raised and high, never a fourth level ---------- */
+  --relieve: -6px -6px 14px rgb(251 251 250 / 0.9), 6px 6px 14px rgb(60 60 60 / 0.18);
+  --relieve-alto: -10px -10px 24px rgb(251 251 250 / 0.9), 10px 10px 24px rgb(60 60 60 / 0.22);
+  --relieve-fijo: 0 -4px 14px rgb(60 60 60 / 0.1), inset 0 1px 0 rgb(251 251 250 / 0.9);
+  --hundido: inset 4px 4px 10px rgb(60 60 60 / 0.18), inset -4px -4px 10px rgb(251 251 250 / 0.9);
+
+  /* ---------- Type: rem on the iOS body size, so the system text size scales text and targets together ---------- */
+  --letra: var(--font-geist-sans), ui-sans-serif, -apple-system, system-ui, "Segoe UI", sans-serif;
+  --t-pantalla: 2rem;
+  --i-pantalla: 1.125;
+  --tr-pantalla: -0.022em;
+  --t-pieza: 1.5rem;
+  --i-pieza: 1.167;
+  --tr-pieza: -0.014em;
+  --t-guion: 1.18rem;
+  --i-guion: 1.6;
+  --t-boton: 1.125rem;
+  --i-boton: 1.333;
+  --t-cuerpo: 1rem;
+  --i-cuerpo: 1.333;
+  --t-meta: 0.9375rem;
+  --i-meta: 1.333;
+  --peso-titulo: 600;
+
+  /* ---------- Shape ---------- */
+  --r-control: 999px;
+  --r-panel: 24px;
+  --r-bloque: 18px;
+  --r-casilla: 9px;
+
+  /* ---------- Motion: only in response to touch ---------- */
+  --dur-corta: 150ms;
+  --dur-media: 200ms;
+  --curva-salida: cubic-bezier(0.23, 1, 0.32, 1);
+  --latido: 1.6s;
 }
 
-/* Pillars: one hue each; tint, strong tint, ink and dot all derive from it (DESIGN.md, Pillar Palette Rule). */
+/* Reduced motion keeps every state change and drops the movement. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-corta: 0ms;
+    --dur-media: 0ms;
+  }
+}
+
+/* Pillars: one hue each; tint, strong tint, ink and dot all derive from it. */
 [data-pilar="pareja"] {
   --p-h: 245;
 }
@@ -49,86 +99,148 @@
 }
 
 @theme inline {
-  --color-fondo: var(--fondo);
-  --color-superficie: var(--superficie);
-  --color-hundido: var(--hundido);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-piedra: var(--piedra);
+  --color-piedra-alta: var(--piedra-alta);
+  --color-piedra-honda: var(--piedra-honda);
+  --color-luz: var(--luz);
   --color-tinta: var(--tinta);
   --color-apagado: var(--apagado);
-  --color-linea: var(--linea);
-  --color-acento: var(--acento);
-  --color-acento-profundo: var(--acento-profundo);
-  --color-acento-suave: var(--acento-suave);
-  --color-acento-claro: var(--acento-claro);
-  --color-sobre-acento: var(--sobre-acento);
-  --color-ok-tinta: var(--ok-tinta);
-  --color-ok-fondo: var(--ok-fondo);
-  --color-aviso-tinta: var(--aviso-tinta);
-  --color-aviso-fondo: var(--aviso-fondo);
-  --color-error-tinta: var(--error-tinta);
-  --color-error-fondo: var(--error-fondo);
+  --color-campo: var(--campo);
+  --color-hilo: var(--hilo);
+  --color-error: var(--error);
+  --color-firma: var(--firma);
+  --color-sobre-firma: var(--sobre-firma);
+  --color-ok: var(--ok);
+  --color-aviso: var(--aviso);
   --color-pilar-tinte: var(--p-tinte);
   --color-pilar-tinte-fuerte: var(--p-tinte-fuerte);
   --color-pilar-tinta: var(--p-tinta);
   --color-pilar-punto: var(--p-punto);
 
-  --font-serif: var(--font-young-serif), Georgia, "Times New Roman", serif;
-  --font-sans: var(--font-hanken), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, -apple-system, system-ui, sans-serif;
 
-  --radius-sm: 12px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
+  --text-pantalla: var(--t-pantalla);
+  --text-pantalla--line-height: var(--i-pantalla);
+  --text-pantalla--letter-spacing: var(--tr-pantalla);
+  --text-pantalla--font-weight: var(--peso-titulo);
+  --text-pieza: var(--t-pieza);
+  --text-pieza--line-height: var(--i-pieza);
+  --text-pieza--letter-spacing: var(--tr-pieza);
+  --text-pieza--font-weight: var(--peso-titulo);
+  --text-guion: var(--t-guion);
+  --text-guion--line-height: var(--i-guion);
+  --text-boton: var(--t-boton);
+  --text-boton--line-height: var(--i-boton);
+  --text-cuerpo: var(--t-cuerpo);
+  --text-cuerpo--line-height: var(--i-cuerpo);
+  --text-meta: var(--t-meta);
+  --text-meta--line-height: var(--i-meta);
 
-  /* The name on the public page of the bio link (brand register): larger than the product scale. */
-  --text-marca: 2.75rem;
-  --text-marca--line-height: 1;
-  --text-display: 1.875rem;
-  --text-display--line-height: 1.12;
-  --text-title: 1.5rem;
-  --text-title--line-height: 1.15;
-  --text-script: 1.25rem;
-  --text-script--line-height: 1.55;
-  --text-body: 1.125rem;
-  --text-body--line-height: 1.5;
-  --text-label: 0.9375rem;
-  --text-label--line-height: 1.3;
-  --text-meta: 0.9375rem;
-  --text-meta--line-height: 1.4;
-  --text-nav: 0.875rem;
-  --text-nav--line-height: 1.3;
+  --radius-control: var(--r-control);
+  --radius-panel: var(--r-panel);
+  --radius-bloque: var(--r-bloque);
+  --radius-casilla: var(--r-casilla);
 
-  --shadow-flotante: 0 10px 28px -14px rgb(43 24 48 / 0.45);
-  --ease-fuerte: cubic-bezier(0.23, 1, 0.32, 1);
+  --shadow-relieve: var(--relieve);
+  --shadow-relieve-alto: var(--relieve-alto);
+  --shadow-relieve-fijo: var(--relieve-fijo);
+  --shadow-hundido: var(--hundido);
+
+  /* Paddings stay px when the root grows with the iOS text size; targets are rem (lib/utils.ts lists these names). */
+  --spacing: 4px;
+  --spacing-objetivo: 2.75rem;
+  --spacing-boton: 3.25rem;
+  --spacing-nav: 3.5rem;
+
+  --ease-salida: var(--curva-salida);
 }
 
+/* 17 px everywhere; iPhone and iPad with touch take Dynamic Type. The media guard is Conidolly's: on macOS Safari
+   -apple-system-body resolves to the desktop body size and would shrink the app. */
 html {
+  font-size: 106.25%;
   -webkit-text-size-adjust: 100%;
 }
+@media (hover: none) and (pointer: coarse) {
+  @supports (font: -apple-system-body) {
+    html {
+      font: -apple-system-body;
+    }
+  }
+}
 
+/* The shorthand above also sets a system family: the body sets family, size and line height again. */
 body {
-  background: var(--fondo);
+  background: var(--piedra);
   color: var(--tinta);
-  font-family: var(--font-sans);
-  font-size: 1.125rem;
-  line-height: 1.5;
+  font-family: var(--letra);
+  font-size: var(--t-cuerpo);
+  line-height: var(--i-cuerpo);
   -webkit-font-smoothing: antialiased;
 }
 
-:focus-visible {
-  outline: 3px solid var(--acento);
-  outline-offset: 2px;
+/* In the base layer so a utility can change the colour where it must. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--tinta);
+    outline-offset: 2px;
+  }
 }
 
-/* The toast slides in 8 px and fades; a transition (not a keyframe) so a second toast retargets smoothly. */
-.aviso {
-  transition:
-    transform 220ms var(--ease-fuerte),
-    opacity 220ms var(--ease-fuerte);
+/* With more contrast every raised or sunken container gets a campo outline and apagado turns ink. */
+@media (prefers-contrast: more) {
+  :root {
+    --apagado: var(--tinta);
+  }
+  :where(.shadow-relieve, .shadow-relieve-alto, .shadow-relieve-fijo, .shadow-hundido, .campo) {
+    outline: 2px solid var(--campo);
+    outline-offset: -2px;
+  }
+  :where(.shadow-relieve, .shadow-relieve-alto, .shadow-relieve-fijo, .shadow-hundido, .campo):focus-visible {
+    outline-color: var(--tinta);
+    outline-offset: 2px;
+  }
+  .campo[aria-invalid="true"] {
+    outline-color: var(--error);
+  }
 }
-@starting-style {
-  .aviso {
-    transform: translateY(8px);
-    opacity: 0;
+
+/* Shadows vanish in forced colours: raised and sunken shapes get a system border. */
+@media (forced-colors: active) {
+  :where(.shadow-relieve, .shadow-relieve-alto, .shadow-relieve-fijo, .shadow-hundido, .campo) {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* Fields sink: a 3.25rem pill for one line; a text area has 24 px corners and grows with its text. In the components
+   layer so a utility can still adjust one. */
+@layer components {
+  .campo {
+    background: var(--piedra-honda);
+    box-shadow: var(--hundido);
+    border: 0;
+    border-radius: var(--r-control);
+    padding: 0 20px;
+    min-height: 3.25rem;
+    color: var(--tinta);
+  }
+  textarea.campo {
+    field-sizing: content;
+    border-radius: var(--r-panel);
+    padding: 14px 20px;
+  }
+  .campo[aria-invalid="true"] {
+    outline: 2px solid var(--error);
+    outline-offset: 0;
+  }
+  .campo:disabled {
+    box-shadow: none;
+    color: var(--apagado);
+  }
+  .campo::placeholder {
+    color: var(--apagado);
   }
 }
 
@@ -139,12 +251,10 @@ body {
   }
 }
 .esqueleto {
-  animation: latido 1.6s ease-in-out infinite;
-  background: var(--linea);
-  border-radius: 999px;
+  animation: latido var(--latido) ease-in-out infinite;
+  background: var(--piedra-honda);
+  border-radius: var(--r-control);
 }
-
-/* Reduced motion keeps the opacity and colour changes that explain a state and drops the movement. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -152,68 +262,4 @@ body {
   .esqueleto {
     animation: none;
   }
-  @starting-style {
-    .aviso {
-      transform: none;
-    }
-  }
-}
-
-/* The approve slider: a native range input restyled as a pill with a 52 px thumb (DESIGN.md, slide-approve). */
-.deslizador {
-  -webkit-appearance: none;
-  appearance: none;
-  margin: 0;
-  border-radius: 999px;
-  background: var(--acento-suave);
-  touch-action: pan-y;
-}
-.deslizador[data-activo="false"] {
-  background: var(--hundido);
-}
-.deslizador::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
-  border: 0;
-  background: var(--acento);
-  box-shadow: 0 2px 6px rgb(43 24 48 / 0.25);
-}
-.deslizador::-moz-range-thumb {
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
-  border: 0;
-  background: var(--acento);
-}
-.deslizador[data-activo="false"]::-webkit-slider-thumb {
-  background: var(--apagado);
-}
-.deslizador[data-activo="false"]::-moz-range-thumb {
-  background: var(--apagado);
-}
-
-/* A new card of the idea bank slides up 8 px and fades in; a transition on mount, so a quick second tap retargets it. */
-.carta-idea {
-  transition:
-    transform 220ms var(--ease-fuerte),
-    opacity 220ms var(--ease-fuerte);
-}
-@starting-style {
-  .carta-idea {
-    transform: translateY(8px);
-    opacity: 0;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  @starting-style {
-    .carta-idea {
-      transform: none;
-    }
-  }
-}
-/* The public page of the bio link is raspberry edge to edge, overscroll included (DESIGN.md, Excepción de `/l`). */
-body:has([data-superficie="marca"]) {
-  background: var(--acento);
 }

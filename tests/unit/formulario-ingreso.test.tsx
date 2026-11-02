@@ -102,4 +102,15 @@ describe("FormularioIngreso", () => {
     expect(await screen.findByText("Espera 30 segundos para pedir otro código.")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: "Soy WAV" })).toBeInTheDocument()
   })
+
+  it("hides the bridge message once she chooses who enters", async () => {
+    pedir.mockResolvedValue({ ok: true, correoEnmascarado: "c•••@estudio.test" })
+    render(<FormularioIngreso avisoDelPuente="El enlace ya se usó o venció." />)
+    expect(screen.getByRole("status")).toHaveTextContent("El enlace ya se usó o venció.")
+
+    fireEvent.click(screen.getByRole("button", { name: "Soy Coni" }))
+
+    expect(await screen.findByRole("heading", { name: "Entra con el código que te mandé" })).toBeInTheDocument()
+    expect(screen.queryByText("El enlace ya se usó o venció.")).not.toBeInTheDocument()
+  })
 })

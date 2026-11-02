@@ -33,13 +33,13 @@ export function BotonReprocesar({ materialId }: { materialId: string }) {
   }
 
   return (
-    <section aria-label="Confirmar el reprocesado" className="grid gap-3 rounded-lg bg-aviso-fondo p-4">
-      <p className="text-aviso-tinta">
+    <section aria-label="Confirmar el reprocesado" className="grid gap-3 rounded-panel bg-piedra-honda p-4">
+      <p className="text-aviso">
         Reprocesar cuesta más o menos lo mismo que la primera vez. Se borran las afirmaciones de este material y se
         vuelven a sacar.
       </p>
       {error ? (
-        <p role="alert" className="text-error-tinta">
+        <p role="alert" className="text-error">
           {error}
         </p>
       ) : null}
