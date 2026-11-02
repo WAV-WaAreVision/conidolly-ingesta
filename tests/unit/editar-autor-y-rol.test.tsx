@@ -100,3 +100,22 @@ describe("EditarAutorYRol", () => {
     expect(editar).not.toHaveBeenCalled()
   })
 })
+
+describe("EditarAutorYRol: casillas de papel", () => {
+  it("raises an unchecked role tile and sinks the checked one, with a visible focus ring", () => {
+    abrir()
+
+    for (const radio of screen.getAllByRole("radio")) {
+      const casilla = radio.closest("label")
+      for (const clase of [
+        "bg-piedra",
+        "shadow-relieve",
+        "has-checked:bg-piedra-honda",
+        "has-checked:shadow-hundido",
+        "has-[:focus-visible]:outline-tinta",
+      ]) {
+        expect(casilla).toHaveClass(clase)
+      }
+    }
+  })
+})

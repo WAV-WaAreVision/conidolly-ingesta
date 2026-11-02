@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Campo, CLASES_DE_CAMPO } from "@/components/campo"
 import { SelectorDeAutor } from "@/components/selector-de-autor"
 import { Boton } from "@/components/ui/boton"
+import { CLASES_DE_OPCION } from "@/components/ui/clases-de-opcion"
 import type { AutorDeLista } from "@/lib/ingesta/buscar-autor"
 import {
   AYUDA_DE_ROL,
@@ -171,8 +172,8 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
             <label
               key={opcion}
               className={cn(
-                "flex min-h-13 cursor-pointer items-center justify-center rounded-bloque border border-hilo bg-piedra-alta px-2 text-center text-cuerpo font-semibold",
-                "has-checked:border-tinta has-checked:bg-piedra-honda has-checked:text-tinta has-focus-visible:outline-3 has-focus-visible:outline-tinta",
+                CLASES_DE_OPCION,
+                "flex min-h-13 items-center justify-center px-2 text-center text-cuerpo font-semibold",
               )}
             >
               <input
@@ -333,13 +334,7 @@ export function FormularioSubida({ autores }: { autores: AutorDeLista[] }) {
 
         <div role="radiogroup" aria-label="Papel del material" className="grid gap-2">
           {ROLES.map((opcion) => (
-            <label
-              key={opcion}
-              className={cn(
-                "grid cursor-pointer gap-0.5 rounded-bloque border border-hilo bg-piedra-alta p-3.5",
-                "has-checked:border-tinta has-checked:bg-piedra-honda has-focus-visible:outline-3 has-focus-visible:outline-tinta",
-              )}
-            >
+            <label key={opcion} className={cn(CLASES_DE_OPCION, "grid gap-0.5 p-3.5")}>
               <input
                 type="radio"
                 name="rol"

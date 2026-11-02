@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { SelectorDeAutor } from "@/components/selector-de-autor"
 import { Boton } from "@/components/ui/boton"
+import { CLASES_DE_OPCION } from "@/components/ui/clases-de-opcion"
 import type { AutorDeLista } from "@/lib/ingesta/buscar-autor"
 import { AYUDA_DE_ROL, ETIQUETA_DE_ROL, ROLES, type Rol } from "@/lib/ingesta/modelo"
 import { cn } from "@/lib/utils"
@@ -71,13 +72,7 @@ export function EditarAutorYRol({
       <SelectorDeAutor autores={autores} valor={autorId} alElegir={setAutorId} alCrear={crearAutorAccion} />
       <div role="radiogroup" aria-label="Papel del material" className="grid gap-2">
         {ROLES.map((opcion) => (
-          <label
-            key={opcion}
-            className={cn(
-              "grid cursor-pointer gap-0.5 rounded-bloque border border-hilo bg-piedra-alta p-3.5",
-              "has-checked:border-tinta has-checked:bg-piedra-honda has-focus-visible:outline-3 has-focus-visible:outline-tinta",
-            )}
-          >
+          <label key={opcion} className={cn(CLASES_DE_OPCION, "grid gap-0.5 p-3.5")}>
             <input
               type="radio"
               name="rol"
