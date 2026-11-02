@@ -80,9 +80,9 @@ export function SelectorDeAutor({ autores: iniciales, valor, alElegir, alCrear }
 
   if (elegido && !cambiando) {
     return (
-      <div className="flex items-center justify-between gap-3 rounded-md border border-acento bg-acento-suave p-3.5">
-        <p className="grid text-label">
-          <span className="font-semibold text-acento-profundo">{elegido.nombre}</span>
+      <div className="flex items-center justify-between gap-3 rounded-bloque border border-tinta bg-piedra-honda p-3.5">
+        <p className="grid text-cuerpo">
+          <span className="font-semibold text-tinta">{elegido.nombre}</span>
           {elegido.credencial ? <span className="text-meta text-apagado">{elegido.credencial}</span> : null}
         </p>
         <Boton variante="callado" tamano="chico" onClick={() => setCambiando(true)} aria-label="Cambiar autor">
@@ -95,7 +95,7 @@ export function SelectorDeAutor({ autores: iniciales, valor, alElegir, alCrear }
   if (creando) {
     const parecidos = autoresParecidos(autores, nombre)
     return (
-      <div className="grid gap-3 rounded-md bg-hundido p-3.5">
+      <div className="grid gap-3 rounded-bloque bg-piedra-honda p-3.5">
         <Campo id="autor-nombre" etiqueta="Nombre del autor" ayuda="Ej: Esther Perel, @cuenta o Instituto Gottman">
           <input
             id="autor-nombre"
@@ -109,8 +109,8 @@ export function SelectorDeAutor({ autores: iniciales, valor, alElegir, alCrear }
           />
         </Campo>
         {parecidos.map((parecido) => (
-          <div key={parecido.id} className="grid gap-2 rounded-md bg-aviso-fondo p-3">
-            <p className="text-aviso-tinta">¿Es el mismo autor que {parecido.nombre}?</p>
+          <div key={parecido.id} className="grid gap-2 rounded-bloque bg-piedra-honda p-3">
+            <p className="text-aviso">¿Es el mismo autor que {parecido.nombre}?</p>
             <Boton variante="linea" tamano="chico" onClick={() => elegir(parecido.id)}>
               Sí, es {parecido.nombre}
             </Boton>
@@ -151,7 +151,7 @@ export function SelectorDeAutor({ autores: iniciales, valor, alElegir, alCrear }
           </select>
         </Campo>
         {error ? (
-          <p role="alert" className="rounded-md bg-error-fondo p-3.5 text-[1rem] text-error-tinta">
+          <p role="alert" className="rounded-bloque bg-piedra-honda p-3.5 text-[1rem] text-error">
             {error}
           </p>
         ) : null}
@@ -190,7 +190,7 @@ export function SelectorDeAutor({ autores: iniciales, valor, alElegir, alCrear }
                 type="button"
                 onClick={() => elegir(autor.id)}
                 aria-label={descripcion(autor)}
-                className="grid min-h-13 w-full content-center gap-0.5 rounded-md border border-linea bg-superficie px-3.5 py-2.5 text-left focus-visible:outline-3 focus-visible:outline-acento"
+                className="grid min-h-13 w-full content-center gap-0.5 rounded-bloque border border-hilo bg-piedra-alta px-3.5 py-2.5 text-left focus-visible:outline-3 focus-visible:outline-tinta"
               >
                 <span className="font-semibold">{autor.nombre}</span>
                 {autor.credencial ? <span className="text-meta text-apagado">{autor.credencial}</span> : null}

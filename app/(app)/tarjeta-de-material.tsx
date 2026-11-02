@@ -9,7 +9,7 @@ import { BotonReintentar } from "./materiales/boton-reintentar"
 export function TarjetaDeMaterial({ material }: { material: MaterialDeLista }) {
   const estado = estadoVisible(material)
   return (
-    <li className="grid gap-1.5 rounded-lg border border-linea bg-superficie p-4">
+    <li className="grid gap-1.5 rounded-panel border border-hilo bg-piedra-alta p-4">
       <Link href={`/materiales/${material.id}`} className="grid gap-1.5">
         <span className="font-semibold text-balance">{material.titulo ?? "Sin título"}</span>
         <span className="text-meta text-apagado">
@@ -17,7 +17,7 @@ export function TarjetaDeMaterial({ material }: { material: MaterialDeLista }) {
           {` · ${material.autor} · ${ETIQUETA_DE_ROL[material.rol as Rol] ?? material.rol}`}
         </span>
       </Link>
-      <p className={cn("w-fit rounded-sm px-2.5 py-1 text-meta font-semibold", estado.clases)}>{estado.texto}</p>
+      <p className={cn("w-fit rounded-casilla px-2.5 py-1 text-meta font-semibold", estado.clases)}>{estado.texto}</p>
       {material.motivo_fallo ? <p className="text-meta text-apagado">{material.motivo_fallo}</p> : null}
       {esperaConfirmacion(material) && material.costo_estimado_usd !== null ? (
         <BotonConfirmarCosto materialId={material.id} costoUsd={material.costo_estimado_usd} />

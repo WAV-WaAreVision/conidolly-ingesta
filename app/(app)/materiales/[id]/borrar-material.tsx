@@ -32,12 +32,12 @@ export function BorrarMaterial({ materialId }: { materialId: string }) {
   }
 
   return (
-    <section aria-label="Confirmar el borrado" className="grid gap-3 rounded-lg bg-error-fondo p-4">
-      <p className="text-error-tinta">
+    <section aria-label="Confirmar el borrado" className="grid gap-3 rounded-panel bg-piedra-honda p-4">
+      <p className="text-error">
         ¿Borrar este material? Se borran también la ficha y los archivos. No se puede deshacer.
       </p>
       {error ? (
-        <p role="alert" className="text-error-tinta">
+        <p role="alert" className="text-error">
           {error}
         </p>
       ) : null}

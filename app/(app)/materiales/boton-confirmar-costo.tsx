@@ -30,7 +30,7 @@ export function BotonConfirmarCosto({ materialId, costoUsd }: { materialId: stri
         Procesar por ~US$ {formatoUsd.format(costoUsd)}
       </Boton>
       {error ? (
-        <p role="alert" className="rounded-md bg-error-fondo p-3.5 text-[1rem] text-error-tinta">
+        <p role="alert" className="rounded-bloque bg-piedra-honda p-3.5 text-[1rem] text-error">
           {error}
         </p>
       ) : null}

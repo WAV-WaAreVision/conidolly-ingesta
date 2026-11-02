@@ -31,12 +31,12 @@ export function BotonProponerAhora() {
         Proponer ahora
       </Boton>
       {pedido ? (
-        <output className="block rounded-md bg-ok-fondo p-3.5 text-ok-tinta">
+        <output className="block rounded-bloque bg-piedra-honda p-3.5 text-ok">
           El motor se puso a trabajar. Las ideas llegan a Conidolly en unos minutos.
         </output>
       ) : null}
       {error ? (
-        <p role="alert" className="rounded-md bg-error-fondo p-3.5 text-error-tinta">
+        <p role="alert" className="rounded-bloque bg-piedra-honda p-3.5 text-error">
           {error}
         </p>
       ) : null}

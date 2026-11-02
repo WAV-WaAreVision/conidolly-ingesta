@@ -13,7 +13,7 @@ export function mezclaDeEvidencia(evidencia: Record<string, number>): string {
 
 function Insignia({ texto }: { texto: string }) {
   return (
-    <span className="w-fit rounded-sm bg-acento-suave px-2.5 py-1 text-meta font-semibold text-acento-profundo">
+    <span className="w-fit rounded-casilla bg-piedra-honda px-2.5 py-1 text-meta font-semibold text-tinta">
       {texto}
     </span>
   )
@@ -22,7 +22,7 @@ function Insignia({ texto }: { texto: string }) {
 export function TarjetaDeTema({ tema }: { tema: TemaResumido }) {
   const evidencia = mezclaDeEvidencia(tema.evidencia)
   return (
-    <li className="grid gap-1.5 rounded-lg border border-linea bg-superficie p-4">
+    <li className="grid gap-1.5 rounded-panel border border-hilo bg-piedra-alta p-4">
       <Link href={`/temas/${tema.id}`} className="grid gap-1.5">
         <span className="font-semibold text-balance">{tema.nombre}</span>
         <span className="text-meta text-apagado">

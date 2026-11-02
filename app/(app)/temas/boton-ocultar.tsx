@@ -28,7 +28,7 @@ export function BotonOcultar({ afirmacionId, oculta }: { afirmacionId: string; o
         {oculta ? "Mostrar" : "Ocultar"}
       </Boton>
       {error ? (
-        <p role="alert" className="text-meta text-error-tinta">
+        <p role="alert" className="text-meta text-error">
           {error}
         </p>
       ) : null}

@@ -11,7 +11,7 @@ export default async function Semana() {
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
-      <h1 className="font-serif text-display text-balance">Semana</h1>
+      <h1 className="text-pantalla text-balance">Semana</h1>
       <NavegacionPrincipal actual="semana" rol={sesion.rol} />
       <BotonProponerAhora />
       <VistaDeSemana semana={semana} />

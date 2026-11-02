@@ -1,8 +1,8 @@
 /** How the state of a material reads, and the tokens that colour its chip. */
 export const ESTADO: Record<string, { texto: string; clases: string }> = {
-  procesando: { texto: "Procesando", clases: "bg-aviso-fondo text-aviso-tinta" },
-  listo: { texto: "Listo", clases: "bg-ok-fondo text-ok-tinta" },
-  fallido: { texto: "No se pudo procesar", clases: "bg-error-fondo text-error-tinta" },
+  procesando: { texto: "Procesando", clases: "bg-piedra-honda text-aviso" },
+  listo: { texto: "Listo", clases: "bg-piedra-honda text-ok" },
+  fallido: { texto: "No se pudo procesar", clases: "bg-piedra-honda text-error" },
 }
 
 export const ETIQUETA_DE_TIPO: Record<string, string> = {
@@ -39,10 +39,10 @@ export function estaProcesando(material: EstadoDeProceso): boolean {
   return material.estado === "procesando" && material.motivo_fallo === null
 }
 
-const ESPERA_TU_OK = { texto: "Espera tu OK", clases: "bg-hundido text-apagado" }
+const ESPERA_TU_OK = { texto: "Espera tu OK", clases: "bg-piedra-honda text-apagado" }
 
 /** The chip of a material: one waiting for the cost to be confirmed says so instead of "Procesando". */
 export function estadoVisible(material: EstadoDeProceso): { texto: string; clases: string } {
   if (esperaConfirmacion(material)) return ESPERA_TU_OK
-  return ESTADO[material.estado] ?? { texto: material.estado, clases: "bg-hundido text-apagado" }
+  return ESTADO[material.estado] ?? { texto: material.estado, clases: "bg-piedra-honda text-apagado" }
 }

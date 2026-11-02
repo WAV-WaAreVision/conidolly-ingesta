@@ -57,8 +57,8 @@ export function UnirAutores({ origen, otros }: Propiedades) {
   }
 
   return (
-    <section aria-label="Unir autores" className="grid gap-3 rounded-lg bg-aviso-fondo p-4">
-      <p className="text-aviso-tinta">
+    <section aria-label="Unir autores" className="grid gap-3 rounded-panel bg-piedra-honda p-4">
+      <p className="text-aviso">
         {`Sus materiales y afirmaciones pasan al otro autor y ${origen.nombre} deja de existir como autor. No se puede deshacer.`}
       </p>
       <Campo id="unir-destino" etiqueta="Unir con">
@@ -78,7 +78,7 @@ export function UnirAutores({ origen, otros }: Propiedades) {
         </select>
       </Campo>
       {error ? (
-        <p role="alert" className="text-error-tinta">
+        <p role="alert" className="text-error">
           {error}
         </p>
       ) : null}

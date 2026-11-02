@@ -27,14 +27,14 @@ export default async function Temas({
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
-      <h1 className="font-serif text-display text-balance">Temas</h1>
+      <h1 className="text-pantalla text-balance">Temas</h1>
       <NavegacionPrincipal actual="temas" rol={sesion.rol} />
       <form
         key={pilar ?? ""}
         method="get"
         action="/temas"
         aria-label="Filtros"
-        className="grid gap-3 rounded-lg border border-linea bg-superficie p-4"
+        className="grid gap-3 rounded-panel border border-hilo bg-piedra-alta p-4"
       >
         <Campo id="filtro-pilar" etiqueta="Pilar">
           <select id="filtro-pilar" name="pilar" defaultValue={pilar ?? ""} className={CLASES_DE_CAMPO}>

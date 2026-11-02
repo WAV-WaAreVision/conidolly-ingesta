@@ -39,12 +39,12 @@ export default async function FichaDeMaterial({ params }: { params: Promise<{ id
         Volver al material
       </Link>
       <header className="grid gap-2">
-        <h1 className="font-serif text-display text-balance">{material.titulo ?? "Sin título"}</h1>
+        <h1 className="text-pantalla text-balance">{material.titulo ?? "Sin título"}</h1>
         <p className="text-meta text-apagado">
           {ETIQUETA_DE_TIPO[material.tipo] ?? material.tipo}
           {` · ${material.autor} · ${ETIQUETA_DE_ROL[rol] ?? material.rol}`}
         </p>
-        <p className={cn("w-fit rounded-sm px-2.5 py-1 text-meta font-semibold", estado.clases)}>{estado.texto}</p>
+        <p className={cn("w-fit rounded-casilla px-2.5 py-1 text-meta font-semibold", estado.clases)}>{estado.texto}</p>
         {material.motivo_fallo ? <p className="text-meta text-apagado">{material.motivo_fallo}</p> : null}
         {esperaConfirmacion(material) && material.costo_estimado_usd !== null ? (
           <BotonConfirmarCosto materialId={material.id} costoUsd={material.costo_estimado_usd} />
@@ -64,7 +64,7 @@ export default async function FichaDeMaterial({ params }: { params: Promise<{ id
         <MapaDelMaterial mapa={mapa} estado={material.estado} />
       ) : ficha ? (
         <>
-          <p className="rounded-md bg-acento-suave p-3.5 text-meta text-tinta">
+          <p className="rounded-bloque bg-piedra-honda p-3.5 text-meta text-tinta">
             {adaptacionDe(material.idioma_original)}
           </p>
           <FichaEditable materialId={material.id} ficha={ficha} />

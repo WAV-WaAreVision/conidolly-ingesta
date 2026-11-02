@@ -25,11 +25,9 @@ export function NavegacionPrincipal({ actual, rol }: { actual: Seccion; rol: Rol
           href={seccion.ruta}
           aria-current={seccion.clave === actual ? "page" : undefined}
           className={cn(
-            "flex min-h-11 min-w-0 flex-auto items-center justify-center rounded-md border border-linea px-1 text-nav font-semibold",
-            "focus-visible:outline-3 focus-visible:outline-acento",
-            seccion.clave === actual
-              ? "border-acento bg-acento-suave text-acento-profundo"
-              : "bg-superficie text-tinta",
+            "flex min-h-11 min-w-0 flex-auto items-center justify-center rounded-bloque border border-hilo px-1 text-meta font-semibold",
+            "focus-visible:outline-3 focus-visible:outline-tinta",
+            seccion.clave === actual ? "border-tinta bg-piedra-honda text-tinta" : "bg-piedra-alta text-tinta",
           )}
         >
           {seccion.texto}
@@ -38,7 +36,7 @@ export function NavegacionPrincipal({ actual, rol }: { actual: Seccion; rol: Rol
       {conidolly ? (
         <a
           href={conidolly}
-          className="flex min-h-11 min-w-0 flex-auto items-center justify-center px-1 text-nav font-semibold text-acento underline underline-offset-4"
+          className="flex min-h-11 min-w-0 flex-auto items-center justify-center px-1 text-meta font-semibold text-tinta underline underline-offset-4"
         >
           Volver a Conidolly
         </a>
