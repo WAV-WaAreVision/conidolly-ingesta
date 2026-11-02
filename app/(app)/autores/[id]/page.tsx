@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { EnlaceDeVuelta } from "@/components/enlace-de-vuelta"
 import { ListaDeAfirmaciones } from "@/components/lista-de-afirmaciones"
 import { leerAutor, listarAutores } from "@/lib/ingesta/autores"
 import { leerSesion } from "@/lib/sesion/miembro"
@@ -17,9 +18,7 @@ export default async function Autor({ params }: { params: Promise<{ id: string }
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
-      <Link href="/autores" className="w-fit text-meta font-semibold text-tinta">
-        ← Autores
-      </Link>
+      <EnlaceDeVuelta href="/autores">Autores</EnlaceDeVuelta>
       <header className="grid gap-1">
         <h1 className="text-pantalla text-balance">{autor.nombre}</h1>
         {autor.credencial ? <p className="text-apagado">{autor.credencial}</p> : null}

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { EnlaceDeVuelta } from "@/components/enlace-de-vuelta"
 import { ListaDeAfirmaciones } from "@/components/lista-de-afirmaciones"
 import { destinoDeTema, leerTema } from "@/lib/ingesta/temas"
 import { leerSesion } from "@/lib/sesion/miembro"
@@ -19,9 +20,7 @@ export default async function Tema({ params }: { params: Promise<{ id: string }>
 
   return (
     <main className="mx-auto grid w-full max-w-[560px] content-start gap-5.5 px-4.5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
-      <Link href="/temas" className="w-fit text-meta font-semibold text-tinta">
-        ← Temas
-      </Link>
+      <EnlaceDeVuelta href="/temas">Temas</EnlaceDeVuelta>
       <header className="grid gap-1.5">
         <h1 className="text-pantalla text-balance">{tema.nombre}</h1>
         {tema.descripcion ? <p>{tema.descripcion}</p> : null}
