@@ -5,6 +5,7 @@ import {
   cruzarPuente,
   DESTINO_DEL_PUENTE_VENCIDO,
   galletasDeLaSesionAnterior,
+  origenDeConidolly,
   TEXTO_PUENTE_VENCIDO,
 } from "@/lib/sesion/puente"
 
@@ -89,5 +90,27 @@ describe("the session cookie of the previous person", () => {
       "sb-127-auth-token.3",
       "sb-127-auth-token.4",
     ])
+  })
+})
+
+describe("origenDeConidolly", () => {
+  it("keeps only the origin of an https URL", () => {
+    expect(origenDeConidolly("https://conidolly.vercel.app/inicio?x=1", "production")).toBe(
+      "https://conidolly.vercel.app",
+    )
+  })
+
+  it("accepts http outside production only, for the local apps", () => {
+    expect(origenDeConidolly("http://127.0.0.1:3200", "development")).toBe("http://127.0.0.1:3200")
+    expect(origenDeConidolly("http://127.0.0.1:3200", "production")).toBeNull()
+  })
+
+  it.each([
+    ["missing", undefined],
+    ["empty", ""],
+    ["without a scheme", "conidolly.vercel.app"],
+    ["another scheme", "javascript:alert(1)"],
+  ])("refuses a value that is %s", (_caso, valor) => {
+    expect(origenDeConidolly(valor, "development")).toBeNull()
   })
 })

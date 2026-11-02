@@ -53,3 +53,14 @@ export function claveDeSesion(urlDeSupabase: string): string {
 export function galletasDeLaSesionAnterior(clave: string): string[] {
   return [clave, ...Array.from({ length: 5 }, (_, indice) => `${clave}.${indice}`)]
 }
+
+/**
+ * The origin of `CONIDOLLY_URL`, or null when it is not a URL Ingesta may trust: https only, plus http outside
+ * production for the local apps. The bridge accepts POSTs from this origin alone and the nav links back to it.
+ */
+export function origenDeConidolly(valor: string | undefined, entorno: string | undefined): string | null {
+  if (!valor || !URL.canParse(valor)) return null
+  const url = new URL(valor)
+  const protocolos = entorno === "production" ? ["https:"] : ["https:", "http:"]
+  return protocolos.includes(url.protocol) ? url.origin : null
+}

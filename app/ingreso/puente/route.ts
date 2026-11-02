@@ -6,6 +6,7 @@ import {
   cruzarPuente,
   DESTINO_DEL_PUENTE_VENCIDO,
   galletasDeLaSesionAnterior,
+  origenDeConidolly,
 } from "@/lib/sesion/puente"
 import { RUTA_DE_INGRESO } from "@/lib/sesion/rutas"
 
@@ -23,6 +24,10 @@ type GalletaNueva = { name: string; value: string; options: CookieOptions }
 
 /** The other end of Conidolly's Biblioteca tab (change 29a): the form there posts Coni's one-time token here. */
 export async function POST(request: NextRequest) {
+  // A form on any other site could post here too: it must not touch the session of whoever is signed in (spec 2).
+  const origen = origenDeConidolly(process.env.CONIDOLLY_URL, process.env.NODE_ENV)
+  if (origen === null || request.headers.get("origin") !== origen) return irA(RUTA_DE_INGRESO)
+
   const urlDeSupabase = exigirEnv("NEXT_PUBLIC_SUPABASE_URL", process.env.NEXT_PUBLIC_SUPABASE_URL)
   const nuevas: GalletaNueva[] = []
   const db = createServerClient(

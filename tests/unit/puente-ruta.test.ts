@@ -15,14 +15,18 @@ vi.mock("@supabase/ssr", () => ({
 
 const TOKEN = "0123456789abcdef0123456789abcdef0123456789abcdef01234567"
 const URL_DEL_PUENTE = "http://localhost:3100/ingreso/puente"
+const ORIGEN_DE_CONIDOLLY = "https://conidolly.example"
 
-function pedidoConFormulario(campos: Record<string, string>) {
-  return new NextRequest(URL_DEL_PUENTE, { method: "POST", body: new URLSearchParams(campos) })
+function pedidoConFormulario(campos: Record<string, string>, origen: string | null = ORIGEN_DE_CONIDOLLY) {
+  const headers = new Headers({ "content-type": "application/x-www-form-urlencoded" })
+  if (origen !== null) headers.set("origin", origen)
+  return new NextRequest(URL_DEL_PUENTE, { method: "POST", headers, body: new URLSearchParams(campos) })
 }
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54421")
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "clave-anonima")
+  vi.stubEnv("CONIDOLLY_URL", `${ORIGEN_DE_CONIDOLLY}/inicio`)
   auth.signOut.mockResolvedValue({ error: null })
   auth.verifyOtp.mockImplementation(async () => {
     escritor.setAll([{ name: "sb-127-auth-token", value: "sesion-de-coni", options: { path: "/" } }])
@@ -78,7 +82,7 @@ describe("POST /ingreso/puente", () => {
     const respuesta = await POST(
       new NextRequest(URL_DEL_PUENTE, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", origin: ORIGEN_DE_CONIDOLLY },
         body: JSON.stringify({ token_hash: TOKEN }),
       }),
     )
@@ -86,6 +90,39 @@ describe("POST /ingreso/puente", () => {
     expect(respuesta.headers.get("location")).toBe("/ingreso?puente=vencido")
     expect(auth.verifyOtp).not.toHaveBeenCalled()
     expect(JSON.stringify(registro.mock.calls)).not.toContain(TOKEN)
+  })
+})
+
+describe("the Origin check of POST /ingreso/puente", () => {
+  async function esperarRechazo(pedido: NextRequest) {
+    const { POST } = await import("@/app/ingreso/puente/route")
+
+    const respuesta = await POST(pedido)
+
+    expect(respuesta.status).toBe(303)
+    expect(respuesta.headers.get("location")).toBe("/ingreso")
+    expect(respuesta.headers.get("cache-control")).toBe("no-store")
+    expect(respuesta.headers.get("referrer-policy")).toBe("no-referrer")
+    expect(respuesta.headers.get("set-cookie")).toBeNull()
+    expect(auth.signOut).not.toHaveBeenCalled()
+    expect(auth.verifyOtp).not.toHaveBeenCalled()
+  }
+
+  it.each([
+    ["no Origin", null],
+    ["Origin null", "null"],
+    ["another site", "https://otro.example"],
+    ["Conidolly over http", "http://conidolly.example"],
+  ])("ignores a POST with %s: it neither signs anyone out nor asks Auth", async (_caso, origen) => {
+    await esperarRechazo(pedidoConFormulario({ token_hash: TOKEN }, origen))
+  })
+
+  it.each([
+    ["unset", ""],
+    ["not a URL", "conidolly.example"],
+  ])("ignores every POST while CONIDOLLY_URL is %s", async (_caso, valor) => {
+    vi.stubEnv("CONIDOLLY_URL", valor)
+    await esperarRechazo(pedidoConFormulario({ token_hash: TOKEN }))
   })
 })
 
