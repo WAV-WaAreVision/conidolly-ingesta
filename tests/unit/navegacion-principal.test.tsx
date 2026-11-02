@@ -72,4 +72,23 @@ describe("NavegacionPrincipal", () => {
     expect(screen.getByRole("link", { name: "Autores" })).toHaveClass("text-apagado")
     expect(screen.getByRole("link", { name: "Autores" }).className).not.toMatch(/shadow-relieve/)
   })
+
+  it("keeps the section track on one row, as Conidolly's tabs never wrap", () => {
+    render(<NavegacionPrincipal actual="materiales" rol="wav" />)
+
+    const pista = screen.getByRole("navigation", { name: "Secciones" })
+    expect(pista).toHaveClass("flex-nowrap")
+    // Narrower than any phone it was checked on, it scrolls inside itself rather than push the page sideways.
+    expect(pista).toHaveClass("max-[359px]:overflow-x-auto")
+    expect(pista).not.toHaveClass("flex-wrap")
+  })
+
+  it("puts Volver a Conidolly outside the track, as the quiet action", () => {
+    vi.stubEnv("CONIDOLLY_URL", "https://conidolly.example")
+    render(<NavegacionPrincipal actual="materiales" rol="coni" />)
+
+    const volver = screen.getByRole("link", { name: "Volver a Conidolly" })
+    expect(screen.getByRole("navigation", { name: "Secciones" })).not.toContainElement(volver)
+    expect(volver).toHaveClass("underline", "min-h-objetivo", "text-tinta")
+  })
 })
