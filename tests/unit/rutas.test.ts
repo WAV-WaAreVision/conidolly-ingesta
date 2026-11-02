@@ -12,4 +12,11 @@ describe("decidirRuta", () => {
     expect(decidirRuta({ ruta: "/ingreso", haySesion: true })).toBe("a_inicio")
     expect(decidirRuta({ ruta: "/subir", haySesion: true })).toBe("seguir")
   })
+
+  it("lets the bridge from Conidolly through with or without a session, so it can swap the session", () => {
+    expect(decidirRuta({ ruta: "/ingreso/puente", haySesion: false })).toBe("seguir")
+    expect(decidirRuta({ ruta: "/ingreso/puente", haySesion: true })).toBe("seguir")
+    // Only the bridge: the rest of /ingreso still sends someone with a session to Inicio.
+    expect(decidirRuta({ ruta: "/ingreso/otra", haySesion: true })).toBe("a_inicio")
+  })
 })
