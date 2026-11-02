@@ -29,10 +29,13 @@ function contraste(a: string, b: string): number {
 const NOMBRES_VIEJOS =
   /(?<![\w-])(?:[\w-]+:)*(?:(?:bg|text|border(?:-[lrtbxy])?|outline|accent|fill|stroke|ring|decoration|divide)-(?:fondo|superficie|hundido|linea|acento(?:-profundo|-suave|-claro)?|sobre-acento|(?:ok|aviso|error)-(?:tinta|fondo))|text-(?:display|title|label|body|nav|script)|rounded-(?:sm|md|lg|xl)|font-serif|ease-fuerte|shadow-flotante)(?![\w-])/
 
-function archivosDeLaApp(): string[] {
+/** A hex colour of 3, 4, 6 or 8 digits, or a colour function. */
+const COLOR_LITERAL = /#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\b|\b(?:rgba?|hsla?|oklch)\(/i
+
+function archivosDeLaApp(extensiones = /\.tsx?$/): string[] {
   return ["app", "components", "lib"].flatMap((carpeta) =>
     readdirSync(join(RAIZ, carpeta), { recursive: true, encoding: "utf-8" })
-      .filter((ruta) => /\.tsx?$/.test(ruta) && !ruta.endsWith("database.types.ts"))
+      .filter((ruta) => extensiones.test(ruta) && !ruta.endsWith("database.types.ts"))
       .map((ruta) => join(carpeta, ruta)),
   )
 }
@@ -68,10 +71,17 @@ describe("Conidolly's tokens in Ingesta", () => {
   })
 
   it("keep literal colours in globals.css and the OS colour of lib/diseno/marca.ts only", () => {
-    const conHex = archivosDeLaApp().filter(
-      (ruta) =>
-        ruta !== join("lib", "diseno", "marca.ts") && /#[0-9a-fA-F]{6}\b/.test(readFileSync(join(RAIZ, ruta), "utf-8")),
+    const permitidos = new Set([join("app", "globals.css"), join("lib", "diseno", "marca.ts")])
+    const conColor = archivosDeLaApp(/\.(?:tsx?|css)$/).filter(
+      (ruta) => !permitidos.has(ruta) && COLOR_LITERAL.test(readFileSync(join(RAIZ, ruta), "utf-8")),
     )
-    expect(conHex).toEqual([])
+    expect(conColor).toEqual([])
   })
+
+  it.each(["#fff", "#ffff", "#ebebea", "#ebebeaff", "rgb(0 0 0)", "rgba(0,0,0,.5)", "hsl(0 0% 0%)", "oklch(0.5 0 0)"])(
+    "recognise %s as a literal colour",
+    (literal) => {
+      expect(COLOR_LITERAL.test(`className="[color:${literal}]"`)).toBe(true)
+    },
+  )
 })
