@@ -9,7 +9,7 @@ import { BotonReintentar } from "./materiales/boton-reintentar"
 export function TarjetaDeMaterial({ material }: { material: MaterialDeLista }) {
   const estado = estadoVisible(material)
   return (
-    <li className="grid gap-1.5 rounded-panel border border-hilo bg-piedra-alta p-4">
+    <li className="grid gap-1.5 rounded-panel bg-piedra p-4 shadow-relieve">
       <Link href={`/materiales/${material.id}`} className="grid gap-1.5">
         <span className="font-semibold text-balance">{material.titulo ?? "Sin título"}</span>
         <span className="text-meta text-apagado">

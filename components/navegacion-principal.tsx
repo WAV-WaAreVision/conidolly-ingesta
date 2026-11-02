@@ -18,16 +18,16 @@ export function NavegacionPrincipal({ actual, rol }: { actual: Seccion; rol: Rol
   // Coni comes from Conidolly's Biblioteca tab (change 29a) and goes back the same way. WAV never enters Conidolly (A6).
   const conidolly = rol === "coni" ? process.env.CONIDOLLY_URL : undefined
   return (
-    <nav aria-label="Secciones" className="flex flex-wrap gap-1.5">
+    <nav aria-label="Secciones" className="flex flex-wrap gap-1 rounded-panel bg-piedra-honda p-1 shadow-hundido">
       {visibles.map((seccion) => (
         <Link
           key={seccion.clave}
           href={seccion.ruta}
           aria-current={seccion.clave === actual ? "page" : undefined}
           className={cn(
-            "flex min-h-11 min-w-0 flex-auto items-center justify-center rounded-bloque border border-hilo px-1 text-meta font-semibold",
-            "focus-visible:outline-3 focus-visible:outline-tinta",
-            seccion.clave === actual ? "border-tinta bg-piedra-honda text-tinta" : "bg-piedra-alta text-tinta",
+            "flex min-h-objetivo min-w-0 flex-auto items-center justify-center rounded-control px-3 text-meta",
+            "transition-shadow duration-[var(--dur-corta)] ease-salida",
+            seccion.clave === actual ? "bg-piedra font-semibold text-tinta shadow-relieve" : "font-medium text-apagado",
           )}
         >
           {seccion.texto}
@@ -36,7 +36,7 @@ export function NavegacionPrincipal({ actual, rol }: { actual: Seccion; rol: Rol
       {conidolly ? (
         <a
           href={conidolly}
-          className="flex min-h-11 min-w-0 flex-auto items-center justify-center px-1 text-meta font-semibold text-tinta underline underline-offset-4"
+          className="flex min-h-objetivo min-w-0 flex-auto items-center justify-center rounded-control px-3 text-meta font-medium text-tinta underline decoration-1 underline-offset-4"
         >
           Volver a Conidolly
         </a>

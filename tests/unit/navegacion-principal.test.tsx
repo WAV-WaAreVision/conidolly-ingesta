@@ -50,4 +50,19 @@ describe("NavegacionPrincipal", () => {
 
     expect(screen.queryByRole("link", { name: "Volver a Conidolly" })).toBeNull()
   })
+
+  it("is Conidolly's segmented control: a sunken track and the current section raised", () => {
+    render(<NavegacionPrincipal actual="temas" rol="coni" />)
+
+    expect(screen.getByRole("navigation", { name: "Secciones" })).toHaveClass("bg-piedra-honda", "shadow-hundido")
+    expect(screen.getByRole("link", { name: "Temas" })).toHaveClass(
+      "bg-piedra",
+      "shadow-relieve",
+      "font-semibold",
+      "min-h-objetivo",
+      "rounded-control",
+    )
+    expect(screen.getByRole("link", { name: "Autores" })).toHaveClass("text-apagado")
+    expect(screen.getByRole("link", { name: "Autores" }).className).not.toMatch(/shadow-relieve/)
+  })
 })
