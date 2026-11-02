@@ -20,6 +20,16 @@ function irA(ruta: string): NextResponse {
   return new NextResponse(null, { status: 303, headers: { location: ruta, ...CABECERAS } })
 }
 
+// The form carries one 56-character token: anything bigger or of another kind is not Conidolly's bridge form.
+const TAMANO_MAXIMO_DEL_CUERPO = 2048
+const TIPOS_DE_FORMULARIO = ["application/x-www-form-urlencoded", "multipart/form-data"]
+
+function esFormularioDelPuente(request: NextRequest): boolean {
+  const tamano = Number(request.headers.get("content-length") ?? 0)
+  const tipo = (request.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase()
+  return Number.isFinite(tamano) && tamano <= TAMANO_MAXIMO_DEL_CUERPO && TIPOS_DE_FORMULARIO.includes(tipo)
+}
+
 type GalletaNueva = { name: string; value: string; options: CookieOptions }
 
 /** The other end of Conidolly's Biblioteca tab (change 29a): the form there posts Coni's one-time token here. */
@@ -42,6 +52,8 @@ export async function POST(request: NextRequest) {
       },
     },
   )
+
+  if (!esFormularioDelPuente(request)) return conSesionNueva(irA(DESTINO_DEL_PUENTE_VENCIDO), urlDeSupabase, nuevas)
 
   let formulario: FormData
   try {

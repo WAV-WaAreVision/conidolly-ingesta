@@ -93,6 +93,59 @@ describe("POST /ingreso/puente", () => {
   })
 })
 
+describe("the body POST /ingreso/puente accepts", () => {
+  async function esperarVencidoSinLeer(pedido: NextRequest) {
+    const { POST } = await import("@/app/ingreso/puente/route")
+
+    const respuesta = await POST(pedido)
+
+    expect(respuesta.headers.get("location")).toBe("/ingreso?puente=vencido")
+    expect(pedido.bodyUsed).toBe(false)
+    expect(auth.signOut).not.toHaveBeenCalled()
+    expect(auth.verifyOtp).not.toHaveBeenCalled()
+  }
+
+  it("refuses a body above 2 KB without reading it", async () => {
+    await esperarVencidoSinLeer(
+      new NextRequest(URL_DEL_PUENTE, {
+        method: "POST",
+        headers: {
+          origin: ORIGEN_DE_CONIDOLLY,
+          "content-type": "application/x-www-form-urlencoded",
+          "content-length": "2049",
+        },
+        body: new URLSearchParams({ token_hash: TOKEN }),
+      }),
+    )
+  })
+
+  it.each([
+    ["JSON", "application/json"],
+    ["plain text", "text/plain"],
+  ])("refuses %s without reading it", async (_caso, tipo) => {
+    await esperarVencidoSinLeer(
+      new NextRequest(URL_DEL_PUENTE, {
+        method: "POST",
+        headers: { origin: ORIGEN_DE_CONIDOLLY, "content-type": tipo },
+        body: `token_hash=${TOKEN}`,
+      }),
+    )
+  })
+
+  it("takes a multipart form as well as an urlencoded one", async () => {
+    const formulario = new FormData()
+    formulario.set("token_hash", TOKEN)
+    const { POST } = await import("@/app/ingreso/puente/route")
+
+    const respuesta = await POST(
+      new NextRequest(URL_DEL_PUENTE, { method: "POST", headers: { origin: ORIGEN_DE_CONIDOLLY }, body: formulario }),
+    )
+
+    expect(respuesta.headers.get("location")).toBe("/")
+    expect(auth.verifyOtp).toHaveBeenCalledWith({ token_hash: TOKEN, type: "email" })
+  })
+})
+
 describe("the Origin check of POST /ingreso/puente", () => {
   async function esperarRechazo(pedido: NextRequest) {
     const { POST } = await import("@/app/ingreso/puente/route")
