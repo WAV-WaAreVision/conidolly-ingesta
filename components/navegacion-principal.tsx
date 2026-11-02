@@ -15,6 +15,8 @@ export type Seccion = (typeof SECCIONES)[number]["clave"]
 
 export function NavegacionPrincipal({ actual, rol }: { actual: Seccion; rol: Rol }) {
   const visibles = SECCIONES.filter((seccion) => !seccion.soloWav || rol === "wav")
+  // Coni comes from Conidolly's Biblioteca tab (change 29a) and goes back the same way. WAV never enters Conidolly (A6).
+  const conidolly = rol === "coni" ? process.env.CONIDOLLY_URL : undefined
   return (
     <nav aria-label="Secciones" className="flex flex-wrap gap-1.5">
       {visibles.map((seccion) => (
@@ -33,6 +35,14 @@ export function NavegacionPrincipal({ actual, rol }: { actual: Seccion; rol: Rol
           {seccion.texto}
         </Link>
       ))}
+      {conidolly ? (
+        <a
+          href={conidolly}
+          className="flex min-h-11 min-w-0 flex-auto items-center justify-center px-1 text-nav font-semibold text-acento underline underline-offset-4"
+        >
+          Volver a Conidolly
+        </a>
+      ) : null}
     </nav>
   )
 }
