@@ -17,7 +17,7 @@ function EnlacesDeTemas({ temas }: { temas: TemaDeTeoria[] }) {
         <li key={tema.id}>
           <Link
             href={`/temas/${tema.id}`}
-            className="inline-flex min-h-11 items-center rounded-casilla bg-piedra-honda px-3 text-meta font-semibold text-tinta focus-visible:outline-3 focus-visible:outline-tinta"
+            className="inline-flex min-h-objetivo items-center rounded-control bg-piedra px-4 text-meta font-semibold text-tinta shadow-relieve transition-shadow duration-[var(--dur-corta)] ease-salida active:shadow-hundido focus-visible:outline-3 focus-visible:outline-tinta"
           >
             {tema.nombre}
           </Link>

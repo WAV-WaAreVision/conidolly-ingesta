@@ -123,4 +123,25 @@ describe("VistaDeSemana", () => {
 
     expect(screen.getByText("Esta corrida no escribió teorías.")).toBeInTheDocument()
   })
+
+  it("raises the linked topic chips like Conidolly's touchables and leaves the data labels flat", () => {
+    render(<VistaDeSemana semana={base} />)
+
+    const teoria = screen.getByRole("listitem", { name: "El apego explica el deseo" })
+    const enlace = within(teoria).getByRole("link", { name: "Apego" })
+    for (const clase of [
+      "rounded-control",
+      "bg-piedra",
+      "shadow-relieve",
+      "active:shadow-hundido",
+      "focus-visible:outline-tinta",
+    ]) {
+      expect(enlace).toHaveClass(clase)
+    }
+    expect(enlace).not.toHaveClass("bg-piedra-honda")
+
+    const dato = within(teoria).getByText("Puntaje 0,82")
+    expect(dato).toHaveClass("bg-piedra-honda")
+    expect(dato.className).not.toMatch(/shadow-/)
+  })
 })

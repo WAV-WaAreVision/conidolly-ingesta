@@ -47,4 +47,13 @@ describe("TarjetaDeTema", () => {
     expect(screen.queryByText("Coni ya lo trató")).toBeNull()
     expect(screen.queryByText("Un solo autor")).toBeNull()
   })
+
+  it("keeps its badges as flat labels, so they never read as something to touch", () => {
+    render(<TarjetaDeTema tema={{ ...TEMA, cubiertoPorConi: true }} />)
+
+    const insignia = screen.getByText("Coni ya lo trató")
+    expect(insignia.closest("a")).toBeNull()
+    expect(insignia).toHaveClass("bg-piedra-honda")
+    expect(insignia.className).not.toMatch(/shadow-/)
+  })
 })
