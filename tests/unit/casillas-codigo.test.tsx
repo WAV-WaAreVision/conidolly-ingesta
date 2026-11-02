@@ -110,4 +110,13 @@ describe("CasillasCodigo", () => {
 
     for (const casilla of casillas()) expect(casilla).toHaveAttribute("aria-invalid", "true")
   })
+
+  it("sinks each box like Conidolly's code boxes and marks a wrong code on every box", () => {
+    render(<CasillasCodigo alCompletar={() => undefined} invalido />)
+
+    for (const casilla of casillas()) {
+      expect(casilla).toHaveClass("campo", "rounded-bloque", "text-pieza", "tabular-nums")
+      expect(casilla).toHaveAttribute("aria-invalid", "true")
+    }
+  })
 })

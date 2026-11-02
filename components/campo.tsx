@@ -1,8 +1,7 @@
 import type { ReactNode } from "react"
 
-/** Classes of the text fields: 52 px tall for a thumb, tokens only. */
-export const CLASES_DE_CAMPO =
-  "min-h-13 w-full rounded-bloque border border-hilo bg-piedra-alta px-3.5 py-3 text-cuerpo text-tinta placeholder:text-apagado focus:border-tinta"
+/** Classes of the text fields: Conidolly's sunken `.campo` (app/globals.css), 3.25rem tall for a thumb. */
+export const CLASES_DE_CAMPO = "campo w-full text-cuerpo"
 
 interface PropiedadesDeCampo {
   id: string
