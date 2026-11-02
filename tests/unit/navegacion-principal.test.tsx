@@ -27,14 +27,21 @@ describe("NavegacionPrincipal", () => {
     expect(screen.getByRole("link", { name: "Datos" })).toHaveAttribute("aria-current", "page")
   })
 
-  it("takes Coni back to Conidolly, the app she came from", () => {
-    vi.stubEnv("CONIDOLLY_URL", "https://conidolly.example")
+  it("takes Coni back to Conidolly, the app she came from, at its origin", () => {
+    vi.stubEnv("CONIDOLLY_URL", "https://conidolly.example/inicio?desde=ingesta")
     render(<NavegacionPrincipal actual="materiales" rol="coni" />)
 
     expect(screen.getByRole("link", { name: "Volver a Conidolly" })).toHaveAttribute(
       "href",
       "https://conidolly.example",
     )
+  })
+
+  it("hides the link when CONIDOLLY_URL is not a full URL", () => {
+    vi.stubEnv("CONIDOLLY_URL", "conidolly.vercel.app")
+    render(<NavegacionPrincipal actual="materiales" rol="coni" />)
+
+    expect(screen.queryByRole("link", { name: "Volver a Conidolly" })).toBeNull()
   })
 
   it("never offers Conidolly to WAV, which does not enter it", () => {

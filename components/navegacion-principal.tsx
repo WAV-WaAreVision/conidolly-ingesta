@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { Rol } from "@/lib/acciones/ingreso"
+import { origenDeConidolly } from "@/lib/sesion/puente"
 import { cn } from "@/lib/utils"
 
 const SECCIONES = [
@@ -16,7 +17,7 @@ export type Seccion = (typeof SECCIONES)[number]["clave"]
 export function NavegacionPrincipal({ actual, rol }: { actual: Seccion; rol: Rol }) {
   const visibles = SECCIONES.filter((seccion) => !seccion.soloWav || rol === "wav")
   // Coni comes from Conidolly's Biblioteca tab (change 29a) and goes back the same way. WAV never enters Conidolly (A6).
-  const conidolly = rol === "coni" ? process.env.CONIDOLLY_URL : undefined
+  const conidolly = rol === "coni" ? origenDeConidolly(process.env.CONIDOLLY_URL, process.env.NODE_ENV) : null
   return (
     <nav aria-label="Secciones" className="flex flex-wrap gap-1 rounded-panel bg-piedra-honda p-1 shadow-hundido">
       {visibles.map((seccion) => (
