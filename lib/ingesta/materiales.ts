@@ -42,6 +42,7 @@ export async function listarMateriales(db: Db, filtros: FiltrosDeMateriales): Pr
   let consulta = db
     .from("materiales")
     .select(COLUMNAS_DE_LISTA)
+    .is("borrar_desde", null)
     .order("creado_en", { ascending: false })
     .limit(MAXIMO_DE_MATERIALES)
   if (filtros.autor) consulta = consulta.eq("autor_id", filtros.autor)
@@ -67,6 +68,7 @@ export async function leerMaterialConFicha(
     .from("materiales")
     .select(`${COLUMNAS_DE_LISTA}, idioma_original, origen_url, fichas ( resumen, ideas_clave, citas, fuente )`)
     .eq("id", id)
+    .is("borrar_desde", null)
     .maybeSingle()
   if (error) throw new Error(`No pude leer el material ${id}: ${error.message}`, { cause: error })
   if (!data) return null
@@ -124,14 +126,15 @@ export async function leerMapaDelMaterial(db: Db, materialId: string): Promise<M
   for (let desde = 0; ; desde += FILAS_POR_PAGINA) {
     const { data, error } = await db
       .from("afirmaciones")
-      .select("tema_id, tipo, evidencia, temas ( nombre )")
+      .select("tema_id, tipo, evidencia, temas ( nombre ), materiales!inner ( borrar_desde )")
       .eq("material_id", materialId)
+      .is("materiales.borrar_desde", null)
       .eq("excluida", false)
       .order("id")
       .range(desde, desde + FILAS_POR_PAGINA - 1)
     if (error)
       throw new Error(`No pude leer las afirmaciones del material ${materialId}: ${error.message}`, { cause: error })
-    filas.push(...data)
+    filas.push(...data.map(({ tema_id, tipo, evidencia, temas }) => ({ tema_id, tipo, evidencia, temas })))
     if (data.length < FILAS_POR_PAGINA) return armarMapa(filas)
   }
 }

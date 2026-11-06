@@ -29,7 +29,7 @@ const ubicacionLeida = (valor: unknown): Ubicacion | null => {
 
 /** The authors in alphabetical order. Row level security shows nothing to someone who is not Coni or WAV. */
 export async function listarAutores(db: Db): Promise<AutorDeLista[]> {
-  const { data, error } = await db.from("autores").select(COLUMNAS)
+  const { data, error } = await db.from("autores").select(COLUMNAS).is("borrar_desde", null)
   if (error) throw new Error(`No pude leer los autores: ${error.message}`, { cause: error })
   return data.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"))
 }
@@ -83,12 +83,13 @@ export async function resumirAutores(db: Db): Promise<AutorResumido[]> {
   const [autores, materiales, afirmaciones] = await Promise.all([
     listarAutores(db),
     leerTodas("los materiales de los autores", (desde, hasta) =>
-      db.from("materiales").select("autor_id").order("id").range(desde, hasta),
+      db.from("materiales").select("autor_id").is("borrar_desde", null).order("id").range(desde, hasta),
     ),
     leerTodas("las afirmaciones de los autores", (desde, hasta) =>
       db
         .from("afirmaciones")
-        .select("autor_id, tema_id, temas ( nombre )")
+        .select("autor_id, tema_id, temas ( nombre ), materiales!inner ( borrar_desde )")
+        .is("materiales.borrar_desde", null)
         .eq("excluida", false)
         .order("id")
         .range(desde, hasta),
@@ -144,7 +145,12 @@ export interface AutorLeido {
 
 /** One author with its claims grouped by topic; null when it does not exist or is not hers to see. */
 export async function leerAutor(db: Db, id: string): Promise<AutorLeido | null> {
-  const { data: autor, error } = await db.from("autores").select(COLUMNAS).eq("id", id).maybeSingle()
+  const { data: autor, error } = await db
+    .from("autores")
+    .select(COLUMNAS)
+    .eq("id", id)
+    .is("borrar_desde", null)
+    .maybeSingle()
   if (error) throw new Error(`No pude leer el autor ${id}: ${error.message}`, { cause: error })
   if (!autor) return null
 
@@ -152,21 +158,25 @@ export async function leerAutor(db: Db, id: string): Promise<AutorLeido | null> 
     .from("materiales")
     .select("id", { count: "exact", head: true })
     .eq("autor_id", id)
+    .is("borrar_desde", null)
   if (errorDeConteo)
     throw new Error(`No pude contar los materiales del autor ${id}: ${errorDeConteo.message}`, { cause: errorDeConteo })
 
   const filas = await leerTodas(`las afirmaciones del autor ${id}`, (desde, hasta) =>
     db
       .from("afirmaciones")
-      .select("id, texto, cita, ubicacion, tipo, evidencia, excluida, tema_id, temas ( nombre )")
+      .select(
+        "id, texto, cita, ubicacion, tipo, evidencia, excluida, tema_id, temas ( nombre ), materiales!inner ( borrar_desde )",
+      )
       .eq("autor_id", id)
+      .is("materiales.borrar_desde", null)
       .order("creada_en")
       .order("id")
       .range(desde, hasta),
   )
   const grupos = new Map<string | null, AutorLeido["grupos"][number]>()
   const ocultas: AfirmacionDeAutor[] = []
-  for (const { excluida, tema_id, temas, ubicacion, ...resto } of filas) {
+  for (const { excluida, tema_id, temas, ubicacion, materiales: _material, ...resto } of filas) {
     const afirmacion = { ...resto, ubicacion: ubicacionLeida(ubicacion) }
     if (excluida) {
       ocultas.push(afirmacion)
