@@ -157,6 +157,7 @@ export async function confirmarMaterial(deps: DepsSubir, entrada: unknown): Prom
     .select("id, estado, archivo_clave")
     .eq("id", materialId)
     .eq("subido_por", userId)
+    .is("borrar_desde", null)
     .maybeSingle()
   if (error) {
     console.error(`No pude leer el material ${materialId}`, error)

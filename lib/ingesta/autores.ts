@@ -61,10 +61,23 @@ export async function crearAutor(
     console.error("No pude crear el autor", error)
     return { ok: false, error: ERROR_GENERICO }
   }
-  const { data: autor, error: errorDeLectura } = await deps.db.from("autores").select(COLUMNAS).eq("id", id).single()
+  const { data: leido, error: errorDeLectura } = await deps.db
+    .from("autores")
+    .select(`${COLUMNAS}, borrar_desde`)
+    .eq("id", id)
+    .single()
   if (errorDeLectura) {
     console.error("No pude leer el autor que creé", errorDeLectura)
     return { ok: false, error: ERROR_GENERICO }
+  }
+  const { borrar_desde, ...autor } = leido
+  // `crear_autor` answers an author deleted from Conidolly a moment ago: typing its name is wanting it back.
+  if (borrar_desde !== null) {
+    const { error: errorAlRecuperar } = await deps.db.rpc("marcar_autor_para_borrar", { p_id: id, p_borrar: false })
+    if (errorAlRecuperar) {
+      console.error(`No pude recuperar el autor ${id}`, errorAlRecuperar)
+      return { ok: false, error: ERROR_GENERICO }
+    }
   }
   return { ok: true, autor }
 }

@@ -157,6 +157,7 @@ export async function editarMaterial(deps: DepsSubir, entrada: unknown): Promise
     .from("materiales")
     .update({ autor_id: autorId, rol })
     .eq("id", materialId)
+    .is("borrar_desde", null)
     .select("id")
   if (error) {
     if (error.code === CLAVE_FORANEA) return { ok: false, error: "Ese autor ya no existe. Elígelo de nuevo." }

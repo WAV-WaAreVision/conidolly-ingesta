@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
-import { leerAutor, listarAutores, resumirAutores } from "@/lib/ingesta/autores"
-import { leerMapaDelMaterial, leerMaterialConFicha, listarMateriales } from "@/lib/ingesta/materiales"
+import { almacenEnMemoria } from "@/lib/almacen/almacen"
+import { crearAutor, leerAutor, listarAutores, resumirAutores } from "@/lib/ingesta/autores"
+import { editarMaterial, leerMapaDelMaterial, leerMaterialConFicha, listarMateriales } from "@/lib/ingesta/materiales"
+import { confirmarMaterial, type DepsSubir } from "@/lib/ingesta/subir"
 import { leerTema, listarTemas } from "@/lib/ingesta/temas"
 import type { Database } from "@/lib/supabase/database.types"
 import { clienteDeConi, clienteDeServicio } from "./sesion"
@@ -135,5 +137,35 @@ describe("Ingesta hides what Conidolly marked for deletion", () => {
     expect((await listarTemas(coni, {})).find((t) => t.id === tema)).toMatchObject({ afirmaciones: 1, autores: 1 })
     const leido = await leerTema(coni, tema)
     expect(leido?.autores.flatMap((grupo) => grupo.afirmaciones)).toHaveLength(1)
+  })
+})
+
+const deps = (db: Db): DepsSubir => ({
+  db,
+  almacen: almacenEnMemoria(),
+  disparar: async () => {},
+  ahora: () => new Date("2026-11-06T12:00:00.000Z"),
+  nuevoId: randomUUID,
+})
+
+describe("Ingesta's actions on a marked row", () => {
+  it("editarMaterial and confirmarMaterial answer not found", async () => {
+    expect(await editarMaterial(deps(coni), { materialId: marcado, autorId: autora, rol: "evidencia" })).toEqual({
+      ok: false,
+      error: "No encontré ese material.",
+    })
+    expect(await confirmarMaterial(deps(coni), { materialId: marcado })).toEqual({
+      ok: false,
+      error: "No encontré ese material.",
+    })
+  })
+
+  it("crearAutor with a marked author's name brings it back", async () => {
+    const { nombre } = (await falla(servicio.from("autores").select("nombre").eq("id", marcada)))[0] ?? { nombre: "" }
+    const resultado = await crearAutor(deps(coni), { nombre, tipo: "persona" })
+    expect(resultado).toMatchObject({ ok: true, autor: { id: marcada } })
+    const [fila] = await falla(servicio.from("autores").select("borrar_desde").eq("id", marcada))
+    expect(fila?.borrar_desde).toBeNull()
+    await marcar("autores", marcada, new Date().toISOString())
   })
 })
