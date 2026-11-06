@@ -82,10 +82,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "afirmaciones_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "autores_visibles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "afirmaciones_material_id_fkey"
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "afirmaciones_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiales_visibles"
             referencedColumns: ["id"]
           },
           {
@@ -112,10 +126,12 @@ export type Database = {
           destinos_por_defecto: string[]
           dias_publicacion: number[]
           enlaces: Json
+          fusiones_nocturnas_activas: boolean
           hora_publicacion: string
           id: boolean
           ideas_por_semana: number
           inventario_desde: string
+          limite_duro_usd: number | null
           linkedin_conectado_en: string | null
           linkedin_miembro: string | null
           linkedin_nombre: string | null
@@ -124,9 +140,11 @@ export type Database = {
           meta: string
           meta_cuenta_id: string | null
           meta_token_expira_en: string | null
+          motor_semanal_activo: boolean
           produccion: Json
           revision_de_inventario_avisada: string | null
           tope_mensual_usd: number
+          ultima_red: string | null
           zona: string
         }
         Insert: {
@@ -136,10 +154,12 @@ export type Database = {
           destinos_por_defecto?: string[]
           dias_publicacion?: number[]
           enlaces?: Json
+          fusiones_nocturnas_activas?: boolean
           hora_publicacion?: string
           id?: boolean
           ideas_por_semana?: number
           inventario_desde?: string
+          limite_duro_usd?: number | null
           linkedin_conectado_en?: string | null
           linkedin_miembro?: string | null
           linkedin_nombre?: string | null
@@ -148,9 +168,11 @@ export type Database = {
           meta?: string
           meta_cuenta_id?: string | null
           meta_token_expira_en?: string | null
+          motor_semanal_activo?: boolean
           produccion?: Json
           revision_de_inventario_avisada?: string | null
           tope_mensual_usd?: number
+          ultima_red?: string | null
           zona?: string
         }
         Update: {
@@ -160,10 +182,12 @@ export type Database = {
           destinos_por_defecto?: string[]
           dias_publicacion?: number[]
           enlaces?: Json
+          fusiones_nocturnas_activas?: boolean
           hora_publicacion?: string
           id?: boolean
           ideas_por_semana?: number
           inventario_desde?: string
+          limite_duro_usd?: number | null
           linkedin_conectado_en?: string | null
           linkedin_miembro?: string | null
           linkedin_nombre?: string | null
@@ -172,9 +196,11 @@ export type Database = {
           meta?: string
           meta_cuenta_id?: string | null
           meta_token_expira_en?: string | null
+          motor_semanal_activo?: boolean
           produccion?: Json
           revision_de_inventario_avisada?: string | null
           tope_mensual_usd?: number
+          ultima_red?: string | null
           zona?: string
         }
         Relationships: []
@@ -182,6 +208,7 @@ export type Database = {
       autores: {
         Row: {
           alias: string[]
+          borrar_desde: string | null
           creado_en: string
           creado_por: string | null
           credencial: string | null
@@ -192,6 +219,7 @@ export type Database = {
         }
         Insert: {
           alias?: string[]
+          borrar_desde?: string | null
           creado_en?: string
           creado_por?: string | null
           credencial?: string | null
@@ -202,6 +230,7 @@ export type Database = {
         }
         Update: {
           alias?: string[]
+          borrar_desde?: string | null
           creado_en?: string
           creado_por?: string | null
           credencial?: string | null
@@ -254,7 +283,107 @@ export type Database = {
             referencedRelation: "piezas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "avisos_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
+          },
         ]
+      }
+      borradores_de_pilar: {
+        Row: {
+          creado_en: string
+          creado_por: string | null
+          decidido_en: string | null
+          descripcion: string
+          estado: string
+          id: string
+          nombre: string
+          nombre_corto: string
+          peso: number
+          pilar_id: string | null
+          red: string
+        }
+        Insert: {
+          creado_en?: string
+          creado_por?: string | null
+          decidido_en?: string | null
+          descripcion: string
+          estado?: string
+          id?: string
+          nombre: string
+          nombre_corto: string
+          peso: number
+          pilar_id?: string | null
+          red: string
+        }
+        Update: {
+          creado_en?: string
+          creado_por?: string | null
+          decidido_en?: string | null
+          descripcion?: string
+          estado?: string
+          id?: string
+          nombre?: string
+          nombre_corto?: string
+          peso?: number
+          pilar_id?: string | null
+          red?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borradores_de_pilar_pilar_id_fkey"
+            columns: ["pilar_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "borradores_de_pilar_pilar_id_fkey"
+            columns: ["pilar_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pilar_id"]
+          },
+        ]
+      }
+      borradores_de_red: {
+        Row: {
+          conexion: string
+          creado_en: string
+          creado_por: string | null
+          decidido_en: string | null
+          estado: string
+          id: string
+          manual: string
+          nombre: string
+          receta: string
+        }
+        Insert: {
+          conexion?: string
+          creado_en?: string
+          creado_por?: string | null
+          decidido_en?: string | null
+          estado?: string
+          id?: string
+          manual?: string
+          nombre: string
+          receta?: string
+        }
+        Update: {
+          conexion?: string
+          creado_en?: string
+          creado_por?: string | null
+          decidido_en?: string | null
+          estado?: string
+          id?: string
+          manual?: string
+          nombre?: string
+          receta?: string
+        }
+        Relationships: []
       }
       carruseles: {
         Row: {
@@ -316,6 +445,13 @@ export type Database = {
             referencedRelation: "piezas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "carruseles_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
+          },
         ]
       }
       categorias: {
@@ -324,12 +460,14 @@ export type Database = {
           creada_en: string
           creada_por: string | null
           descripcion: string | null
+          es_capa: boolean
           es_pilar: boolean
           id: string
           nombre: string
           nombre_corto: string | null
           nombre_normalizado: string | null
           orden: number | null
+          red: string | null
           slug: string
         }
         Insert: {
@@ -337,12 +475,14 @@ export type Database = {
           creada_en?: string
           creada_por?: string | null
           descripcion?: string | null
+          es_capa?: boolean
           es_pilar?: boolean
           id?: string
           nombre: string
           nombre_corto?: string | null
           nombre_normalizado?: string | null
           orden?: number | null
+          red?: string | null
           slug: string
         }
         Update: {
@@ -350,12 +490,14 @@ export type Database = {
           creada_en?: string
           creada_por?: string | null
           descripcion?: string | null
+          es_capa?: boolean
           es_pilar?: boolean
           id?: string
           nombre?: string
           nombre_corto?: string | null
           nombre_normalizado?: string | null
           orden?: number | null
+          red?: string | null
           slug?: string
         }
         Relationships: []
@@ -420,6 +562,13 @@ export type Database = {
             referencedRelation: "materiales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "embeddings_ficha_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: true
+            referencedRelation: "materiales_visibles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       eventos: {
@@ -479,6 +628,13 @@ export type Database = {
             referencedRelation: "piezas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fechas_propuestas_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: true
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
+          },
         ]
       }
       fichas: {
@@ -515,6 +671,13 @@ export type Database = {
             columns: ["material_id"]
             isOneToOne: true
             referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fichas_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: true
+            referencedRelation: "materiales_visibles"
             referencedColumns: ["id"]
           },
         ]
@@ -569,6 +732,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "piezas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gastos_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
           },
         ]
       }
@@ -629,11 +799,19 @@ export type Database = {
             referencedRelation: "piezas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "guion_versiones_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
+          },
         ]
       }
       ideas: {
         Row: {
           alertas: Json
+          angulo_id: string | null
           creada_en: string
           descartada_en: string | null
           descartada_por: string | null
@@ -654,6 +832,7 @@ export type Database = {
         }
         Insert: {
           alertas?: Json
+          angulo_id?: string | null
           creada_en?: string
           descartada_en?: string | null
           descartada_por?: string | null
@@ -674,6 +853,7 @@ export type Database = {
         }
         Update: {
           alertas?: Json
+          angulo_id?: string | null
           creada_en?: string
           descartada_en?: string | null
           descartada_por?: string | null
@@ -694,6 +874,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "ideas_angulo_id_fkey"
+            columns: ["angulo_id"]
+            isOneToOne: false
+            referencedRelation: "pilar_angulos"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ideas_pilar_fkey"
             columns: ["pilar"]
             isOneToOne: false
@@ -706,6 +893,46 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "teorias"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      ideas_pilar_antes: {
+        Row: {
+          idea_id: string
+          lote: string
+          pilar: string
+        }
+        Insert: {
+          idea_id: string
+          lote: string
+          pilar: string
+        }
+        Update: {
+          idea_id?: string
+          lote?: string
+          pilar?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ideas_pilar_antes_idea_id_fkey"
+            columns: ["idea_id"]
+            isOneToOne: false
+            referencedRelation: "ideas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ideas_pilar_antes_lote_fkey"
+            columns: ["lote"]
+            isOneToOne: false
+            referencedRelation: "lotes_de_pilares"
+            referencedColumns: ["lote"]
+          },
+          {
+            foreignKeyName: "ideas_pilar_antes_pilar_fkey"
+            columns: ["pilar"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["slug"]
           },
         ]
       }
@@ -744,6 +971,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "piezas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intervenciones_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
           },
         ]
       }
@@ -795,12 +1029,86 @@ export type Database = {
         }
         Relationships: []
       }
+      limites_del_mes: {
+        Row: {
+          fijado_en: string
+          fijado_por: string
+          limite_usd: number
+          mes: string
+        }
+        Insert: {
+          fijado_en?: string
+          fijado_por: string
+          limite_usd: number
+          mes: string
+        }
+        Update: {
+          fijado_en?: string
+          fijado_por?: string
+          limite_usd?: number
+          mes?: string
+        }
+        Relationships: []
+      }
+      lote_pilares_retirados: {
+        Row: {
+          lote: string
+          pilar_id: string
+        }
+        Insert: {
+          lote: string
+          pilar_id: string
+        }
+        Update: {
+          lote?: string
+          pilar_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lote_pilares_retirados_lote_fkey"
+            columns: ["lote"]
+            isOneToOne: false
+            referencedRelation: "lotes_de_pilares"
+            referencedColumns: ["lote"]
+          },
+          {
+            foreignKeyName: "lote_pilares_retirados_pilar_id_fkey"
+            columns: ["pilar_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lote_pilares_retirados_pilar_id_fkey"
+            columns: ["pilar_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pilar_id"]
+          },
+        ]
+      }
+      lotes_de_pilares: {
+        Row: {
+          aplicado_en: string
+          lote: string
+        }
+        Insert: {
+          aplicado_en?: string
+          lote: string
+        }
+        Update: {
+          aplicado_en?: string
+          lote?: string
+        }
+        Relationships: []
+      }
       materiales: {
         Row: {
           anio: number | null
           archivo_clave: string | null
           autor: string | null
           autor_id: string
+          borrar_desde: string | null
           categoria_id: string | null
           corrida_desde: string | null
           corrida_id: string | null
@@ -826,6 +1134,7 @@ export type Database = {
           archivo_clave?: string | null
           autor?: string | null
           autor_id: string
+          borrar_desde?: string | null
           categoria_id?: string | null
           corrida_desde?: string | null
           corrida_id?: string | null
@@ -851,6 +1160,7 @@ export type Database = {
           archivo_clave?: string | null
           autor?: string | null
           autor_id?: string
+          borrar_desde?: string | null
           categoria_id?: string | null
           corrida_desde?: string | null
           corrida_id?: string | null
@@ -880,11 +1190,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "materiales_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "autores_visibles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "materiales_categoria_id_fkey"
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "categorias"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materiales_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pilar_id"]
           },
         ]
       }
@@ -910,6 +1234,13 @@ export type Database = {
             columns: ["material_id"]
             isOneToOne: false
             referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materiales_archivos_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiales_visibles"
             referencedColumns: ["id"]
           },
         ]
@@ -973,6 +1304,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "piezas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metricas_linkedin_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
           },
         ]
       }
@@ -1038,6 +1376,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "piezas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metricas_reel_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
           },
         ]
       }
@@ -1245,6 +1590,82 @@ export type Database = {
           },
         ]
       }
+      pilar_angulos: {
+        Row: {
+          descripcion: string
+          es_capa: boolean
+          id: string
+          minimo: number | null
+          nombre: string
+          orden: number
+          pilar_id: string
+          red: string | null
+          slug: string
+        }
+        Insert: {
+          descripcion: string
+          es_capa?: boolean
+          id?: string
+          minimo?: number | null
+          nombre: string
+          orden: number
+          pilar_id: string
+          red?: string | null
+          slug: string
+        }
+        Update: {
+          descripcion?: string
+          es_capa?: boolean
+          id?: string
+          minimo?: number | null
+          nombre?: string
+          orden?: number
+          pilar_id?: string
+          red?: string | null
+          slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilar_angulos_pilar"
+            columns: ["pilar_id", "red", "es_capa"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id", "red", "es_capa"]
+          },
+        ]
+      }
+      pilar_pesos: {
+        Row: {
+          desde: string
+          es_capa: boolean
+          peso: number
+          pilar_id: string
+          red: string | null
+        }
+        Insert: {
+          desde: string
+          es_capa?: boolean
+          peso: number
+          pilar_id: string
+          red?: string | null
+        }
+        Update: {
+          desde?: string
+          es_capa?: boolean
+          peso?: number
+          pilar_id?: string
+          red?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilar_pesos_pilar"
+            columns: ["pilar_id", "red", "es_capa"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id", "red", "es_capa"]
+          },
+        ]
+      }
       publicaciones: {
         Row: {
           destino: string
@@ -1301,6 +1722,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "piezas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publicaciones_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
           },
         ]
       }
@@ -1394,6 +1822,61 @@ export type Database = {
         }
         Relationships: []
       }
+      tema_pilares: {
+        Row: {
+          creado_en: string
+          es_capa: boolean
+          fuerza: string | null
+          lote: string | null
+          origen: string
+          pilar_id: string
+          red: string
+          tema_id: string
+        }
+        Insert: {
+          creado_en?: string
+          es_capa: boolean
+          fuerza?: string | null
+          lote?: string | null
+          origen: string
+          pilar_id: string
+          red: string
+          tema_id: string
+        }
+        Update: {
+          creado_en?: string
+          es_capa?: boolean
+          fuerza?: string | null
+          lote?: string | null
+          origen?: string
+          pilar_id?: string
+          red?: string
+          tema_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tema_pilares_pilar"
+            columns: ["pilar_id", "red", "es_capa"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id", "red", "es_capa"]
+          },
+          {
+            foreignKeyName: "tema_pilares_tema_id_fkey"
+            columns: ["tema_id"]
+            isOneToOne: false
+            referencedRelation: "temas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tema_pilares_tema_id_fkey"
+            columns: ["tema_id"]
+            isOneToOne: false
+            referencedRelation: "temas_resumen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       temas: {
         Row: {
           actualizado_en: string
@@ -1438,6 +1921,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "categorias"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "temas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pilar_id"]
           },
           {
             foreignKeyName: "temas_fusionado_en_fkey"
@@ -1557,6 +2047,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "teoria_fuentes_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiales_visibles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "teoria_fuentes_teoria_id_fkey"
             columns: ["teoria_id"]
             isOneToOne: false
@@ -1643,6 +2140,13 @@ export type Database = {
             referencedRelation: "categorias"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "teorias_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pilar_id"]
+          },
         ]
       }
       transparencia_versiones: {
@@ -1727,10 +2231,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vinculos_material_a_fkey"
+            columns: ["material_a"]
+            isOneToOne: false
+            referencedRelation: "materiales_visibles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vinculos_material_b_fkey"
             columns: ["material_b"]
             isOneToOne: false
             referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vinculos_material_b_fkey"
+            columns: ["material_b"]
+            isOneToOne: false
+            referencedRelation: "materiales_visibles"
             referencedColumns: ["id"]
           },
         ]
@@ -1755,6 +2273,152 @@ export type Database = {
       }
     }
     Views: {
+      autores_visibles: {
+        Row: {
+          alias: string[] | null
+          borrar_desde: string | null
+          creado_en: string | null
+          creado_por: string | null
+          credencial: string | null
+          id: string | null
+          nombre: string | null
+          nombre_normalizado: string | null
+          tipo: string | null
+        }
+        Insert: {
+          alias?: string[] | null
+          borrar_desde?: string | null
+          creado_en?: string | null
+          creado_por?: string | null
+          credencial?: string | null
+          id?: string | null
+          nombre?: string | null
+          nombre_normalizado?: string | null
+          tipo?: string | null
+        }
+        Update: {
+          alias?: string[] | null
+          borrar_desde?: string | null
+          creado_en?: string | null
+          creado_por?: string | null
+          credencial?: string | null
+          id?: string | null
+          nombre?: string | null
+          nombre_normalizado?: string | null
+          tipo?: string | null
+        }
+        Relationships: []
+      }
+      materiales_visibles: {
+        Row: {
+          anio: number | null
+          archivo_clave: string | null
+          autor: string | null
+          autor_id: string | null
+          borrar_desde: string | null
+          categoria_id: string | null
+          corrida_desde: string | null
+          corrida_id: string | null
+          costo_confirmado_en: string | null
+          costo_estimado_usd: number | null
+          creado_en: string | null
+          declaracion_sin_pacientes_en: string | null
+          estado: string | null
+          etiquetas: string[] | null
+          id: string | null
+          idioma_original: string | null
+          motivo_fallo: string | null
+          origen_url: string | null
+          rol: string | null
+          subido_por: string | null
+          texto_clave: string | null
+          texto_pegado: string | null
+          tipo: string | null
+          titulo: string | null
+        }
+        Insert: {
+          anio?: number | null
+          archivo_clave?: string | null
+          autor?: string | null
+          autor_id?: string | null
+          borrar_desde?: string | null
+          categoria_id?: string | null
+          corrida_desde?: string | null
+          corrida_id?: string | null
+          costo_confirmado_en?: string | null
+          costo_estimado_usd?: number | null
+          creado_en?: string | null
+          declaracion_sin_pacientes_en?: string | null
+          estado?: string | null
+          etiquetas?: string[] | null
+          id?: string | null
+          idioma_original?: string | null
+          motivo_fallo?: string | null
+          origen_url?: string | null
+          rol?: string | null
+          subido_por?: string | null
+          texto_clave?: string | null
+          texto_pegado?: string | null
+          tipo?: string | null
+          titulo?: string | null
+        }
+        Update: {
+          anio?: number | null
+          archivo_clave?: string | null
+          autor?: string | null
+          autor_id?: string | null
+          borrar_desde?: string | null
+          categoria_id?: string | null
+          corrida_desde?: string | null
+          corrida_id?: string | null
+          costo_confirmado_en?: string | null
+          costo_estimado_usd?: number | null
+          creado_en?: string | null
+          declaracion_sin_pacientes_en?: string | null
+          estado?: string | null
+          etiquetas?: string[] | null
+          id?: string | null
+          idioma_original?: string | null
+          motivo_fallo?: string | null
+          origen_url?: string | null
+          rol?: string | null
+          subido_por?: string | null
+          texto_clave?: string | null
+          texto_pegado?: string | null
+          tipo?: string | null
+          titulo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materiales_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "autores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materiales_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "autores_visibles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materiales_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "materiales_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pilar_id"]
+          },
+        ]
+      }
       metricas_linkedin_ultima: {
         Row: {
           comentarios: number | null
@@ -1772,6 +2436,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "piezas"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metricas_linkedin_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
           },
         ]
       }
@@ -1791,6 +2462,30 @@ export type Database = {
             columns: ["pieza_id"]
             isOneToOne: false
             referencedRelation: "piezas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metricas_reel_pieza_id_fkey"
+            columns: ["pieza_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pieza_id"]
+          },
+        ]
+      }
+      piezas_con_angulo: {
+        Row: {
+          angulo_id: string | null
+          pieza_id: string | null
+          pilar_id: string | null
+          publicada_en: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ideas_angulo_id_fkey"
+            columns: ["angulo_id"]
+            isOneToOne: false
+            referencedRelation: "pilar_angulos"
             referencedColumns: ["id"]
           },
         ]
@@ -1818,7 +2513,21 @@ export type Database = {
             referencedRelation: "categorias"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "temas_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "piezas_con_angulo"
+            referencedColumns: ["pilar_id"]
+          },
         ]
+      }
+      temas_tratados: {
+        Row: {
+          red: string | null
+          tema_id: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -1831,9 +2540,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      aplicar_lote_de_pilares: {
+        Args: { p_filas: Json; p_lote: string }
+        Returns: Json
+      }
+      aprobar_borrador_de_pilar: {
+        Args: { p_borrador: string; p_pesos: Json }
+        Returns: string
+      }
       archivar_ideas_de_pilares_retirados: { Args: never; Returns: number }
       archivar_ideas_del_motor: { Args: { p_semanas: number }; Returns: number }
       borrar_autor: { Args: { p_id: string }; Returns: undefined }
+      borrar_lo_marcado: { Args: { p_antes: string }; Returns: string[] }
       cambiar_diseno_de_carrusel: {
         Args: {
           p_diseno: Json
@@ -1864,6 +2582,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      cambiar_pilares_de_tema: {
+        Args: { p_filas: Json; p_tema: string }
+        Returns: undefined
       }
       conectar_instagram: {
         Args: { p_cuenta: string; p_expira_en: string; p_token: string }
@@ -1916,6 +2638,7 @@ export type Database = {
         Returns: undefined
       }
       desconectar_linkedin: { Args: never; Returns: undefined }
+      deshacer_lote_de_pilares: { Args: { p_lote: string }; Returns: Json }
       editar_guion_como_coni: {
         Args: {
           p_guion: string
@@ -2096,10 +2819,26 @@ export type Database = {
       }
       es_coni: { Args: never; Returns: boolean }
       es_mantenedor: { Args: never; Returns: boolean }
+      es_uuid_de_texto: { Args: { p_valor: Json }; Returns: boolean }
       espacios_simples: { Args: { p_texto: string }; Returns: string }
       excluir_afirmacion: {
         Args: { p_excluida: boolean; p_id: string }
         Returns: undefined
+      }
+      fijar_limite_del_mes: {
+        Args: { p_limite: number }
+        Returns: {
+          fijado_en: string
+          fijado_por: string
+          limite_usd: number
+          mes: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "limites_del_mes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       fusionar_autores: {
         Args: { p_destino: string; p_origen: string }
@@ -2391,9 +3130,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      limite_del_mes: { Args: { p_ahora?: string }; Returns: number }
       linkedin_conectado: { Args: never; Returns: boolean }
+      marcar_autor_para_borrar: {
+        Args: { p_borrar: boolean; p_id: string }
+        Returns: undefined
+      }
       marcar_disparo_fallido: { Args: { p_id: string }; Returns: undefined }
       marcar_inventario_revisado: { Args: never; Returns: string }
+      marcar_material_para_borrar: {
+        Args: { p_borrar: boolean; p_id: string }
+        Returns: undefined
+      }
       marcar_subido_como_coni: {
         Args: {
           p_destino: string
@@ -2468,7 +3216,7 @@ export type Database = {
         }[]
       }
       motor_pares: {
-        Args: { p_minimo_autores: number }
+        Args: { p_minimo_autores: number; p_por_pilares_de_red?: boolean }
         Returns: {
           a: string
           autores_comunes: number
@@ -2485,6 +3233,7 @@ export type Database = {
           evidencia_fuerte: number
           nombre: string
           pilar: string
+          pilares: string[]
           tema_id: string
         }[]
       }
@@ -2544,6 +3293,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      pilares_automaticos_de_tema: {
+        Args: { p_filas: Json; p_tema: string }
+        Returns: number
       }
       proponer_fechas: {
         Args: { p_fechas: string[]; p_piezas: string[] }
@@ -2627,6 +3380,7 @@ export type Database = {
           p_ahora?: string
           p_clave: string
           p_estimado: number
+          p_firmado?: boolean
           p_paso: string
           p_pieza: string
           p_proveedor: string
@@ -2683,6 +3437,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      resolver_filas_de_pilares: {
+        Args: { p_filas: Json }
+        Returns: {
+          es_capa: boolean
+          fuerza: string
+          pilar_id: string
+          red: string
+        }[]
+      }
       respaldo_de_idea: {
         Args: { p_idea: string; p_limite: number }
         Returns: Json
@@ -2694,6 +3457,47 @@ export type Database = {
         Returns: {
           similitud: number
           tema_id: string
+        }[]
+      }
+      temas_de_pilar: {
+        Args: { p_pilar: string }
+        Returns: {
+          actualizado_en: string | null
+          afirmaciones: number | null
+          alias: string[] | null
+          autores: number | null
+          categoria_id: string | null
+          creado_en: string | null
+          cubierto_por_coni: boolean | null
+          descripcion: string | null
+          evidencia: Json | null
+          id: string | null
+          nombre: string | null
+          ultima_afirmacion: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "temas_resumen"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      temas_de_red: {
+        Args: { p_pilar?: string; p_red: string }
+        Returns: {
+          actualizado_en: string
+          afirmaciones: number
+          alias: string[]
+          autores: number
+          categoria_id: string
+          creado_en: string
+          cubierto_por_coni: boolean
+          descripcion: string
+          evidencia: Json
+          id: string
+          nombre: string
+          tratado: boolean
+          ultima_afirmacion: string
         }[]
       }
       temas_parecidos: {
