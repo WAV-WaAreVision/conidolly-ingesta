@@ -117,15 +117,16 @@ export async function leerTema(db: Db, id: string): Promise<TemaLeido | null> {
   const filas = await leerTodas(`las afirmaciones del tema ${id}`, (desde, hasta) =>
     db
       .from("afirmaciones")
-      .select(COLUMNAS_DE_AFIRMACION)
+      .select(`${COLUMNAS_DE_AFIRMACION}, materiales!inner ( borrar_desde )`)
       .eq("tema_id", id)
+      .is("materiales.borrar_desde", null)
       .eq("excluida", false)
       .order("creada_en")
       .order("id")
       .range(desde, hasta),
   )
   const grupos = new Map<string, TemaLeido["autores"][number]>()
-  for (const { autores, autor_id, ubicacion, ...resto } of filas) {
+  for (const { autores, autor_id, ubicacion, materiales: _material, ...resto } of filas) {
     const grupo = grupos.get(autor_id) ?? {
       autor: { id: autor_id, nombre: autores?.nombre ?? "", credencial: autores?.credencial ?? null },
       afirmaciones: [],
