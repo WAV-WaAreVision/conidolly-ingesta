@@ -248,6 +248,24 @@ describe("confirmarMaterial", () => {
     expect(disparos).toEqual([creado.materialId])
   })
 
+  it("stamps the queue time on confirmation, so the abandoned-upload sweep leaves a slow upload alone", async () => {
+    const creado = await crearOk(coni, { tipo: "documento", archivos: [{ nombre: "a.pdf", tamano: 4 }] })
+    almacen.simularSubida(creado.subidas[0]?.url ?? "", new Uint8Array([1, 2, 3, 4]))
+    const viejo = "2026-01-01T00:00:00.000Z"
+    const { error } = await servicio.from("materiales").update({ en_cola_desde: viejo }).eq("id", creado.materialId)
+    if (error) throw error
+
+    expect(await confirmarMaterial(deps(coni), { materialId: creado.materialId })).toEqual({ ok: true })
+
+    const { data, error: errorDeLectura } = await servicio
+      .from("materiales")
+      .select("en_cola_desde")
+      .eq("id", creado.materialId)
+      .single()
+    if (errorDeLectura) throw errorDeLectura
+    expect(new Date(data.en_cola_desde).getTime()).toBeGreaterThan(new Date(viejo).getTime())
+  })
+
   it("triggers a link right away: there is no file to wait for", async () => {
     const creado = await crearOk(coni, { tipo: "link", url: "https://example.com/z", archivos: [] })
 
