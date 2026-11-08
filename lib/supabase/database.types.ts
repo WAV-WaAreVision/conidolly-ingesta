@@ -292,6 +292,36 @@ export type Database = {
           },
         ]
       }
+      avisos_a_federico: {
+        Row: {
+          clave: string
+          creado_en: string
+          entidad_id: string
+          enviado_en: string | null
+          id: string
+          reclamado_en: string | null
+          tipo: string
+        }
+        Insert: {
+          clave: string
+          creado_en?: string
+          entidad_id: string
+          enviado_en?: string | null
+          id?: string
+          reclamado_en?: string | null
+          tipo: string
+        }
+        Update: {
+          clave?: string
+          creado_en?: string
+          entidad_id?: string
+          enviado_en?: string | null
+          id?: string
+          reclamado_en?: string | null
+          tipo?: string
+        }
+        Relationships: []
+      }
       borradores_de_pilar: {
         Row: {
           creado_en: string
@@ -1116,6 +1146,7 @@ export type Database = {
           costo_estimado_usd: number | null
           creado_en: string
           declaracion_sin_pacientes_en: string
+          en_cola_desde: string
           estado: string
           etiquetas: string[]
           id: string
@@ -1142,6 +1173,7 @@ export type Database = {
           costo_estimado_usd?: number | null
           creado_en?: string
           declaracion_sin_pacientes_en: string
+          en_cola_desde?: string
           estado?: string
           etiquetas?: string[]
           id?: string
@@ -1168,6 +1200,7 @@ export type Database = {
           costo_estimado_usd?: number | null
           creado_en?: string
           declaracion_sin_pacientes_en?: string
+          en_cola_desde?: string
           estado?: string
           etiquetas?: string[]
           id?: string
@@ -1434,6 +1467,39 @@ export type Database = {
           resumen?: Json
           semana?: string
           terminada_en?: string | null
+        }
+        Relationships: []
+      }
+      pausas_de_proveedor: {
+        Row: {
+          avisada_en: string | null
+          aviso_reclamado_en: string | null
+          cerrada_en: string | null
+          desde: string
+          detalle: string
+          id: string
+          motivo: string
+          proveedor: string
+        }
+        Insert: {
+          avisada_en?: string | null
+          aviso_reclamado_en?: string | null
+          cerrada_en?: string | null
+          desde?: string
+          detalle: string
+          id?: string
+          motivo: string
+          proveedor: string
+        }
+        Update: {
+          avisada_en?: string | null
+          aviso_reclamado_en?: string | null
+          cerrada_en?: string | null
+          desde?: string
+          detalle?: string
+          id?: string
+          motivo?: string
+          proveedor?: string
         }
         Relationships: []
       }
@@ -2531,6 +2597,14 @@ export type Database = {
       }
     }
     Functions: {
+      abrir_pausa_de_proveedor: {
+        Args: { p_detalle: string; p_motivo: string; p_proveedor: string }
+        Returns: {
+          avisar: boolean
+          nueva: boolean
+          pausa_id: string
+        }[]
+      }
       anotar_numeros_linkedin: {
         Args: {
           p_medido_en: string
@@ -2587,6 +2661,7 @@ export type Database = {
         Args: { p_filas: Json; p_tema: string }
         Returns: undefined
       }
+      cerrar_pausa_de_proveedor: { Args: { p_id: string }; Returns: boolean }
       conectar_instagram: {
         Args: { p_cuenta: string; p_expira_en: string; p_token: string }
         Returns: undefined
@@ -3136,12 +3211,17 @@ export type Database = {
         Args: { p_borrar: boolean; p_id: string }
         Returns: undefined
       }
+      marcar_aviso_a_federico_enviado: {
+        Args: { p_clave: string }
+        Returns: undefined
+      }
       marcar_disparo_fallido: { Args: { p_id: string }; Returns: undefined }
       marcar_inventario_revisado: { Args: never; Returns: string }
       marcar_material_para_borrar: {
         Args: { p_borrar: boolean; p_id: string }
         Returns: undefined
       }
+      marcar_pausa_avisada: { Args: { p_id: string }; Returns: undefined }
       marcar_subido_como_coni: {
         Args: {
           p_destino: string
@@ -3298,6 +3378,7 @@ export type Database = {
         Args: { p_filas: Json; p_tema: string }
         Returns: number
       }
+      poner_material_en_cola: { Args: { p_id: string }; Returns: boolean }
       proponer_fechas: {
         Args: { p_fechas: string[]; p_piezas: string[] }
         Returns: undefined
@@ -3361,6 +3442,11 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reclamar_aviso_a_federico: {
+        Args: { p_clave: string; p_entidad_id: string; p_tipo: string }
+        Returns: string
+      }
+      reclamar_aviso_de_pausa: { Args: { p_id: string }; Returns: boolean }
       registrar_clic: {
         Args: { p_dia: string; p_enlace: string; p_visitante: string }
         Returns: boolean
@@ -3452,6 +3538,8 @@ export type Database = {
       }
       restaurar_ideas: { Args: { p_ids: string[] }; Returns: string[] }
       siguiente_version_de_guion: { Args: { p_pieza: string }; Returns: number }
+      soltar_aviso_a_federico: { Args: { p_clave: string }; Returns: undefined }
+      soltar_aviso_de_pausa: { Args: { p_id: string }; Returns: undefined }
       tema_mas_cercano: {
         Args: { p_umbral: number; p_vector: string }
         Returns: {

@@ -183,6 +183,15 @@ export async function confirmarMaterial(deps: DepsSubir, entrada: unknown): Prom
     return { ok: false, error: ERROR_GENERICO }
   }
 
+  // Stamped before the run starts, so Conidolly's sweep of abandoned uploads leaves it alone; false when the sweep or
+  // another action took the row while its files were being checked.
+  const { data: enCola, error: errorDeCola } = await deps.db.rpc("poner_material_en_cola", { p_id: materialId })
+  if (errorDeCola) {
+    console.error(`No pude poner en cola el material ${materialId}`, errorDeCola)
+    return { ok: false, error: ERROR_GENERICO }
+  }
+  if (!enCola) return { ok: false, error: "No encontré ese material." }
+
   try {
     await deps.disparar(materialId)
   } catch (errorDeDisparo) {
